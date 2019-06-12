@@ -25,6 +25,7 @@ class AppsdescribeCommand extends Command
         $token = file_get_contents('/root/.config/lamp.io/token');
         $curl_handle = curl_init();
         curl_setopt($curl_handle, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($curl_handle, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
         curl_setopt($curl_handle, CURLOPT_URL, "https://api.lamp.io/apps/" . $input->getArgument('app_name'));
         curl_setopt($curl_handle, CURLOPT_HTTPHEADER, array(
             "Authorization: Bearer $token",
