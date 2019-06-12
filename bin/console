@@ -1,0 +1,13 @@
+#!/usr/bin/env php
+<?php
+
+require_once __DIR__ . '/../vendor/autoload.php';
+ 
+use Symfony\Component\Console\Application;
+use Console\App\Commands\AppslistCommand;
+use Console\App\Commands\AppsdescribeCommand;
+
+$app = new Application();
+$app->add(new AppslistCommand());
+$app->add(new AppsdescribeCommand());
+$app->run();
