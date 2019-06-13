@@ -6,6 +6,10 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
+use Art4\JsonApiClient\Exception\InputException;
+use Art4\JsonApiClient\Exception\ValidationException;
+use Art4\JsonApiClient\Helper\Parser;
+use Art4\JsonApiClient\Serializer\ArraySerializer;
  
 class AppslistCommand extends Command
 {
@@ -22,18 +26,29 @@ class AppslistCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $token = file_get_contents('/root/.config/lamp.io/token');
-        $curl_handle = curl_init();
-        curl_setopt($curl_handle, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($curl_handle, CURLOPT_URL, "https://api.lamp.io/apps");
-        curl_setopt($curl_handle, CURLOPT_HTTPHEADER, array(
-            "Authorization: Bearer $token",
-            'Content-type: application/vnd.api+json',
-            'Accept: application/vnd.api+json'
-        ));
 
-        $output->writeln(curl_exec($curl_handle));
+        $client = new \GuzzleHttp\Client();
+        $headers = [
+            'Authorization' => "Bearer $token",
+            'Content-type'  => 'application/vnd.api+json',
+            'Accept'        => 'application/vnd.api+json'
+        ];
+        $response = $client->request('GET', "https://api.lamp.io/apps", ['headers' => $headers]);
 
-        curl_close($curl_handle);
+        try {
+            $document = Parser::parseResponseString($response->getBody()->getContents());
+        } catch (InputException $e) {
+            $output->writeln($e->getMessage());
+        } catch (ValidationException $e) {
+            $output->writeln($e->getMessage());
+        }
+
+        $serializer = new ArraySerializer(['recursive' => true]);
+        $apps = $serializer->serialize($document);
+        $output->writeln("app name\tdescription"); 
+        foreach($apps['data'] as $app){
+            $output->writeln($app['id'] . "\t" . $app['attributes']['description']);
+        }
+
     }
 }
-

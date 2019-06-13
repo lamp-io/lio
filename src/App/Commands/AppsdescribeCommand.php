@@ -6,6 +6,9 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
+use Art4\JsonApiClient\Exception\InputException;
+use Art4\JsonApiClient\Exception\ValidationException;
+use Art4\JsonApiClient\Helper\Parser;
  
 class AppsdescribeCommand extends Command
 {
@@ -23,18 +26,30 @@ class AppsdescribeCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $token = file_get_contents('/root/.config/lamp.io/token');
-        $curl_handle = curl_init();
-        curl_setopt($curl_handle, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($curl_handle, CURLOPT_URL, "https://api.lamp.io/apps/" . $input->getArgument('app_name'));
-        curl_setopt($curl_handle, CURLOPT_HTTPHEADER, array(
-            "Authorization: Bearer $token",
-            'Content-type: application/vnd.api+json',
-            'Accept: application/vnd.api+json'
-        ));
 
-        $output->writeln(curl_exec($curl_handle));
+        $client = new \GuzzleHttp\Client();
+        $headers = [
+            'Authorization' => "Bearer $token",
+            'Content-type'  => 'application/vnd.api+json',
+            'Accept'        => 'application/vnd.api+json'
+        ];
+        $app_name = $input->getArgument('app_name');
+        $response = $client->request('GET', "https://api.lamp.io/apps/$app_name", ['headers' => $headers]);
 
-        curl_close($curl_handle);
+        try {
+            $document = Parser::parseResponseString($response->getBody()->getContents());
+        } catch (InputException $e) {
+            $output->writeln($e->getMessage());
+        } catch (ValidationException $e) {
+            $output->writeln($e->getMessage());
+        }
+
+        $output->writeln('name:        ' . $document->get('data.id'));
+        $output->writeln('description: ' . $document->get('data.attributes.description'));
+        $output->writeln('status:      ' . $document->get('data.attributes.status'));
+        $output->writeln('vcpu:        ' . $document->get('data.attributes.vcpu'));
+        $output->writeln('memory:      ' . $document->get('data.attributes.memory'));
+        $output->writeln('replicas:    ' . $document->get('data.attributes.replicas'));
     }
 }
 
