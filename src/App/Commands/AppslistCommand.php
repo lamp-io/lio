@@ -25,7 +25,7 @@ class AppslistCommand extends Command
  
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $token = file_get_contents('/root/.config/lamp.io/token');
+        $token = file_get_contents(getenv('HOME') . '/.config/lamp.io/token');
 
         $client = new \GuzzleHttp\Client();
         $headers = [
