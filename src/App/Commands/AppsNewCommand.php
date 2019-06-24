@@ -33,14 +33,14 @@ class AppsNewCommand extends Command
 		$this->setDescription('Creates a new app')
 			->setHelp('Allow you to create app, api reference https://www.lamp.io/api#/apps/appsCreate')
 			->addArgument('organization_id', InputArgument::REQUIRED, 'The ID(uuid) of the organization this app belongs to. STRING')
-			->addOption('description', 'desc', InputOption::VALUE_OPTIONAL, 'A description', 'Default')
-			->addOption(self::HTTPD_CONF_OPTION_NAME, 'httpd', InputOption::VALUE_OPTIONAL, 'Path to your httpd.conf', self::HTTPD_CONF_DEFAULT)
-			->addOption('max_replicas', 'max-repl', InputOption::VALUE_OPTIONAL, 'The maximum number of auto-scaled replicas INT', 1)
-			->addOption('memory', 'mem', InputOption::VALUE_OPTIONAL, 'The amount of memory available (example: 1Gi) STRING', '128Mi')
-			->addOption('min_replicas', 'min-repl', InputOption::VALUE_OPTIONAL, 'The minimum number of auto-scaled replicas INT', 1)
-			->addOption(self::PHP_INI_OPTION_NAME, 'php', InputOption::VALUE_OPTIONAL, 'Path to your php.ini', self::PHP_INI_DEFAULT)
-			->addOption('replicas', 'repl', InputOption::VALUE_OPTIONAL, 'The number current number replicas available. 0 stops app. INT', 1)
-			->addOption('vcpu', 'vcpu', InputOption::VALUE_OPTIONAL, 'The number of virtual cpu cores available (maximum: 4, minimum: 0.25) FLOAT', 0.25);
+			->addOption('description', 'd', InputOption::VALUE_OPTIONAL, 'A description', 'Default')
+			->addOption(self::HTTPD_CONF_OPTION_NAME, null, InputOption::VALUE_OPTIONAL, 'Path to your httpd.conf', self::HTTPD_CONF_DEFAULT)
+			->addOption('max_replicas', null, InputOption::VALUE_OPTIONAL, 'The maximum number of auto-scaled replicas INT', 1)
+			->addOption('memory', 'm', InputOption::VALUE_OPTIONAL, 'The amount of memory available (example: 1Gi) STRING', '128Mi')
+			->addOption('min_replicas', null, InputOption::VALUE_OPTIONAL, 'The minimum number of auto-scaled replicas INT', 1)
+			->addOption(self::PHP_INI_OPTION_NAME, null, InputOption::VALUE_OPTIONAL, 'Path to your php.ini', self::PHP_INI_DEFAULT)
+			->addOption('replicas', 'r', InputOption::VALUE_OPTIONAL, 'The number current number replicas available. 0 stops app. INT', 1)
+			->addOption('vcpu', null, InputOption::VALUE_OPTIONAL, 'The number of virtual cpu cores available (maximum: 4, minimum: 0.25) FLOAT', 0.25);
 	}
 
 	protected function execute(InputInterface $input, OutputInterface $output)
