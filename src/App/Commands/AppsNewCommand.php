@@ -28,6 +28,9 @@ class AppsNewCommand extends Command
 
 	protected static $defaultName = 'apps:new';
 
+	/**
+	 *
+	 */
 	protected function configure()
 	{
 		$this->setDescription('Creates a new app')
@@ -43,6 +46,12 @@ class AppsNewCommand extends Command
 			->addOption('vcpu', null, InputOption::VALUE_OPTIONAL, 'The number of virtual cpu cores available (maximum: 4, minimum: 0.25) FLOAT', 0.25);
 	}
 
+	/**
+	 * @param InputInterface $input
+	 * @param OutputInterface $output
+	 * @return int|null|void
+	 * @throws \Exception
+	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
@@ -70,6 +79,10 @@ class AppsNewCommand extends Command
 		}
 	}
 
+	/**
+	 * @param InputInterface $input
+	 * @return string
+	 */
 	protected function getRequestBody(InputInterface $input): string
 	{
 		$phpConfig = $this->parseConfigFilesOptions(self::PHP_INI_OPTION_NAME, self::PHP_INI_DEFAULT, $input);
@@ -94,6 +107,12 @@ class AppsNewCommand extends Command
 		]);
 	}
 
+	/**
+	 * @param string $optionName
+	 * @param string $defaultValue
+	 * @param InputInterface $input
+	 * @return string
+	 */
 	protected function parseConfigFilesOptions(string $optionName, string $defaultValue, InputInterface $input): string
 	{
 		if ($input->getOption($optionName) == $defaultValue) {
