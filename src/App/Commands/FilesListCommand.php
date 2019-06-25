@@ -60,7 +60,7 @@ class FilesListCommand extends Command
 					'sink'    => fopen($this->getPath('lamp') . '.' . $format, 'w'),
 				]
 			);
-			$output->writeln('File received, ' . $this->getPath('lamp') . '.' . $format);
+			$output->writeln('<info>File received, ' . $this->getPath('lamp') . '.' . $format . '</info>');
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
 			die();
