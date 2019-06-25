@@ -8,9 +8,11 @@ use Console\App\Commands\AppsDescribeCommand;
 use Console\App\Commands\AppsListCommand;
 use Console\App\Commands\AuthCommand;
 use GuzzleHttp\Client;
+use Console\App\Commands\FilesListCommand;
 
 $app = new Application();
 $app->add(new AppsListCommand(new Client()));
 $app->add(new AppsDescribeCommand(new Client()));
 $app->add(new AuthCommand());
+$app->add(new FilesListCommand(new Client()));
 $app->run();
