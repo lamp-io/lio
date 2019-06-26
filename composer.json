@@ -1,14 +1,16 @@
 {
-    "require": {
-        "symfony/console": "^4.3",
-        "art4/json-api-client": "^0.10.0",
-        "guzzlehttp/guzzle": "^6.3"
+  "require": {
+    "symfony/console": "^4.3",
+    "art4/json-api-client": "^0.10.0",
+    "guzzlehttp/guzzle": "^6.3",
+    "php": ">=7.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Console\\": "src"
     },
-    "autoload": {
-        "psr-4": {
-            "Console\\": "src"
-        },
-        "classmap": ["src"]
-    }
-    
+    "classmap": [
+      "src"
+    ]
+  }
 }
