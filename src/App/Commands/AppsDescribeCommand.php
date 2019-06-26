@@ -2,6 +2,7 @@
 
 namespace Console\App\Commands;
 
+use Art4\JsonApiClient\V1\Document;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -51,6 +52,7 @@ class AppsDescribeCommand extends Command
 		}
 
 		try {
+			/** @var Document $document */
 			$document = Parser::parseResponseString($response->getBody()->getContents());
 			$table = new Table($output);
 			$table->setHeaderTitle('App Describe');
