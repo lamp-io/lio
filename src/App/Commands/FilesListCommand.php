@@ -74,7 +74,7 @@ class FilesListCommand extends Command
 	 */
 	protected function getPath(string $fileName): string
 	{
-		return getenv('HOME') . getenv("HOMEDRIVE") . getenv("HOMEPATH") . DIRECTORY_SEPARATOR . '.config' . DIRECTORY_SEPARATOR . '.lamp.io/' . $fileName;
+		return getenv('HOME') . getenv("HOMEDRIVE") . getenv("HOMEPATH") . DIRECTORY_SEPARATOR . '.config' . DIRECTORY_SEPARATOR . 'lamp.io/' . $fileName;
 	}
 
 
