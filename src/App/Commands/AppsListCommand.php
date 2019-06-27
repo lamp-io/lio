@@ -45,7 +45,7 @@ class AppsListCommand extends Command
 			$serializer = new ArraySerializer(['recursive' => true]);
 			$table = new Table($output);
 			$table->setHeaderTitle('Apps');
-			$table->setHeaders(['App name', 'App description']);
+			$table->setHeaders(['App id', 'App description']);
 			$apps = $serializer->serialize($document);
 			foreach ($apps['data'] as $key => $app) {
 				$table->addRow([

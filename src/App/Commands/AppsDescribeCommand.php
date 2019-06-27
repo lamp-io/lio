@@ -13,7 +13,7 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class AppsDescribeCommand extends Command
 {
-	const API_ENDPOINT = 'https://api.lamp.io/apps/{app_name}';
+	const API_ENDPOINT = 'https://api.lamp.io/apps/{app_id}';
 
 	/**
 	 * @var string
@@ -27,7 +27,7 @@ class AppsDescribeCommand extends Command
 	{
 		$this->setDescription('gets the apps you specify')
 			->setHelp('try rebooting')
-			->addArgument('app_name', InputArgument::REQUIRED, 'which app would you like to describe?');
+			->addArgument('app_id', InputArgument::REQUIRED, 'which app would you like to describe?');
 	}
 
 	/**
@@ -43,7 +43,7 @@ class AppsDescribeCommand extends Command
 		try {
 			$response = $this->httpHelper->getClient()->request(
 				'GET',
-				str_replace('{app_name}', $input->getArgument('app_name'), self::API_ENDPOINT),
+				str_replace('{app_id}', $input->getArgument('app_id'), self::API_ENDPOINT),
 				['headers' => $this->httpHelper->getHeaders()]
 			);
 		} catch (GuzzleException $guzzleException) {
