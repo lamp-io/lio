@@ -12,7 +12,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class FilesListCommand extends Command
 {
-	const API_ENDPOINT = 'https://api.lamp.io/apps/{app_name}/files';
+	const API_ENDPOINT = 'https://api.lamp.io/apps/{app_id}/files';
 
 	const RESPONSE_FORMAT_TYPES = [
 		'json' => [
@@ -35,8 +35,8 @@ class FilesListCommand extends Command
 	{
 		$this->setDescription('Return files from the root of an app')
 			->setHelp('try rebooting')
-			->addArgument('app_id', InputArgument::REQUIRED, 'From which app_id need to get fiels?')
-			->addOption('json', 'j', InputOption::VALUE_NONE, 'Set this flag, if you want response as a json')
+			->addArgument('app_id', InputArgument::REQUIRED, 'From which app_id need to get fields?')
+			->addOption('level', 'l', InputOption::VALUE_NONE, 'Work only if you dont set, any other options, it will define depth of the directory tree')
 			->addOption('gzip', 'g', InputOption::VALUE_NONE, 'Set this flag, if you want response as a gzip archive')
 			->addOption('zip', 'z', InputOption::VALUE_NONE, 'Set this flag, if you want response as a zip archive.');
 	}
@@ -52,21 +52,25 @@ class FilesListCommand extends Command
 		parent::execute($input, $output);
 		$format = $this->getResponseFormat($input);
 		try {
-			$this->httpHelper->getClient()->request(
+			$response = $this->httpHelper->getClient()->request(
 				'GET',
-				str_replace('{app_name}', $input->getArgument('app_id'), self::API_ENDPOINT),
-				[
-					'headers' => array_merge($this->httpHelper->getHeaders(), ['Accept' => self::RESPONSE_FORMAT_TYPES[$format]['AcceptHeader']]),
-					'sink'    => fopen($this->getPath('lamp') . '.' . $format, 'w'),
-				]
+				str_replace('{app_id}', $input->getArgument('app_id'), self::API_ENDPOINT),
+				$this->getRequestOptions($format)
 			);
 			$output->writeln('<info>File received, ' . $this->getPath('lamp') . '.' . $format . '</info>');
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
-			die();
 		}
 
 	}
+
+	protected function getRequestOptions(string $format)
+	{
+		return array_merge([
+			'headers' => array_merge($this->httpHelper->getHeaders(), ['Accept' => self::RESPONSE_FORMAT_TYPES[$format]['AcceptHeader']]),
+		], $format != 'json' ? ['sink' => fopen($this->getPath('lamp') . '.' . $format, 'w')] : []);
+	}
+
 
 	/**
 	 * @param string $fileName
