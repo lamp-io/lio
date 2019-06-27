@@ -35,7 +35,7 @@ class AppsNewCommand extends Command
 	{
 		$this->setDescription('Creates a new app')
 			->setHelp('Allow you to create app, api reference https://www.lamp.io/api#/apps/appsCreate')
-			->addArgument('organization_id', InputArgument::REQUIRED, 'The ID(uuid) of the organization this app belongs to. STRING')
+			->addArgument('organization_id', InputArgument::OPTIONAL, 'The ID(uuid) of the organization this app belongs to. STRING')
 			->addOption('description', 'd', InputOption::VALUE_OPTIONAL, 'A description', 'Default')
 			->addOption(self::HTTPD_CONF_OPTION_NAME, null, InputOption::VALUE_OPTIONAL, 'Path to your httpd.conf', self::HTTPD_CONF_DEFAULT)
 			->addOption('max_replicas', null, InputOption::VALUE_OPTIONAL, 'The maximum number of auto-scaled replicas INT', 1)
@@ -73,7 +73,7 @@ class AppsNewCommand extends Command
 		try {
 			/** @var Document $document */
 			$document = Parser::parseResponseString($response->getBody()->getContents());
-			$output->writeln('Your new app successfully created, id: ' . $document->get('data.id'));
+			$output->writeln('Your new app successfully created, app id: ' . $document->get('data.id'));
 		} catch (ValidationException $e) {
 			$output->writeln($e->getMessage());
 		}
@@ -91,17 +91,19 @@ class AppsNewCommand extends Command
 		return json_encode([
 			'data' => [
 				'attributes' =>
-					[
-						'description'     => (string)$input->getOption('description'),
-						'httpd_conf'      => $httpdConfig,
-						'max_replicas'    => (int)$input->getOption('max_replicas'),
-						'memory'          => (string)$input->getOption('memory'),
-						'min_replicas'    => (int)$input->getOption('min_replicas'),
-						'organization_id' => (string)$input->getArgument('organization_id'),
-						'php_ini'         => $phpConfig,
-						'replicas'        => (int)$input->getOption('replicas'),
-						'vcpu'            => (float)$input->getOption('vcpu'),
-					],
+					array_merge(
+						[
+							'description'  => (string)$input->getOption('description'),
+							'httpd_conf'   => $httpdConfig,
+							'max_replicas' => (int)$input->getOption('max_replicas'),
+							'memory'       => (string)$input->getOption('memory'),
+							'min_replicas' => (int)$input->getOption('min_replicas'),
+							'php_ini'      => $phpConfig,
+							'replicas'     => (int)$input->getOption('replicas'),
+							'vcpu'         => (float)$input->getOption('vcpu'),
+						],
+						!empty($input->getArgument('organization_id')) ? ['organization_id' => (string)$input->getArgument('organization_id')] : []
+					),
 				'type'       => 'apps',
 			],
 		]);
