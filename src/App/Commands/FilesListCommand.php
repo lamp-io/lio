@@ -12,7 +12,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class FilesListCommand extends Command
 {
-	const API_ENDPOINT = 'https://api.lamp.io/apps/{app_id}/files';
+	const API_ENDPOINT = 'https://api.lamp.io/apps/%s/files/%s';
 
 	const RESPONSE_FORMAT_TYPES = [
 		'json' => [
@@ -36,7 +36,7 @@ class FilesListCommand extends Command
 		$this->setDescription('Return files from the root of an app')
 			->setHelp('try rebooting')
 			->addArgument('app_id', InputArgument::REQUIRED, 'From which app_id need to get fields?')
-			->addOption('level', 'l', InputOption::VALUE_NONE, 'Work only if you dont set, any other options, it will define depth of the directory tree')
+			->addArgument('file_id', InputArgument::OPTIONAL, 'The ID of the file. The ID is also the file path relative to its app root.', '/')
 			->addOption('gzip', 'g', InputOption::VALUE_NONE, 'Set this flag, if you want response as a gzip archive')
 			->addOption('zip', 'z', InputOption::VALUE_NONE, 'Set this flag, if you want response as a zip archive.');
 	}
@@ -54,7 +54,10 @@ class FilesListCommand extends Command
 		try {
 			$response = $this->httpHelper->getClient()->request(
 				'GET',
-				str_replace('{app_id}', $input->getArgument('app_id'), self::API_ENDPOINT),
+				sprintf(self::API_ENDPOINT,
+					$input->getArgument('app_id'),
+					urlencode($input->getArgument('file_id'))
+				),
 				$this->getRequestOptions($format)
 			);
 			$output->writeln('<info>File received, ' . $this->getPath('lamp') . '.' . $format . '</info>');
