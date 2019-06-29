@@ -29,7 +29,7 @@ class AuthHelper
 	 */
 	public static function getPathToTokenFolder(): string
 	{
-		return getenv('HOME') . getenv("HOMEDRIVE") . getenv("HOMEPATH") . '/.config/.lamp.io/';
+		return getenv('HOME') . getenv("HOMEDRIVE") . getenv("HOMEPATH") . '/.config/lamp.io/';
 	}
 
 	/**

@@ -2,6 +2,7 @@
 
 namespace Console\App\Commands;
 
+use Art4\JsonApiClient\V1\Document;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Helper\TableSeparator;
@@ -39,11 +40,12 @@ class AppsListCommand extends Command
 		}
 
 		try {
+			/** @var Document $document */
 			$document = Parser::parseResponseString($response->getBody()->getContents());
 			$serializer = new ArraySerializer(['recursive' => true]);
 			$table = new Table($output);
 			$table->setHeaderTitle('Apps');
-			$table->setHeaders(['App name', 'App description']);
+			$table->setHeaders(['App id', 'App description']);
 			$apps = $serializer->serialize($document);
 			foreach ($apps['data'] as $key => $app) {
 				$table->addRow([
