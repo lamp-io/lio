@@ -46,8 +46,9 @@ class FilesListCommand extends Command
 			->addArgument('app_id', InputArgument::REQUIRED, 'From which app_id need to get fields?')
 			->addArgument('file_id', InputArgument::OPTIONAL, 'The ID of the file. The ID is also the file path relative to its app root.', '/')
 			->addOption('human-readable', '', InputOption::VALUE_NONE, 'Format size values from raw bytes to human readable format')
+			->addOption('recursive', 'r', InputOption::VALUE_NONE, 'Command is performed on all files or objects under the specified path')
 			->addOption('gzip', 'g', InputOption::VALUE_NONE, 'Set this flag, if you want response as a gzip archive')
-			->addOption('zip', 'z', InputOption::VALUE_NONE, 'Set this flag, if you want response as a zip archive.');
+			->addOption('zip', 'z', InputOption::VALUE_NONE, 'Set this flag, if you want response as a zip archive');
 	}
 
 	/**
@@ -61,27 +62,17 @@ class FilesListCommand extends Command
 		parent::execute($input, $output);
 		$format = $this->getResponseFormat($input);
 		try {
-			$response = $this->sendRequest($format, $input);
 			if ($format != self::DEFAULT_FORMAT) {
+				$this->sendRequest(
+					$format,
+					$input->getArgument('app_id'),
+					$input->getArgument('file_id')
+				);
 				$output->writeln('<info>File received, ' . $this->getPath('lamp') . '.' . $format . '</info>');
-
 			} else {
-				/** @var Document $document */
-				$document = Parser::parseResponseString($response->getBody()->getContents());
-				$serializer = new ArraySerializer(['recursive' => true]);
 				$table = new Table($output);
 				$table->setStyle('compact');
-				foreach ($serializer->serialize($document->get('included')) as $key => $val) {
-					if (empty($val['relationships'])) {
-						continue;
-					}
-					$table->addRow(explode(' ', $this->formatFileInfo(
-						$val['id'],
-						$val['attributes'],
-						$input->getOption('human-readable')
-					)));
-
-				}
+				$this->prepareOutput($input, $table, $input->getArgument('file_id'));
 				$table->render();
 
 			}
@@ -94,18 +85,59 @@ class FilesListCommand extends Command
 	}
 
 	/**
-	 * @param string $format
 	 * @param InputInterface $input
-	 * @return \Psr\Http\Message\ResponseInterface
+	 * @param Table $table
+	 * @param string $filePath
+	 * @throws GuzzleException
+	 * @throws  ValidationException
+	 */
+	protected function prepareOutput(InputInterface $input, Table $table, string $filePath)
+	{
+		$response = $this->sendRequest(
+			self::DEFAULT_FORMAT,
+			$input->getArgument('app_id'),
+			$filePath
+		);
+		/** @var Document $document */
+		$document = Parser::parseResponseString($response->getBody()->getContents());
+		$serializer = new ArraySerializer(['recursive' => true]);
+		$siblings = [];
+		if ($document->has('data.relationships.siblings')) {
+			$siblingsData = $document->get('data.relationships.siblings.data');
+			foreach ($serializer->serialize($siblingsData) as $val) {
+				$siblings[] = $val['id'];
+			}
+		}
+
+		foreach ($serializer->serialize($document->get('included')) as $key => $val) {
+			if (empty($val['relationships']) || in_array($val['id'], $siblings)) {
+				continue;
+			}
+			$table->addRow(explode(' ', $this->formatFileInfo(
+				$val['id'],
+				$val['attributes'],
+				$input->getOption('human-readable')
+			)));
+			if ($val['attributes']['is_dir'] && !empty($input->getOption('recursive'))) {
+				$this->prepareOutput($input, $table, $val['id']);
+			}
+		}
+	}
+
+	/**
+	 * @param string $format
+	 * @param string $appId
+	 * @param string $filePath
+	 * @return ResponseInterface
 	 * @throws GuzzleException
 	 */
-	protected function sendRequest(string $format, InputInterface $input): ResponseInterface
+	protected function sendRequest(string $format, string $appId, string $filePath): ResponseInterface
 	{
 		return $this->httpHelper->getClient()->request(
 			'GET',
 			sprintf(self::API_ENDPOINT,
-				$input->getArgument('app_id'),
-				urlencode($input->getArgument('file_id'))
+				$appId,
+				urlencode($filePath)
 			),
 			$this->getRequestOptions($format)
 		);
@@ -113,6 +145,12 @@ class FilesListCommand extends Command
 
 	}
 
+	/**
+	 * @param string $fileName
+	 * @param array $fileAttributes
+	 * @param bool $isHumanReadable
+	 * @return string
+	 */
 	protected function formatFileInfo(string $fileName, array $fileAttributes, bool $isHumanReadable = true): string
 	{
 		$date = date('Y-m-d H:i:s', strtotime($fileAttributes['modify_time']));
@@ -120,6 +158,11 @@ class FilesListCommand extends Command
 		return $date . '  ' . $size . '  ' . $fileName;
 	}
 
+	/**
+	 * @param int $bytes
+	 * @param int $precision
+	 * @return string
+	 */
 	protected function formatBytes(int $bytes, int $precision = 2)
 	{
 		$unit = ['B', 'KB', 'MB', 'GB', 'TB'];
@@ -128,6 +171,10 @@ class FilesListCommand extends Command
 	}
 
 
+	/**
+	 * @param string $format
+	 * @return array
+	 */
 	protected function getRequestOptions(string $format)
 	{
 		return array_merge([
