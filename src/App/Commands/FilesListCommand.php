@@ -36,6 +36,8 @@ class FilesListCommand extends Command
 
 	protected static $defaultName = 'files:list';
 
+	protected $counter = 0;
+
 	/**
 	 *
 	 */
@@ -45,6 +47,7 @@ class FilesListCommand extends Command
 			->setHelp('try rebooting')
 			->addArgument('app_id', InputArgument::REQUIRED, 'From which app_id need to get fields?')
 			->addArgument('file_id', InputArgument::OPTIONAL, 'The ID of the file. The ID is also the file path relative to its app root.', '/')
+			->addOption('limit', 'l', InputOption::VALUE_REQUIRED, ' The number of results to return in each response to a list operation. The default value is 1000 (the maximum allowed). Using a lower value may help if an operation times out', '1000')
 			->addOption('human-readable', '', InputOption::VALUE_NONE, 'Format size values from raw bytes to human readable format')
 			->addOption('recursive', 'r', InputOption::VALUE_NONE, 'Command is performed on all files or objects under the specified path')
 			->addOption('gzip', 'g', InputOption::VALUE_NONE, 'Set this flag, if you want response as a gzip archive')
@@ -93,6 +96,9 @@ class FilesListCommand extends Command
 	 */
 	protected function prepareOutput(InputInterface $input, Table $table, string $filePath)
 	{
+		if ($this->counter == $input->getOption('limit')) {
+			return;
+		}
 		$response = $this->sendRequest(
 			self::DEFAULT_FORMAT,
 			$input->getArgument('app_id'),
@@ -118,6 +124,7 @@ class FilesListCommand extends Command
 				$val['attributes'],
 				$input->getOption('human-readable')
 			)));
+			$this->counter += 1;
 			if ($val['attributes']['is_dir'] && !empty($input->getOption('recursive'))) {
 				$this->prepareOutput($input, $table, $val['id']);
 			}
