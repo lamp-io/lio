@@ -71,11 +71,13 @@ class FilesUploadCommand extends Command
 
 	/**
 	 * @param string $remoteFile
-	 * @param string $localFileName
+	 * @param string $localFilePath
 	 * @return string
 	 */
-	protected function getRemoteFileName(string $remoteFile, string $localFileName): string
+	protected function getRemoteFileName(string $remoteFile, string $localFilePath): string
 	{
+		$localFilePathAsArray = explode('/', $localFilePath);
+		$localFileName = $localFilePathAsArray[count($localFilePathAsArray) - 1];
 		return $this->isRemoteFileNameSpecified($remoteFile) ? $remoteFile : $remoteFile . $localFileName;
 	}
 
