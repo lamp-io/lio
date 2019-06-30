@@ -172,11 +172,16 @@ class FilesListCommand extends Command
 	 * @param int $precision
 	 * @return string
 	 */
-	protected function formatBytes(int $bytes, int $precision = 2)
+	protected function formatBytes(int $bytes, int $precision = 2): string
 	{
-		$unit = ['B', 'KB', 'MB', 'GB', 'TB'];
+		$unit = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
 		$exp = floor(log($bytes, 1024)) | 0;
-		return round($bytes / (pow(1024, $exp)), $precision) . $unit[$exp];
+		if (empty($unit[$exp])) {
+			$result = (string)$bytes;
+		} else {
+			$result = round($bytes / (pow(1024, $exp)), $precision) . $unit[$exp];
+		}
+		return $result;
 	}
 
 
@@ -184,7 +189,7 @@ class FilesListCommand extends Command
 	 * @param string $format
 	 * @return array
 	 */
-	protected function getRequestOptions(string $format)
+	protected function getRequestOptions(string $format): array
 	{
 		return array_merge([
 			'headers' => array_merge($this->httpHelper->getHeaders(), ['Accept' => self::RESPONSE_FORMAT_TYPES[$format]['AcceptHeader']]),
