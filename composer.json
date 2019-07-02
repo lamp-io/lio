@@ -2,6 +2,7 @@
   "name": "lamp-io/lio",
   "type": "library",
   "description": "Command line interface, for lamp.io platform",
+  "license": [],
   "authors": [],
   "bin": [
     "bin/lio"
