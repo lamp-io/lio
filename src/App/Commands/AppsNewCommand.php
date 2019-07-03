@@ -68,7 +68,10 @@ class AppsNewCommand extends Command
 			);
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
-			die();
+			exit(1);
+		} catch (\InvalidArgumentException $invalidArgumentException) {
+			$output->writeln($invalidArgumentException->getMessage());
+			exit(1);
 		}
 
 		try {
@@ -77,6 +80,7 @@ class AppsNewCommand extends Command
 			$output->writeln('Your new app successfully created, app id: ' . $document->get('data.id'));
 		} catch (ValidationException $e) {
 			$output->writeln($e->getMessage());
+			exit(1);
 		}
 	}
 
