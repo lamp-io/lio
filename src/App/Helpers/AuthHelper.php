@@ -47,6 +47,6 @@ class AuthHelper
 	 */
 	public static function getToken(): string
 	{
-		return (self::isTokenExist()) ? file_get_contents(self::getPathToTokenFolder() . self::TOKEN_FILE_NAME) : '';
+		return (self::isTokenExist()) ? trim(file_get_contents(self::getPathToTokenFolder() . self::TOKEN_FILE_NAME)) : '';
 	}
 }
