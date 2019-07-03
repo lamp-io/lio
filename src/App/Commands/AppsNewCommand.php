@@ -63,7 +63,6 @@ class AppsNewCommand extends Command
 				[
 					'headers' => $this->httpHelper->getHeaders(),
 					'body'    => $this->getRequestBody($input),
-					'proxy'   => 'localhost:3127',
 				]
 			);
 		} catch (GuzzleException $guzzleException) {
