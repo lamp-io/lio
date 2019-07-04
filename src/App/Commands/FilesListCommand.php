@@ -20,21 +20,7 @@ class FilesListCommand extends Command
 {
 	const API_ENDPOINT = 'https://api.lamp.io/apps/%s/files/%s';
 
-	const DEFAULT_FORMAT = 'json';
-
 	const MAX_LIMIT = '1000';
-
-	const RESPONSE_FORMAT_TYPES = [
-		'json' => [
-			'AcceptHeader' => 'Accept: application/vnd.api+json',
-		],
-		'gzip' => [
-			'AcceptHeader' => 'Accept: application/x-gzip',
-		],
-		'zip'  => [
-			'AcceptHeader' => 'Accept: application/zip',
-		],
-	];
 
 	protected static $defaultName = 'files:list';
 
@@ -51,10 +37,8 @@ class FilesListCommand extends Command
 			->addArgument('file_id', InputArgument::OPTIONAL, 'The ID of the file. The ID is also the file path relative to its app root.', '/')
 			->addOption('limit', 'l', InputOption::VALUE_REQUIRED, ' The number of results to return in each response to a list operation. The default value is 1000 (the maximum allowed). Using a lower value may help if an operation times out', self::MAX_LIMIT)
 			->addOption('human-readable', '', InputOption::VALUE_NONE, 'Format size values from raw bytes to human readable format')
-			->addOption('recursive', 'r', InputOption::VALUE_NONE, 'Command is performed on all files or objects under the specified path')
-			->addOption('gzip', 'g', InputOption::VALUE_NONE, 'Set this flag, if you want response as a gzip archive')
-			->addOption('zip', 'z', InputOption::VALUE_NONE, 'Set this flag, if you want response as a zip archive');
-	}
+			->addOption('recursive', 'r', InputOption::VALUE_NONE, 'Command is performed on all files or objects under the specified path');
+			}
 
 	/**
 	 * @param InputInterface $input
@@ -65,22 +49,12 @@ class FilesListCommand extends Command
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
-		$format = $this->getResponseFormat($input);
 		try {
-			if ($format != self::DEFAULT_FORMAT) {
-				$this->sendRequest(
-					$format,
-					$input->getArgument('app_id'),
-					$input->getArgument('file_id')
-				);
-				$output->writeln('<info>File received, ' . $this->getPath('lamp') . '.' . $format . '</info>');
-			} else {
-				$table = new Table($output);
-				$table->setStyle('compact');
-				$this->prepareOutput($input, $table, $input->getArgument('file_id'));
-				$table->render();
+			$table = new Table($output);
+			$table->setStyle('compact');
+			$this->prepareOutput($input, $table, $input->getArgument('file_id'));
+			$table->render();
 
-			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
 		} catch (ValidationException $validationException) {
@@ -102,7 +76,6 @@ class FilesListCommand extends Command
 			return;
 		}
 		$response = $this->sendRequest(
-			self::DEFAULT_FORMAT,
 			$input->getArgument('app_id'),
 			$filePath
 		);
@@ -134,13 +107,12 @@ class FilesListCommand extends Command
 	}
 
 	/**
-	 * @param string $format
 	 * @param string $appId
 	 * @param string $filePath
 	 * @return ResponseInterface
 	 * @throws GuzzleException
 	 */
-	protected function sendRequest(string $format, string $appId, string $filePath): ResponseInterface
+	protected function sendRequest(string $appId, string $filePath): ResponseInterface
 	{
 		return $this->httpHelper->getClient()->request(
 			'GET',
@@ -148,7 +120,9 @@ class FilesListCommand extends Command
 				$appId,
 				urlencode($filePath)
 			),
-			$this->getRequestOptions($format)
+			[
+				'headers' => $this->httpHelper->getHeaders(),
+			]
 		);
 
 
@@ -183,44 +157,4 @@ class FilesListCommand extends Command
 		}
 		return $result;
 	}
-
-
-	/**
-	 * @param string $format
-	 * @return array
-	 */
-	protected function getRequestOptions(string $format): array
-	{
-		return array_merge([
-			'headers' => array_merge($this->httpHelper->getHeaders(), ['Accept' => self::RESPONSE_FORMAT_TYPES[$format]['AcceptHeader']]),
-		], $format != self::DEFAULT_FORMAT ? ['sink' => fopen($this->getPath('lamp') . '.' . $format, 'w')] : []);
-	}
-
-
-	/**
-	 * @param string $fileName
-	 * @return string
-	 */
-	protected function getPath(string $fileName): string
-	{
-		return getenv('HOME') . getenv("HOMEDRIVE") . getenv("HOMEPATH") . DIRECTORY_SEPARATOR . '.config' . DIRECTORY_SEPARATOR . 'lamp.io/' . $fileName;
-	}
-
-
-	/**
-	 * @param InputInterface $input
-	 * @return string
-	 */
-	protected function getResponseFormat(InputInterface $input): string
-	{
-		$format = self::DEFAULT_FORMAT;
-		foreach ($input->getOptions() as $key => $option) {
-			if (array_key_exists($key, self::RESPONSE_FORMAT_TYPES) && !empty($option)) {
-				$format = $key;
-			}
-		}
-		return $format;
-	}
-
-
 }
