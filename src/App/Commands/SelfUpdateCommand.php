@@ -32,11 +32,10 @@ class SelfUpdateCommand extends Command
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
-		$this->output = $output;
 		$this->version = $this->getApplication()->getVersion();
 		$updater = new Updater(null, false);
 		$updater->setStrategy(Updater::STRATEGY_GITHUB);
-		$this->update($this->getGithubReleasesUpdater($updater));
+		$this->update($this->getGithubReleasesUpdater($updater), $output);
 	}
 
 
@@ -58,9 +57,9 @@ class SelfUpdateCommand extends Command
 	/**
 	 * @param Updater $updater
 	 */
-	protected function update(Updater $updater)
+	protected function update(Updater $updater, OutputInterface $output)
 	{
-		$this->output->writeln('Updating...' . PHP_EOL);
+		$output->writeln('Updating...' . PHP_EOL);
 		try {
 			$result = $updater->update();
 			$newVersion = $updater->getNewVersion();
@@ -73,27 +72,26 @@ class SelfUpdateCommand extends Command
 			}
 
 			if ($result) {
-				$this->output->writeln('<fg=green>Lio cli has been updated.</fg=green>');
-				$this->output->writeln(sprintf(
-					'<fg=green>Current version is:</fg=green> <options=bold>%s</options=bold>.',
+				$output->writeln('<info>Lio cli has been updated.</info>>');
+				$output->writeln(sprintf(
+					'<info>Current version is:</info> <options=bold>%s</options=bold>.',
 					$newVersion
 				));
-				$this->output->writeln(sprintf(
-					'<fg=green>Previous version was:</fg=green> <options=bold>%s</options=bold>.',
+				$output->writeln(sprintf(
+					'<info>Previous version was:</info> <options=bold>%s</options=bold>.',
 					$oldVersion
 				));
 			} else {
-				$this->output->writeln('<fg=green>Lio cli currently up to date.</fg=green>');
-				$this->output->writeln(sprintf(
-					'<fg=green>Current version is:</fg=green> <options=bold>%s</options=bold>.',
+				$output->writeln('<info>Lio cli currently up to date.</info>');
+				$output->writeln(sprintf(
+					'<info>Current version is:</info> <options=bold>%s</options=bold>.',
 					$oldVersion
 				));
 			}
 		} catch (\Exception $e) {
-			$this->output->writeln(sprintf('Error: <fg=yellow>%s</fg=yellow>', $e->getMessage()));
+			$output->writeln(sprintf('Error: <error>%s</error>', $e->getMessage()));
+			exit(1);
 		}
-		$this->output->write(PHP_EOL);
-		$this->output->writeln('You can also select update stability using --dev, --pre (alpha/beta/rc) or --stable.');
 	}
 
 	/**
