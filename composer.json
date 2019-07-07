@@ -4,7 +4,8 @@
     "art4/json-api-client": "^0.10.0",
     "guzzlehttp/guzzle": "^6.3",
     "php": ">=7.0",
-    "ext-json": "*"
+    "ext-json": "*",
+    "symfony/finder": "^4.3"
   },
   "autoload": {
     "psr-4": {
