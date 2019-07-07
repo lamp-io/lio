@@ -32,6 +32,10 @@ class SelfUpdateCommand extends Command
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
+		if (!\Phar::running()) {
+			$output->writeln('<error>Cant execute command. This command works only under phar build</error>');
+			exit(1);
+		}
 		$this->version = $this->getApplication()->getVersion();
 		$updater = new Updater(null, false);
 		$updater->setStrategy(Updater::STRATEGY_GITHUB);
