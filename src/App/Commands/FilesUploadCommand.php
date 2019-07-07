@@ -38,7 +38,7 @@ class FilesUploadCommand extends Command
 		parent::execute($input, $output);
 		if (!file_exists($input->getArgument('file'))) {
 			$output->writeln('<error>File not exists</error>');
-			die();
+			exit(1);
 		}
 
 		try {
@@ -66,6 +66,7 @@ class FilesUploadCommand extends Command
 				) . ' successfully uploaded</info>');
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
+			exit(1);
 		}
 	}
 
@@ -76,7 +77,7 @@ class FilesUploadCommand extends Command
 	 */
 	protected function getRemoteFileName(string $remoteFile, string $localFilePath): string
 	{
-		$localFilePathAsArray = explode('/', $localFilePath);
+		$localFilePathAsArray = explode(DIRECTORY_SEPARATOR, $localFilePath);
 		$localFileName = $localFilePathAsArray[count($localFilePathAsArray) - 1];
 		return $this->isRemoteFileNameSpecified($remoteFile) ? $remoteFile : $remoteFile . $localFileName;
 	}
@@ -87,7 +88,7 @@ class FilesUploadCommand extends Command
 	 */
 	protected function isRemoteFileNameSpecified(string $remoteFile): bool
 	{
-		return $remoteFile[strlen($remoteFile) - 1] != '/';
+		return $remoteFile[strlen($remoteFile) - 1] != DIRECTORY_SEPARATOR;
 	}
 
 }
