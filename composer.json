@@ -15,5 +15,8 @@
     "classmap": [
       "src"
     ]
+  },
+  "scripts": {
+    "build": "php bin/build"
   }
 }
