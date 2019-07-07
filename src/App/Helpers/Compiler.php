@@ -31,7 +31,6 @@ class Compiler
 			->ignoreVCS(true)
 			->name('*.php')
 			->notName('Compiler.php')
-			->notName('build.php')
 			->in($this->getAppRoot())
 			->sort($finderSort);
 
