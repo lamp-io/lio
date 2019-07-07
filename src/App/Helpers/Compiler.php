@@ -44,6 +44,10 @@ class Compiler
 		$phar->setStub($this->getStub());
 		$phar->stopBuffering();
 		unset($phar);
+		chmod(
+			$this->getAppRoot() . DIRECTORY_SEPARATOR . 'build' . DIRECTORY_SEPARATOR . self::PHAR_NAME,
+			0755
+		);
 	}
 
 
@@ -69,7 +73,12 @@ class Compiler
 
 	private function getStub()
 	{
-		$stub ='<?php Phar::mapPhar(\'lio.phar\'); require \'phar://lio.phar/bin/lio\'; __HALT_COMPILER();';
+		$stub = <<<'EOF'
+#!/usr/bin/env php
+<?php Phar::mapPhar('lio.phar');
+require 'phar://lio.phar/bin/lio';
+__HALT_COMPILER();
+EOF;
 		return $stub;
 	}
 }
