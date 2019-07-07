@@ -2,6 +2,7 @@
 
 namespace Console\App\Helpers;
 
+use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 
@@ -9,16 +10,28 @@ class Compiler
 {
 	const PHAR_NAME = 'lio.phar';
 
+	protected $output;
+
+	/**
+	 * Compiler constructor.
+	 */
+	public function __construct()
+	{
+		$this->output = new ConsoleOutput();
+	}
+
 	/**
 	 *
 	 */
 	public function compile()
 	{
-		if (file_exists($this->getAppRoot() . DIRECTORY_SEPARATOR . 'build' . DIRECTORY_SEPARATOR . self::PHAR_NAME)) {
-			unlink($this->getAppRoot() . DIRECTORY_SEPARATOR . 'build' . DIRECTORY_SEPARATOR . self::PHAR_NAME);
+		$this->output->writeln('<info>Starting build phar package</info>');
+		$pathToBuild =  $this->getAppRoot() . DIRECTORY_SEPARATOR . 'build' . DIRECTORY_SEPARATOR . self::PHAR_NAME;
+		if (file_exists($pathToBuild)) {
+			unlink($pathToBuild);
 		}
 		$phar = new \Phar(
-			$this->getAppRoot() . DIRECTORY_SEPARATOR . 'build' . DIRECTORY_SEPARATOR . self::PHAR_NAME,
+			$pathToBuild,
 			0,
 			self::PHAR_NAME
 		);
@@ -47,9 +60,10 @@ class Compiler
 		$phar->stopBuffering();
 		unset($phar);
 		chmod(
-			$this->getAppRoot() . DIRECTORY_SEPARATOR . 'build' . DIRECTORY_SEPARATOR . self::PHAR_NAME,
+			$pathToBuild,
 			0755
 		);
+		$this->output->writeln('<info>Phar successfully built, path: ' . $pathToBuild . ' </info>');
 	}
 
 

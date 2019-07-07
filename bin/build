@@ -9,5 +9,10 @@ if (file_exists(dirname(__DIR__, 3) . '/autoload.php')) {
 
 use Console\App\Helpers\Compiler;
 
-$compiler = new Compiler();
-$compiler->compile();
+try {
+	$compiler = new Compiler();
+	$compiler->compile();
+} catch (Exception $exception) {
+	echo PHP_EOL . $exception->getMessage();
+	exit(1);
+}
