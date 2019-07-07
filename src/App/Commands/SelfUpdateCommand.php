@@ -40,6 +40,10 @@ class SelfUpdateCommand extends Command
 	}
 
 
+	/**
+	 * @param Updater $updater
+	 * @return Updater
+	 */
 	protected function getGithubReleasesUpdater(Updater $updater)
 	{
 		/** @var GithubStrategy $strategy */
@@ -51,6 +55,9 @@ class SelfUpdateCommand extends Command
 	}
 
 
+	/**
+	 * @param Updater $updater
+	 */
 	protected function update(Updater $updater)
 	{
 		$this->output->writeln('Updating...' . PHP_EOL);
@@ -89,6 +96,9 @@ class SelfUpdateCommand extends Command
 		$this->output->writeln('You can also select update stability using --dev, --pre (alpha/beta/rc) or --stable.');
 	}
 
+	/**
+	 *
+	 */
 	protected function configure()
 	{
 		$this

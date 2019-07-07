@@ -9,6 +9,9 @@ class Compiler
 {
 	const PHAR_NAME = 'lio.phar';
 
+	/**
+	 *
+	 */
 	public function compile()
 	{
 		if (file_exists($this->getAppRoot() . DIRECTORY_SEPARATOR . 'build' . DIRECTORY_SEPARATOR . self::PHAR_NAME)) {
@@ -50,6 +53,9 @@ class Compiler
 	}
 
 
+	/**
+	 * @param \Phar $phar
+	 */
 	private function addBin(\Phar $phar)
 	{
 		$content = file_get_contents($this->getAppRoot() . '/bin/lio');
@@ -57,6 +63,10 @@ class Compiler
 		$phar->addFromString('bin/lio', $content);
 	}
 
+	/**
+	 * @param \Phar $phar
+	 * @param SplFileInfo $file
+	 */
 	private function addFile(\Phar $phar, SplFileInfo $file)
 	{
 		$path = $file->getRelativePathname();
@@ -65,11 +75,17 @@ class Compiler
 	}
 
 
+	/**
+	 * @return string
+	 */
 	private function getAppRoot()
 	{
 		return dirname(__DIR__, 3);
 	}
 
+	/**
+	 * @return string
+	 */
 	private function getStub()
 	{
 		$stub = <<<'EOF'
