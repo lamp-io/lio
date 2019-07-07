@@ -26,8 +26,6 @@ class Compiler
 		};
 
 		$finder = new Finder();
-
-
 		$finder
 			->files()
 			->ignoreVCS(true)
@@ -52,6 +50,7 @@ class Compiler
 	private function addBin(\Phar $phar)
 	{
 		$content = file_get_contents($this->getAppRoot() . '/bin/lio');
+		$content = preg_replace('{^#!/usr/bin/env php\s*}', '', $content);
 		$phar->addFromString('bin/lio', $content);
 	}
 
@@ -70,15 +69,7 @@ class Compiler
 
 	private function getStub()
 	{
-		$stub = <<<'EOF'
-			#!/usr/bin/env php
-			<?php
-			Phar::mapPhar('lio.phar');
-EOF;
-		return $stub . <<<'EOF'
-			require 'phar://lio.phar/bin/lio';
-			__HALT_COMPILER();
-EOF;
-
+		$stub ='<?php Phar::mapPhar(\'lio.phar\'); require \'phar://lio.phar/bin/lio\'; __HALT_COMPILER();';
+		return $stub;
 	}
 }
