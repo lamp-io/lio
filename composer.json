@@ -5,7 +5,8 @@
     "guzzlehttp/guzzle": "^6.3",
     "php": ">=7.0",
     "ext-json": "*",
-    "symfony/finder": "^4.3"
+    "symfony/finder": "^4.3",
+    "padraic/phar-updater": "^1.0.6"
   },
   "autoload": {
     "psr-4": {
