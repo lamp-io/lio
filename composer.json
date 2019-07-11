@@ -1,4 +1,12 @@
 {
+  "name": "lamp-io/lio",
+  "type": "library",
+  "description": "Command line interface, for lamp.io platform",
+  "license": [],
+  "authors": [],
+  "bin": [
+    "bin/lio"
+  ],
   "require": {
     "symfony/console": "^4.3",
     "art4/json-api-client": "^0.10.0",
@@ -8,6 +16,7 @@
     "symfony/finder": "^4.3",
     "padraic/phar-updater": "^1.0.6"
   },
+  "version": "0.1.0 - ALPHA",
   "autoload": {
     "psr-4": {
       "Console\\": "src"

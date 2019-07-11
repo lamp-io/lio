@@ -44,6 +44,24 @@ class HttpHelper
 	}
 
 	/**
+	 * @param string $headerKey
+	 * @return string
+	 */
+	public function getHeader(string $headerKey): string
+	{
+		return $this->isHeaderExist($headerKey) ? $this->headers[$headerKey] : '';
+	}
+
+	/**
+	 * @param string $headerKey
+	 * @return bool
+	 */
+	public function isHeaderExist(string $headerKey): bool
+	{
+		return !empty($this->headers[$headerKey]);
+	}
+
+	/**
 	 * @return array
 	 */
 	public function getDefaultHeaders(): array
