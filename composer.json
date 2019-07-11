@@ -12,9 +12,11 @@
     "art4/json-api-client": "^0.10.0",
     "guzzlehttp/guzzle": "^6.3",
     "php": ">=7.0",
-    "ext-json": "*"
+    "ext-json": "*",
+    "symfony/finder": "^4.3",
+    "padraic/phar-updater": "^1.0.6"
   },
-  "version": "0.1.0 - ALPHA",
+  "version": "0.1.0",
   "autoload": {
     "psr-4": {
       "Console\\": "src"
@@ -22,5 +24,8 @@
     "classmap": [
       "src"
     ]
+  },
+  "scripts": {
+    "build": "php bin/build"
   }
 }
