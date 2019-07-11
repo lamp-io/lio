@@ -6,13 +6,15 @@ Installation
 ```sh
 $ composer global require lamp-io/lio 
 ```
-##### Download as a PHAR
-<a href = "">lio.phar</a>
 
 ##### As local composer package
 ```sh
 composer require lamp-il/lio
 ```
+
+##### Download as a PHAR
+[lio.phar]()
+
 Usage
 ------------
 ```sh
@@ -28,7 +30,7 @@ Commands
 
     Options:
 
-    *   [-u][--update_token] (bool) will allow to override your current auth token
+    * `[-u][--update_token](bool)` will allow to override your current auth token
 ### Apps
 1.  #### apps:list
 
