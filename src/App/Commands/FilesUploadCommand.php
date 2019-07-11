@@ -21,7 +21,7 @@ class FilesUploadCommand extends Command
 	protected function configure()
 	{
 		$this->setDescription('Creates new file')
-			->setHelp('https://www.lamp.io/api#/files/filesCreate')
+			->setHelp('Upload file to selected app')
 			->addArgument('file', InputArgument::REQUIRED, 'Path to file, that should be uploaded')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
 			->addArgument('remote_path', InputArgument::REQUIRED, 'Path on app, where uploaded file should be saved');
