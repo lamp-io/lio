@@ -44,7 +44,9 @@ class AppsNewCommand extends Command
 			->addOption('min_replicas', null, InputOption::VALUE_REQUIRED, 'The minimum number of auto-scaled replicas INT', 1)
 			->addOption(self::PHP_INI_OPTION_NAME, null, InputOption::VALUE_REQUIRED, 'Path to your php.ini', self::PHP_INI_DEFAULT)
 			->addOption('replicas', 'r', InputOption::VALUE_REQUIRED, 'The number current number replicas available. 0 stops app. INT', 1)
-			->addOption('vcpu', null, InputOption::VALUE_REQUIRED, 'The number of virtual cpu cores available (maximum: 4, minimum: 0.25) FLOAT', 0.25);
+			->addOption('vcpu', null, InputOption::VALUE_REQUIRED, 'The number of virtual cpu cores available (maximum: 4, minimum: 0.25) FLOAT', 0.25)
+			->addOption('github_webhook_secret', null, InputOption::VALUE_REQUIRED, 'Github web-hook secret token', '')
+			->addOption('webhook_run_command', null, InputOption::VALUE_REQUIRED, 'Github web-hook command', '');
 	}
 
 	/**
@@ -98,14 +100,16 @@ class AppsNewCommand extends Command
 				'attributes' =>
 					array_merge(
 						[
-							'description'  => (string)$input->getOption('description'),
-							'httpd_conf'   => $httpdConfig,
-							'max_replicas' => (int)$input->getOption('max_replicas'),
-							'memory'       => (string)$input->getOption('memory'),
-							'min_replicas' => (int)$input->getOption('min_replicas'),
-							'php_ini'      => $phpConfig,
-							'replicas'     => (int)$input->getOption('replicas'),
-							'vcpu'         => (float)$input->getOption('vcpu'),
+							'description'           => (string)$input->getOption('description'),
+							'httpd_conf'            => $httpdConfig,
+							'max_replicas'          => (int)$input->getOption('max_replicas'),
+							'memory'                => (string)$input->getOption('memory'),
+							'min_replicas'          => (int)$input->getOption('min_replicas'),
+							'php_ini'               => $phpConfig,
+							'replicas'              => (int)$input->getOption('replicas'),
+							'vcpu'                  => (float)$input->getOption('vcpu'),
+							'github_webhook_secret' => $input->getOption('github_webhook_secret'),
+							'webhook_run_command'   => $input->getOption('webhook_run_command'),
 						],
 						!empty($input->getArgument('organization_id')) ? ['organization_id' => (string)$input->getArgument('organization_id')] : []
 					),
