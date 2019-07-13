@@ -108,8 +108,8 @@ class AppsNewCommand extends Command
 							'php_ini'               => $phpConfig,
 							'replicas'              => (int)$input->getOption('replicas'),
 							'vcpu'                  => (float)$input->getOption('vcpu'),
-							'github_webhook_secret' => $input->getOption('github_webhook_secret'),
-							'webhook_run_command'   => $input->getOption('webhook_run_command'),
+							'github_webhook_secret' => (string)$input->getOption('github_webhook_secret'),
+							'webhook_run_command'   => (string)$input->getOption('webhook_run_command'),
 						],
 						!empty($input->getArgument('organization_id')) ? ['organization_id' => (string)$input->getArgument('organization_id')] : []
 					),
