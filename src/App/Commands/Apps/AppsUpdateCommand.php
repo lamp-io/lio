@@ -81,7 +81,7 @@ class AppsUpdateCommand extends Command
 		try {
 			/** @var Document $document */
 			$document = Parser::parseResponseString($response->getBody()->getContents());
-			$output->writeln('Your app' . $document->get('data.id') .  'successfully updated');
+			$output->writeln('Your app ' . $document->get('data.id') .  ' successfully updated');
 		} catch (ValidationException $e) {
 			$output->writeln($e->getMessage());
 			exit(1);
