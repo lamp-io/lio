@@ -24,7 +24,15 @@ class FilesListCommand extends Command
 
 	protected static $defaultName = 'files:list';
 
+	/**
+	 * @var int
+	 */
 	protected $counter = 0;
+
+	/**
+	 * @var array
+	 */
+	protected $rawJsonResponse = [];
 
 	/**
 	 *
@@ -35,6 +43,7 @@ class FilesListCommand extends Command
 			->setHelp('try rebooting')
 			->addArgument('app_id', InputArgument::REQUIRED, 'From which app_id need to get fields?')
 			->addArgument('file_id', InputArgument::OPTIONAL, 'The ID of the file. The ID is also the file path relative to its app root.', '/')
+			->addOption('json', 'j', InputOption::VALUE_NONE, 'Output as a raw json')
 			->addOption('limit', 'l', InputOption::VALUE_REQUIRED, ' The number of results to return in each response to a list operation. The default value is 1000 (the maximum allowed). Using a lower value may help if an operation times out', self::MAX_LIMIT)
 			->addOption('human-readable', '', InputOption::VALUE_NONE, 'Format size values from raw bytes to human readable format')
 			->addOption('recursive', 'r', InputOption::VALUE_NONE, 'Command is performed on all files or objects under the specified path');
@@ -53,7 +62,7 @@ class FilesListCommand extends Command
 			$table = new Table($output);
 			$table->setStyle('compact');
 			$this->prepareOutput($input, $table, $input->getArgument('file_id'));
-			$table->render();
+			empty($input->getOption('json')) ? $table->render() : $output->writeln(json_encode($this->rawJsonResponse));
 
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
@@ -82,6 +91,7 @@ class FilesListCommand extends Command
 		/** @var Document $document */
 		$document = Parser::parseResponseString($response->getBody()->getContents());
 		$serializer = new ArraySerializer(['recursive' => true]);
+		$this->rawJsonResponse[] = $serializer->serialize($document);
 		$siblings = [];
 		if ($document->has('data.relationships.siblings')) {
 			$siblingsData = $document->get('data.relationships.siblings.data');
