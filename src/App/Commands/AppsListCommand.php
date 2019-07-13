@@ -19,6 +19,9 @@ class AppsListCommand extends Command
 
 	const API_ENDPOINT = 'https://api.lamp.io/apps';
 
+	/**
+	 *
+	 */
 	protected function configure()
 	{
 		$this->setDescription('gets the set of apps from the org associated with your token')
@@ -26,6 +29,12 @@ class AppsListCommand extends Command
 			->addOption('json', 'j', InputOption::VALUE_NONE, 'Output as a raw json');
 	}
 
+	/**
+	 * @param InputInterface $input
+	 * @param OutputInterface $output
+	 * @return int|null|void
+	 * @throws \Exception
+	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
@@ -55,6 +64,11 @@ class AppsListCommand extends Command
 		}
 	}
 
+	/**
+	 * @param Document $document
+	 * @param Table $table
+	 * @return Table
+	 */
 	protected function getOutputAsTable(Document $document, Table $table): Table
 	{
 		$table->setHeaderTitle('Apps');
