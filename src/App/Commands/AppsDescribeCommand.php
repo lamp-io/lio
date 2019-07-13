@@ -3,7 +3,6 @@
 namespace Console\App\Commands;
 
 use Art4\JsonApiClient\V1\Document;
-use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -56,7 +55,7 @@ class AppsDescribeCommand extends Command
 
 		try {
 			if (!empty($input->getOption('json'))) {
-				$output->writeln($this->getOutputAsJson($response));
+				$output->writeln($response->getBody()->getContents());
 			} else {
 				/** @var Document $document */
 				$document = Parser::parseResponseString($response->getBody()->getContents());
@@ -69,6 +68,11 @@ class AppsDescribeCommand extends Command
 		}
 	}
 
+	/**
+	 * @param Document $document
+	 * @param Table $table
+	 * @return Table
+	 */
 	protected function getOutputAsTable(Document $document, Table $table): Table
 	{
 		$table->setHeaderTitle('App Describe');
@@ -85,11 +89,6 @@ class AppsDescribeCommand extends Command
 		]);
 
 		return $table;
-	}
-
-	protected function getOutputAsJson(ResponseInterface $response): string
-	{
-		return $response->getBody()->getContents();
 	}
 }
 
