@@ -1,9 +1,9 @@
 #!/usr/bin/env php
 <?php
 if (file_exists(dirname(__DIR__, 3) . '/autoload.php')) {
-    require_once dirname(__DIR__, 3) . '/autoload.php';
+	require_once dirname(__DIR__, 3) . '/autoload.php';
 } else {
-    require_once dirname(__DIR__) . '/vendor/autoload.php';
+	require_once dirname(__DIR__) . '/vendor/autoload.php';
 }
 
 use Symfony\Component\Console\Application;
@@ -17,13 +17,18 @@ use Console\App\Commands\AppsDeleteCommand;
 use Console\App\Commands\FilesUploadCommand;
 use Console\App\Commands\SelfUpdateCommand;
 
-$app = new Application();
-$app->add(new AppsListCommand(new Client()));
-$app->add(new AppsDescribeCommand(new Client()));
-$app->add(new AppsNewCommand(new Client()));
-$app->add(new AuthCommand());
-$app->add(new FilesListCommand(new Client()));
-$app->add(new AppsDeleteCommand(new Client()));
-$app->add(new FilesUploadCommand(new Client()));
-$app->add(new SelfUpdateCommand());
-$app->run();
+try {
+	$app = new Application();
+	$app->add(new AppsListCommand(new Client()));
+	$app->add(new AppsDescribeCommand(new Client()));
+	$app->add(new AppsNewCommand(new Client()));
+	$app->add(new AuthCommand());
+	$app->add(new FilesListCommand(new Client()));
+	$app->add(new AppsDeleteCommand(new Client()));
+	$app->add(new FilesUploadCommand(new Client()));
+	$app->add(new SelfUpdateCommand());
+	$app->run();
+} catch (Exception $exception) {
+    echo $exception->getMessage() . PHP_EOL;
+    exit(1);
+}
