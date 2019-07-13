@@ -30,11 +30,16 @@ Commands
 
     Options:
 
-    * `[-u][--update_token](bool)` will allow to override your current auth token
+    * `[-u][--update_token](bool){false}` will allow to override your current auth token
+    
 ### Apps
 1.  #### apps:list
 
     Will output you all your apps associated to your token
+    
+    Options:
+    
+    * `[-j][--json](bool){false}` Output as a raw json
 
 2.  #### apps:describe <app_id>
 
@@ -42,7 +47,11 @@ Commands
 
     Arguments:
 
-    * `<app_id>(string)` The ID of the app  
+    * `<app_id>(string)` The ID of the app
+    
+    Options:
+        
+    * `[-j][--json](bool){false}` Output as a raw json
 
 3. #### apps:new <organization_id> [-d][--description] [--httpd_conf] [--max_replicas] [-m][--memory] [--min_replicas] [--php_ini] [-r][--replicas] [--vcpu]
 
@@ -84,6 +93,7 @@ Commands
     
     Options:
     
+    * `[-j][--json](bool){false}` Output as a raw json
     * `[-l][--limit](int){1000}` The number of results to return in each response to a list operation. The default value is 1000 (the maximum allowed). Using a lower value may help if an operation times out
     * `[--human-readable](bool){false}` Format size values from raw bytes to human readable format
     * `[-r][--recursive](bool){false}` Command is performed on all files or objects under the specified path
@@ -109,7 +119,7 @@ Commands
     
     Options:
     
-    * `[--gzip](bool)` Allow to download archive in a gzip archive
+    * `[--gzip](bool){false}` Allow to download archive in a gzip archive
 
 ### Phar updates
 
