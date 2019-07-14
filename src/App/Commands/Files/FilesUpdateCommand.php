@@ -31,10 +31,10 @@ class FilesUpdateCommand extends Command
 		$this->setDescription('This will update the file at specified file ID (file path including file name, relative to app root)')
 			->setHelp('https://www.lamp.io/api#/files/filesUpdateID')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addArgument('remote_path', InputArgument::REQUIRED, 'Path on app, where uploaded file should be saved')
-			->addArgument('file', InputArgument::REQUIRED, '')
+			->addArgument('remote_path', InputArgument::REQUIRED, 'File path on app, that should be updated')
+			->addArgument('file', InputArgument::REQUIRED, 'Path to a local file, which content will sent to remote')
 			->addOption('recur', 'r', InputOption::VALUE_NONE, 'Recur into directories')
-			->addOption('command', null, InputOption::VALUE_REQUIRED, '')
+			->addOption('command', null, InputOption::VALUE_REQUIRED, 'Command that will be executed in your app (Allowed: fetch, move, unarchive)')
 			->addOption('source', '', InputOption::VALUE_REQUIRED, 'A URL to that will be retrieved if "command" is "fetch"');
 	}
 
