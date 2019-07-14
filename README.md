@@ -147,12 +147,12 @@ Commands
     
 4. #### files:delete <app_id> <remote_path>
 
-    Delete file on selected app
+    Delete file/directory on selected app
     
     Arguments:
     
     * `<app_id>(string)` The ID of the app
-    * `<remote_path>(string)` Path on app, where uploaded file should be saved
+    * `<remote_path>(string)` Remote path on app, what file/directory you need to delete
 
 ### Phar updates
 
