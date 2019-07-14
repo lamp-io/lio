@@ -15,10 +15,6 @@ use GuzzleHttp\Client;
 use Console\App\Commands\Files\FilesListCommand;
 use Console\App\Commands\Apps\AppsDeleteCommand;
 use Console\App\Commands\Files\FilesUploadCommand;
-use Console\App\Commands\FilesListCommand;
-use Console\App\Commands\AppsDeleteCommand;
-use Console\App\Commands\FilesUploadCommand;
-use Console\App\Commands\AppsDeleteCommand;
 use Console\App\Commands\SelfUpdateCommand;
 
 $app = new Application();
@@ -31,4 +27,4 @@ $app->add(new AppsDeleteCommand(new Client()));
 $app->add(new FilesUploadCommand(new Client()));
 $app->add(new SelfUpdateCommand());
 $app->add(new AppsDeleteCommand(new Client()));
-$app->run();xw
+$app->run();
