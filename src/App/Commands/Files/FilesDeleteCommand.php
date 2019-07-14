@@ -19,10 +19,10 @@ class FilesDeleteCommand extends Command
 	 */
 	protected function configure()
 	{
-		$this->setDescription('Remove file from your app')
+		$this->setDescription('Remove file/directory from your app')
 			->setHelp('https://www.lamp.io/api#/files/filesDestroy')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addArgument('remote_path', InputArgument::REQUIRED, 'Path on app, where uploaded file should be saved');
+			->addArgument('remote_path', InputArgument::REQUIRED, 'Remote path on app, what file/directory you need to delete');
 	}
 
 	/**
@@ -49,7 +49,7 @@ class FilesDeleteCommand extends Command
 						'Authorization' => $this->httpHelper->getHeader('Authorization'),
 					],
 				]);
-			$output->writeln('<info>File ' . $input->getArgument('remote_path') . ' deleted</info>');
+			$output->writeln('<info>Success, ' . $input->getArgument('remote_path') . 'has been deleted</info>');
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
 			exit(1);
