@@ -80,6 +80,11 @@ class HttpHelper
 		return $this->client;
 	}
 
+	/**
+	 * @param array $options
+	 * @param array $queryOptions
+	 * @return string
+	 */
 	public function optionsToQuery(array $options, array $queryOptions): string
 	{
 		$query = '';

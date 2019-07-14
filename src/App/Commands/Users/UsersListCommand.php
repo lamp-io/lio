@@ -28,7 +28,7 @@ class UsersListCommand extends Command
 	 */
 	protected function configure()
 	{
-		$this->setDescription('gets the set of apps from the org associated with your token')
+		$this->setDescription('Get all users from your account')
 			->setHelp('try rebooting')
 			->addOption('filter[organization_id]', 'o', InputOption::VALUE_REQUIRED, 'Comma-separated list of requested organization_ids. If omitted defaults to user\'s default organization')
 			->addOption('filter[email]', 'e', InputOption::VALUE_REQUIRED, 'Email address to filter for')
