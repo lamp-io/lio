@@ -56,8 +56,8 @@ class FilesUpdateCommand extends Command
 					self::API_ENDPOINT,
 					$input->getArgument('app_id'),
 					$input->getArgument('file'),
-					$this->getUrlQuery($input->getOptions()
-					)),
+					$this->httpHelper->optionsToQuery($input->getOptions(), self::OPTIONS_KEYS)
+				),
 				[
 					'headers' => $this->httpHelper->getHeaders(),
 					'body'    => $this->getRequestBody(
@@ -70,22 +70,6 @@ class FilesUpdateCommand extends Command
 			$output->writeln($guzzleException->getMessage());
 			exit(1);
 		}
-	}
-
-	/**
-	 * @param array $options
-	 * @return string
-	 */
-	protected function getUrlQuery(array $options): string
-	{
-		$query = '';
-		foreach ($options as $optionKey => $option) {
-			if (in_array($optionKey, self::OPTIONS_KEYS) && !empty($option)) {
-				$query .= http_build_query([$optionKey => $option]);
-			}
-		}
-
-		return !empty($query) ? '?' . $query : $query;
 	}
 
 	/**
