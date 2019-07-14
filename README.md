@@ -147,7 +147,7 @@ Commands
     
 4. #### files:delete <app_id> <remote_path>
 
-    Upload file to selected app
+    Delete file on selected app
     
     Arguments:
     
