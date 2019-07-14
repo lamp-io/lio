@@ -1,17 +1,20 @@
 #!/usr/bin/env php
 <?php
 if (file_exists(dirname(__DIR__, 3) . '/autoload.php')) {
-    require_once dirname(__DIR__, 3) . '/autoload.php';
+	require_once dirname(__DIR__, 3) . '/autoload.php';
 } else {
-    require_once dirname(__DIR__) . '/vendor/autoload.php';
+	require_once dirname(__DIR__) . '/vendor/autoload.php';
 }
 
 use Symfony\Component\Console\Application;
-use Console\App\Commands\AppsDescribeCommand;
-use Console\App\Commands\AppsListCommand;
+use Console\App\Commands\Apps\AppsDescribeCommand;
+use Console\App\Commands\Apps\AppsListCommand;
 use Console\App\Commands\AuthCommand;
-use Console\App\Commands\AppsNewCommand;
+use Console\App\Commands\Apps\AppsNewCommand;
 use GuzzleHttp\Client;
+use Console\App\Commands\Files\FilesListCommand;
+use Console\App\Commands\Apps\AppsDeleteCommand;
+use Console\App\Commands\Files\FilesUploadCommand;
 use Console\App\Commands\FilesListCommand;
 use Console\App\Commands\AppsDeleteCommand;
 use Console\App\Commands\FilesUploadCommand;
