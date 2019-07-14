@@ -65,7 +65,7 @@ class FilesUpdateCommand extends Command
 						$input->getArgument('remote_path')
 					),
 				]);
-			$output->writeln('<info>Success</info>');
+			$output->writeln('<info>Success, file ' . $input->getArgument('remote_path') . ' has been updated</info>');
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
 			exit(1);
