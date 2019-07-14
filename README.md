@@ -53,7 +53,7 @@ Commands
         
     * `[-j][--json](bool){false}` Output as a raw json
 
-3. #### apps:new <organization_id> [-d][--description] [--httpd_conf] [--max_replicas] [-m][--memory] [--min_replicas] [--php_ini] [-r][--replicas] [--vcpu]
+3. #### apps:new <organization_id> [-d][--description] [--httpd_conf] [--max_replicas] [-m][--memory] [--min_replicas] [--php_ini] [-r][--replicas] [--vcpu] [--github_webhook_secret] [--webhook_run_command]
 
     Will allow you to create an app
 
@@ -71,8 +71,32 @@ Commands
     * `[--php_ini]{default php.ini}` Path to your php.ini
     * `[-r][--replicas](int){1}` The number current number replicas available. 0 stops app.
     * `[--vcpu](float){0.25} `The number of virtual cpu cores available (maximum: 4, minimum: 0.25)
+    * `[--github_webhook_secret](string){''}` Github web-hook secret token
+    * `[--webhook_run_command](string){''}` Github web-hook command
     
-4. #### apps:delete <app_id>
+4. #### apps:update <app_id> <organization_id>  [-d][--description] [--httpd_conf] [--max_replicas] [-m][--memory] [--min_replicas] [--php_ini] [-r][--replicas] [--vcpu]
+    
+    Will allow you to update selected app
+    
+    Arguments:
+    
+    * `<app_id>(string)` The ID of the app
+    * `<organization_id>[optional](string)` The ID(uuid) of the organization this app belongs to
+    
+    Options:
+    
+    * `[-d][--description](string){Default}` A description of your app
+    * `[--httpd_conf](string){default appache config}` Path to your httpd.conf
+    * `[--max_replicas](int){1}` The maximum number of auto-scaled replicas
+    * `[-m][--memory](string){128Mi}` The amount of memory available (example: 1Gi)
+    * `[--min_replicas](string){1}` The minimum number of auto-scaled replicas
+    * `[--php_ini]{default php.ini}` Path to your php.ini
+    * `[-r][--replicas](int){1}` The number current number replicas available. 0 stops app.
+    * `[--vcpu](float){0.25} `The number of virtual cpu cores available (maximum: 4, minimum: 0.25)
+    * `[--github_webhook_secret](string){''}` Github web-hook secret token
+    * `[--webhook_run_command](string){''}` Github web-hook command
+    
+5. #### apps:delete <app_id>
 
     Delete an app
     
