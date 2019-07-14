@@ -20,7 +20,7 @@ class FilesUpdateRootCommand extends Command
 	protected function configure()
 	{
 		$this->setDescription('This is only used to set apache_writeable for the root directory of an app')
-			->setHelp('https://www.lamp.io/api#/files/filesCreate')
+			->setHelp('https://www.lamp.io/api#/files/filesUpdate')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app');
 	}
 
