@@ -1,6 +1,6 @@
 <?php
 
-namespace Console\App\Commands;
+namespace Console\App\Commands\Apps;
 
 use Art4\JsonApiClient\V1\Document;
 use GuzzleHttp\Exception\GuzzleException;
@@ -11,6 +11,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Art4\JsonApiClient\Exception\ValidationException;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
+use Console\App\Commands\Command;
 
 class AppsListCommand extends Command
 {
