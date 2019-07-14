@@ -144,6 +144,15 @@ Commands
     Options:
     
     * `[--gzip](bool){false}` Allow to download archive in a gzip archive
+    
+4. #### files:delete <app_id> <remote_path>
+
+    Upload file to selected app
+    
+    Arguments:
+    
+    * `<app_id>(string)` The ID of the app
+    * `<remote_path>(string)` Path on app, where uploaded file should be saved
 
 ### Phar updates
 
