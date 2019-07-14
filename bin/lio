@@ -16,9 +16,7 @@ use Console\App\Commands\Files\FilesListCommand;
 use Console\App\Commands\Apps\AppsDeleteCommand;
 use Console\App\Commands\Files\FilesUploadCommand;
 use Console\App\Commands\SelfUpdateCommand;
-use Console\App\Commands\FilesListCommand;
-use Console\App\Commands\FilesUploadCommand;
-use Console\App\Commands\FilesDownloadCommand;
+use Console\App\Commands\Files\FilesDownloadCommand;
 
 $app = new Application();
 $app->add(new AppsListCommand(new Client()));
