@@ -151,7 +151,7 @@ Commands
    
    Arguments:
        
-   * `app_id(string)` The ID of the app
+   * `<app_id(string)>` The ID of the app
    * `<remote_path>(string)` File path on app, that should be updated
    * `<local_file>(string)` Path to a local file, which content will sent to remote 
    
@@ -161,7 +161,14 @@ Commands
    * `[--command](string)` Command that will be executed in your app (Allowed: 'fetch', 'move', 'unarchive')
    * `[--source](string)` A URL to that will be retrieved if "command" is "fetch"
    
-5. #### files:delete <app_id> <remote_path>
+5. #### files:update:root <app_id>
+
+    This is only used to set apache_writeable for the root directory of an app
+    
+    Arguments:
+    * `<app_id(string)>` The ID of the app
+
+6. #### files:delete <app_id> <remote_path>
 
     Delete file/directory on selected app
     
