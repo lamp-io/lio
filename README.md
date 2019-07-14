@@ -138,14 +138,30 @@ Commands
     
     Arguments:
     
-    * `app_id(string)` The ID of the app
-    * `file_id(string){/}` The ID of the file. The ID is also the file path relative to its app root. Default value its a root of your app
+    * `<app_id>(string)` The ID of the app
+    * `<file_id>(string){/}` The ID of the file. The ID is also the file path relative to its app root. Default value its a root of your app
     
     Options:
     
     * `[--gzip](bool){false}` Allow to download archive in a gzip archive
+
+4. #### files:update <app_id> <remote_path> <local_file> [-r][--recur] [--command] [--source]
     
-4. #### files:delete <app_id> <remote_path>
+   This will update the file at specified file ID (file path including file name, relative to app root)
+   
+   Arguments:
+       
+   * `app_id(string)` The ID of the app
+   * `<remote_path>(string)` File path on app, that should be updated
+   * `<local_file>(string)` Path to a local file, which content will sent to remote 
+   
+   Options:
+   
+   * `[-r][--recur](bool){false}` Recur into directories
+   * `[--command](string)` Command that will be executed in your app (Allowed: 'fetch', 'move', 'unarchive')
+   * `[--source](string)` A URL to that will be retrieved if "command" is "fetch"
+   
+5. #### files:delete <app_id> <remote_path>
 
     Delete file on selected app
     
