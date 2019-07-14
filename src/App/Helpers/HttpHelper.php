@@ -80,4 +80,16 @@ class HttpHelper
 		return $this->client;
 	}
 
+	public function optionsToQuery(array $options, array $queryOptions): string
+	{
+		$query = '';
+		foreach ($options as $optionKey => $option) {
+			if (in_array($optionKey, $queryOptions) && !empty($option)) {
+				$query .= http_build_query([$optionKey => $option]);
+			}
+		}
+		return !empty($query) ? '?' . $query : $query;
+	}
+
+
 }
