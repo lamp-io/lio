@@ -104,6 +104,16 @@ Commands
     
     * `<app_id>(string)` The ID of the app  
     
+### App backups
+
+2.  #### app:backup:create <app_id>
+
+    Back up files in app
+    
+    Arguments:
+        
+    * `<app_id>(string)` The ID of the app
+    
 ### Files
 
 1. #### files:list [-l][--limit] [--human-readable] [-r][--recursive] <app_id> <file_id>
