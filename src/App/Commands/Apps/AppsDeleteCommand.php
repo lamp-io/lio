@@ -1,12 +1,13 @@
 <?php
 
 
-namespace Console\App\Commands;
+namespace Console\App\Commands\Apps;
 
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Console\App\Commands\Command;
 
 class AppsDeleteCommand extends Command
 {

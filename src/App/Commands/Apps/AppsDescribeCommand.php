@@ -1,6 +1,6 @@
 <?php
 
-namespace Console\App\Commands;
+namespace Console\App\Commands\Apps;
 
 use Art4\JsonApiClient\V1\Document;
 use Symfony\Component\Console\Helper\Table;
@@ -10,6 +10,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Art4\JsonApiClient\Exception\ValidationException;
 use Art4\JsonApiClient\Helper\Parser;
 use GuzzleHttp\Exception\GuzzleException;
+use Console\App\Commands\Command;
 
 class AppsDescribeCommand extends Command
 {

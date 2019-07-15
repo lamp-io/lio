@@ -7,15 +7,17 @@ if (file_exists(dirname(__DIR__, 3) . '/autoload.php')) {
 }
 
 use Symfony\Component\Console\Application;
-use Console\App\Commands\AppsDescribeCommand;
-use Console\App\Commands\AppsListCommand;
+use Console\App\Commands\Apps\AppsDescribeCommand;
+use Console\App\Commands\Apps\AppsListCommand;
 use Console\App\Commands\AuthCommand;
-use Console\App\Commands\AppsNewCommand;
+use Console\App\Commands\Apps\AppsNewCommand;
 use GuzzleHttp\Client;
-use Console\App\Commands\FilesListCommand;
-use Console\App\Commands\AppsDeleteCommand;
-use Console\App\Commands\FilesUploadCommand;
+use Console\App\Commands\Files\FilesListCommand;
+use Console\App\Commands\Apps\AppsDeleteCommand;
+use Console\App\Commands\Files\FilesUploadCommand;
 use Console\App\Commands\SelfUpdateCommand;
+use Console\App\Commands\AppBackups\AppBackupCreateCommand;
+use Console\App\Commands\Files\FilesUpdateCommand;
 
 try {
 	$app = new Application();
@@ -27,6 +29,9 @@ try {
 	$app->add(new AppsDeleteCommand(new Client()));
 	$app->add(new FilesUploadCommand(new Client()));
 	$app->add(new SelfUpdateCommand());
+	$app->add(new AppBackupCreateCommand(new Client()));
+	$app->add(new FilesUpdateCommand(new Client()));
+	$app->add(new AppsDeleteCommand(new Client()));
 	$app->run();
 } catch (Exception $exception) {
     echo $exception->getMessage() . PHP_EOL;
