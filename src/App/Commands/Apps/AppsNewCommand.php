@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Console\App\Commands;
+namespace Console\App\Commands\Apps;
 
 
 use Art4\JsonApiClient\Exception\ValidationException;
@@ -13,6 +13,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Console\App\Commands\Command;
 
 class AppsNewCommand extends Command
 {
