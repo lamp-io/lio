@@ -43,7 +43,7 @@ class FilesDownloadCommand extends Command
 		$this->setDescription('Download files')
 			->setHelp('try rebooting')
 			->addArgument('app_id', InputArgument::REQUIRED, 'App ID')
-			->addArgument('file_id', InputArgument::REQUIRED, 'The ID of the file. The ID is also the file path relative to its app root. Default value its a root of your app')
+			->addArgument('file_id', InputArgument::REQUIRED, 'The ID of the file. The ID is also the file path relative to its app root.')
 			->addArgument('dir', InputArgument::OPTIONAL, 'Specify path where will be stored downloaded files (Default is your working dir)', getcwd());
 	}
 
