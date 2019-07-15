@@ -21,8 +21,6 @@ class FilesDownloadCommand extends Command
 
 	protected static $defaultName = 'files:download';
 
-	const DEFAULT_FORMAT = 'zip';
-
 	const RESPONSE_FORMAT_TYPES = [
 		'gzip'   => [
 			'AcceptHeader' => 'Accept: application/x-gzip',
@@ -196,30 +194,5 @@ class FilesDownloadCommand extends Command
 				'headers' => $this->httpHelper->getHeaders(),
 			]
 		);
-	}
-
-
-	/**
-	 * @param InputInterface $input
-	 * @return string
-	 */
-	protected function getResponseFormat(InputInterface $input): string
-	{
-		$format = self::DEFAULT_FORMAT;
-		foreach ($input->getOptions() as $key => $option) {
-			if (array_key_exists($key, self::RESPONSE_FORMAT_TYPES) && !empty($option)) {
-				$format = $key;
-			}
-		}
-		return $format;
-	}
-
-	/**
-	 * @param string $fileName
-	 * @return string
-	 */
-	protected function getPath(string $fileName): string
-	{
-		return getenv('HOME') . getenv("HOMEDRIVE") . getenv("HOMEPATH") . DIRECTORY_SEPARATOR . '.config' . DIRECTORY_SEPARATOR . 'lamp.io' . DIRECTORY_SEPARATOR . $fileName;
 	}
 }
