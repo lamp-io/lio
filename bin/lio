@@ -17,6 +17,8 @@ use Console\App\Commands\Apps\AppsDeleteCommand;
 use Console\App\Commands\Files\FilesUploadCommand;
 use Console\App\Commands\SelfUpdateCommand;
 use Console\App\Commands\Files\FilesUpdateRootCommand;
+use Console\App\Commands\AppBackups\AppBackupCreateCommand;
+use Console\App\Commands\Files\FilesUpdateCommand;
 
 $app = new Application();
 $app->add(new AppsListCommand(new Client()));
@@ -28,4 +30,7 @@ $app->add(new AppsDeleteCommand(new Client()));
 $app->add(new FilesUploadCommand(new Client()));
 $app->add(new SelfUpdateCommand());
 $app->add(new FilesUpdateRootCommand(new Client()));
+$app->add(new AppBackupCreateCommand(new Client()));
+$app->add(new FilesUpdateCommand(new Client()));
+$app->add(new AppsDeleteCommand(new Client()));
 $app->run();
