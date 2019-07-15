@@ -49,7 +49,7 @@ class AppsDescribeCommand extends Command
 			);
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
-			die();
+			exit(1);
 		}
 
 		try {
@@ -71,6 +71,7 @@ class AppsDescribeCommand extends Command
 			$table->render();
 		} catch (ValidationException $e) {
 			$output->writeln($e->getMessage());
+			exit(1);
 		}
 	}
 }
