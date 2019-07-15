@@ -142,18 +142,16 @@ Commands
     * `<app_id>(string)` The ID of the app
     * `<remote_path>(string)` Path on app, where uploaded file should be saved
     
-3. #### files:download <app_id> <file_id> [--gzip]
+3. #### files:download <app_id> <file_id> <dir> [--gzip]
 
     Download files from selected app in a zip archive.
     
     Arguments:
     
     * `<app_id>(string)` The ID of the app
-    * `<file_id>(string){/}` The ID of the file. The ID is also the file path relative to its app root. Default value its a root of your app
+    * `<file_id>(string)` The ID of the file. The ID is also the file path relative to its app root.
+    * `<dir>(string){$PWD}` Path to directory, where should be stored downloaded file. Default value current working directory
     
-    Options:
-    
-    * `[--gzip](bool){false}` Allow to download archive in a gzip archive
 
 4. #### files:update <app_id> <remote_path> <local_file> [-r][--recur] [--command] [--source]
     
