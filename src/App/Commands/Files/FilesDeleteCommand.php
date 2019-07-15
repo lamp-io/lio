@@ -49,7 +49,7 @@ class FilesDeleteCommand extends Command
 						'Authorization' => $this->httpHelper->getHeader('Authorization'),
 					],
 				]);
-			$output->writeln('<info>Success, ' . $input->getArgument('remote_path') . 'has been deleted</info>');
+			$output->writeln('<info>Success, ' . $input->getArgument('remote_path') . ' has been deleted</info>');
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
 			exit(1);
