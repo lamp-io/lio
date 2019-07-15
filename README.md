@@ -142,7 +142,7 @@ Commands
     * `<app_id>(string)` The ID of the app
     * `<remote_path>(string)` Path on app, where uploaded file should be saved
     
-3. #### files:download <app_id> <file_id> <dir> [--gzip]
+3. #### files:download <app_id> <file_id> <dir>
 
     Download files from selected app in a zip archive.
     
