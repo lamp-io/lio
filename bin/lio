@@ -27,5 +27,6 @@ $app->add(new FilesListCommand(new Client()));
 $app->add(new AppsDeleteCommand(new Client()));
 $app->add(new FilesUploadCommand(new Client()));
 $app->add(new SelfUpdateCommand());
+$app->add(new AppsDeleteCommand(new Client()));
 $app->add(new FilesDownloadCommand(new Client()));
 $app->run();
