@@ -1,34 +1,32 @@
 <?php
 
-namespace Console\App\Commands;
+namespace Console\App\Commands\Apps;
 
 use Art4\JsonApiClient\V1\Document;
+use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Helper\Table;
+use Symfony\Component\Console\Helper\TableSeparator;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Input\InputArgument;
 use Art4\JsonApiClient\Exception\ValidationException;
 use Art4\JsonApiClient\Helper\Parser;
-use GuzzleHttp\Exception\GuzzleException;
+use Art4\JsonApiClient\Serializer\ArraySerializer;
+use Console\App\Commands\Command;
 
-class AppsDescribeCommand extends Command
+class AppsListCommand extends Command
 {
-	const API_ENDPOINT = 'https://api.lamp.io/apps/{app_id}';
+	protected static $defaultName = 'apps:list';
 
-	/**
-	 * @var string
-	 */
-	protected static $defaultName = 'apps:describe';
+	const API_ENDPOINT = 'https://api.lamp.io/apps';
 
 	/**
 	 *
 	 */
 	protected function configure()
 	{
-		$this->setDescription('Gets your app description')
+		$this->setDescription('gets the set of apps from the org associated with your token')
 			->setHelp('try rebooting')
-			->addArgument('app_id', InputArgument::REQUIRED, 'which app would you like to describe?')
 			->addOption('json', 'j', InputOption::VALUE_NONE, 'Output as a raw json');
 	}
 
@@ -45,12 +43,12 @@ class AppsDescribeCommand extends Command
 		try {
 			$response = $this->httpHelper->getClient()->request(
 				'GET',
-				str_replace('{app_id}', $input->getArgument('app_id'), self::API_ENDPOINT),
+				self::API_ENDPOINT,
 				['headers' => $this->httpHelper->getHeaders()]
 			);
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
-			exit(1);
+			die();
 		}
 
 		try {
@@ -64,7 +62,6 @@ class AppsDescribeCommand extends Command
 			}
 		} catch (ValidationException $e) {
 			$output->writeln($e->getMessage());
-			exit(1);
 		}
 	}
 
@@ -75,20 +72,20 @@ class AppsDescribeCommand extends Command
 	 */
 	protected function getOutputAsTable(Document $document, Table $table): Table
 	{
-		$table->setHeaderTitle('App Describe');
-		$table->setHeaders([
-			'Name', 'Description', 'Status', 'VCPU', 'Memory', 'Replicas',
-		]);
-		$table->addRow([
-			$document->get('data.id'),
-			$document->get('data.attributes.description'),
-			$document->get('data.attributes.status'),
-			$document->get('data.attributes.vcpu'),
-			$document->get('data.attributes.memory'),
-			$document->get('data.attributes.replicas'),
-		]);
+		$table->setHeaderTitle('Apps');
+		$table->setHeaders(['App id', 'App description']);
+		$serializer = new ArraySerializer(['recursive' => true]);
+		$apps = $serializer->serialize($document);
+		foreach ($apps['data'] as $key => $app) {
+			$table->addRow([
+				$app['id'],
+				$app['attributes']['description'],
+			]);
+			if ($key != count($apps['data']) - 1) {
+				$table->addRow(new TableSeparator());
+			}
+		}
 
 		return $table;
 	}
 }
-
