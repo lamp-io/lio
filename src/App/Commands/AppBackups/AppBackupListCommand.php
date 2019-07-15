@@ -52,7 +52,6 @@ class AppBackupListCommand extends Command
 				self::API_ENDPOINT,
 				[
 					'headers' => $this->httpHelper->getHeaders(),
-					'proxy'   => 'localhost:3127',
 				]
 			);
 			if (!empty($input->getOption('json'))) {
