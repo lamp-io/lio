@@ -48,7 +48,7 @@ class AppsListCommand extends Command
 			);
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
-			die();
+			exit(1);
 		}
 
 		try {
@@ -62,6 +62,7 @@ class AppsListCommand extends Command
 			}
 		} catch (ValidationException $e) {
 			$output->writeln($e->getMessage());
+			exit(1);
 		}
 	}
 
