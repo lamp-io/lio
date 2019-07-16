@@ -21,6 +21,7 @@ use Console\App\Commands\Apps\AppsUpdateCommand;
 use Console\App\Commands\AppBackups\AppBackupCreateCommand;
 use Console\App\Commands\Files\FilesUpdateCommand;
 use Console\App\Commands\FilesDownloadCommand;
+use Console\App\Commands\AppBackups\AppBackupsDescribeCommand;
 
 try {
 	$app = new Application();
@@ -38,6 +39,7 @@ try {
 	$app->add(new AppsDeleteCommand(new Client()));
 	$app->add(new FilesDeleteCommand(new Client()));
 	$app->add(new FilesDownloadCommand(new Client()));
+	$app->add(new AppBackupsDescribeCommand(new Client()));
 	$app->run();
 } catch (Exception $exception) {
     echo $exception->getMessage() . PHP_EOL;
