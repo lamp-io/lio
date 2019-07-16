@@ -19,7 +19,10 @@ class UsersListCommand extends Command
 
 	const API_ENDPOINT = 'https://api.lamp.io/users%s';
 
-	const QUERY_OPTIONS_KEYS = ['filter[email]', 'filter[organization_id]'];
+	const OPTIONS_TO_QUERY_KEYS = [
+		'email'           => 'filter[email]',
+		'organization_id' => 'filter[organization_id]',
+	];
 
 	protected static $defaultName = 'users:list';
 
@@ -30,8 +33,8 @@ class UsersListCommand extends Command
 	{
 		$this->setDescription('Get all users from your account')
 			->setHelp('try rebooting')
-			->addOption('filter[organization_id]', 'o', InputOption::VALUE_REQUIRED, 'Comma-separated list of requested organization_ids. If omitted defaults to user\'s default organization')
-			->addOption('filter[email]', 'e', InputOption::VALUE_REQUIRED, 'Email address to filter for')
+			->addOption('organization_id', 'o', InputOption::VALUE_REQUIRED, 'Comma-separated list of requested organization_ids. If omitted defaults to user\'s default organization')
+			->addOption('email', 'e', InputOption::VALUE_REQUIRED, 'Email address to filter for')
 			->addOption('json', 'j', InputOption::VALUE_NONE, 'Output as raw json');
 	}
 
@@ -44,15 +47,16 @@ class UsersListCommand extends Command
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
-
 		try {
 			$response = $this->httpHelper->getClient()->request(
 				'GET',
 				sprintf(
 					self::API_ENDPOINT,
-					$this->httpHelper->optionsToQuery($input->getOptions(), self::QUERY_OPTIONS_KEYS)
+					$this->httpHelper->optionsToQuery($input->getOptions(), self::OPTIONS_TO_QUERY_KEYS)
 				),
-				['headers' => $this->httpHelper->getHeaders()]
+				[
+					'headers' => $this->httpHelper->getHeaders(),
+				]
 			);
 			if (!empty($input->getOption('json'))) {
 				$output->writeln($response->getBody()->getContents());
@@ -93,7 +97,7 @@ class UsersListCommand extends Command
 						$attributes[] = 'organization_users: ' . PHP_EOL . $this->parseOrganizationUsers($attribute);
 
 					} else {
-						$attributes[] = $attributeKey . ' : ' . $attribute;
+						$attributes[] = $attributeKey . ' => ' . $attribute;
 					}
 				}
 				$row[] = (implode(PHP_EOL, $attributes));
@@ -116,7 +120,9 @@ class UsersListCommand extends Command
 		foreach ($organizationUsers as $organizationUser) {
 			$data = [];
 			foreach ((array)$organizationUser as $key => $value) {
-				$data[] = '   ' . $key . ' : ' . $value;
+				if (!empty($value)) {
+					$data[] = '  * ' . $key . ' => ' . $value;
+				}
 			}
 			$parseOrgUsersData[] = implode(PHP_EOL, $data);
 		}
