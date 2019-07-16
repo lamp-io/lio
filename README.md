@@ -114,7 +114,7 @@ Commands
         
     * `<app_id>(string)` The ID of the app
     
-2.  #### app:backup:list [-o][--organization_id] [--json][-j]
+2.  #### app:backup:list [-o][--organization_id] [-j][--json]
 
     Return list of all your app backups
     
