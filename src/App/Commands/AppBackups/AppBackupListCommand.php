@@ -12,15 +12,17 @@ use Console\App\Commands\Command;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Helper\TableSeparator;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class AppBackupListCommand extends Command
 {
-	const API_ENDPOINT = 'https://api.lamp.io/app_backups';
+	const API_ENDPOINT = 'https://api.lamp.io/app_backups%s';
 
+	const OPTIONS_TO_QUERY_KEYS = [
+		'organization_id' => 'filter[organization_id]',
+	];
 	/**
 	 * @var string
 	 */
@@ -33,6 +35,7 @@ class AppBackupListCommand extends Command
 	{
 		$this->setDescription('Return app backups')
 			->setHelp('https://www.lamp.io/api#/app_backups/appBackupsList')
+			->addOption('organization_id', 'o', InputOption::VALUE_REQUIRED, 'Comma-separated list of requested organization_ids. If omitted defaults to user\'s default organization')
 			->addOption('json', 'j', InputOption::VALUE_NONE, 'Output as raw json');
 	}
 
@@ -49,7 +52,10 @@ class AppBackupListCommand extends Command
 		try {
 			$response = $this->httpHelper->getClient()->request(
 				'GET',
-				self::API_ENDPOINT,
+				sprintf(
+					self::API_ENDPOINT,
+					$this->httpHelper->optionsToQuery($input->getOptions(), self::OPTIONS_TO_QUERY_KEYS)
+				),
 				[
 					'headers' => $this->httpHelper->getHeaders(),
 				]
