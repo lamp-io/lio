@@ -77,6 +77,11 @@ class AppBackupListCommand extends Command
 		}
 	}
 
+	/**
+	 * @param Document $document
+	 * @param Table $table
+	 * @return Table
+	 */
 	protected function getOutputAsTable(Document $document, Table $table): Table
 	{
 		$table->setHeaderTitle('Backups');
