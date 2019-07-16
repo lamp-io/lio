@@ -189,14 +189,14 @@ Commands
 
 ### Users
 
-1. #### users:list [--filter[organization_id]][-o][--filter[email]][-e][--json][-j]
+1. #### users:list [--organization_id][-o] [--email][-e] [--json][-j]
 
     Get all users from your account
     
     Options:
     
-    * `[--filter[organization_id]][-o](string)` Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
-    * `[--filter[email]][-e](string)` Format size values from raw bytes to human readable format
+    * `[--organization_id][-o](string)` Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
+    * `[--email][-e](string)` Format size values from raw bytes to human readable format
     * `[-j][--json](bool){false}` Output as a raw json
     
 ### Phar updates
