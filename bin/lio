@@ -16,16 +16,32 @@ use Console\App\Commands\Files\FilesListCommand;
 use Console\App\Commands\Apps\AppsDeleteCommand;
 use Console\App\Commands\Files\FilesUploadCommand;
 use Console\App\Commands\SelfUpdateCommand;
+use Console\App\Commands\Files\FilesDeleteCommand;
+use Console\App\Commands\Apps\AppsUpdateCommand;
+use Console\App\Commands\AppBackups\AppBackupCreateCommand;
+use Console\App\Commands\Files\FilesUpdateCommand;
+use Console\App\Commands\FilesDownloadCommand;
 use Console\App\Commands\Users\UsersListCommand;
 
-$app = new Application();
-$app->add(new AppsListCommand(new Client()));
-$app->add(new AppsDescribeCommand(new Client()));
-$app->add(new AppsNewCommand(new Client()));
-$app->add(new AuthCommand());
-$app->add(new FilesListCommand(new Client()));
-$app->add(new AppsDeleteCommand(new Client()));
-$app->add(new FilesUploadCommand(new Client()));
-$app->add(new SelfUpdateCommand());
-$app->add(new UsersListCommand(new Client()));
-$app->run();
+try {
+	$app = new Application();
+	$app->add(new AppsListCommand(new Client()));
+	$app->add(new AppsDescribeCommand(new Client()));
+	$app->add(new AppsNewCommand(new Client()));
+	$app->add(new AuthCommand());
+	$app->add(new FilesListCommand(new Client()));
+	$app->add(new AppsDeleteCommand(new Client()));
+	$app->add(new FilesUploadCommand(new Client()));
+	$app->add(new SelfUpdateCommand());
+	$app->add(new AppsUpdateCommand(new Client()));
+	$app->add(new AppBackupCreateCommand(new Client()));
+	$app->add(new FilesUpdateCommand(new Client()));
+	$app->add(new AppsDeleteCommand(new Client()));
+	$app->add(new FilesDeleteCommand(new Client()));
+	$app->add(new FilesDownloadCommand(new Client()));
+	$app->add(new UsersListCommand(new Client()));
+	$app->run();
+} catch (Exception $exception) {
+    echo $exception->getMessage() . PHP_EOL;
+    exit(1);
+}
