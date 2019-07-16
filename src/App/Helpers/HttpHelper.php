@@ -89,7 +89,9 @@ class HttpHelper
 	{
 		$query = '';
 		foreach ($options as $optionKey => $option) {
-			if (in_array($optionKey, $queryOptions) && !empty($option)) {
+			if (array_key_exists($optionKey, $queryOptions) && !empty($option)) {
+				$query .= http_build_query([$queryOptions[$optionKey] => $option]);
+			} elseif(in_array($optionKey, $queryOptions) && !empty($option)) {
 				$query .= http_build_query([$optionKey => $option]);
 			}
 		}
