@@ -106,13 +106,51 @@ Commands
     
 ### App backups
 
-2.  #### app:backup:create <app_id>
+1.  #### app_backups:create <app_id>
 
     Back up files in app
     
     Arguments:
         
     * `<app_id>(string)` The ID of the app
+
+2.  #### app_backups:list [-o][--organization_id] [-j][--json]
+   
+    Return list of all your app backups
+    
+    Options:
+    
+    * `[-o][--organization_id](string)` Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
+    * `[-j][--json](bool){false}` Output as a raw json
+
+3. #### app_backups:describe <app_backup_id> [-j][--json]
+
+    Return an app backup
+    
+    Arguments:
+    
+    * `<app_backup_id>(string)` The ID of the app backup
+    
+    Options:
+        
+    * `[-j][--json](bool){false}` Output as a raw json
+    
+4. #### app_backups:download <app_backup_id> <dir>
+    
+   Download an app backup 
+    
+    Arguments:
+        
+    * `<app_backup_id>(string)` The ID of the app backup
+    * `<dir>(string){$PWD}` Path to directory, where should be stored downloaded file. Default value current working directory
+    
+5. #### app_backups:delete <app_backup_id> <dir>
+
+    Delete an app backup
+    
+    Arguments:
+        
+    * `<app_backup_id>(string)` The ID of the app backup
     
 ### Files
 
