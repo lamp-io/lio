@@ -16,7 +16,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class AppBackupListCommand extends Command
+class AppBackupsListCommand extends Command
 {
 	const API_ENDPOINT = 'https://api.lamp.io/app_backups%s';
 
@@ -26,7 +26,7 @@ class AppBackupListCommand extends Command
 	/**
 	 * @var string
 	 */
-	protected static $defaultName = 'app:backup:list';
+	protected static $defaultName = 'app_backups:list';
 
 	/**
 	 *
