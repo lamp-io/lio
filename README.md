@@ -106,13 +106,22 @@ Commands
     
 ### App backups
 
-2.  #### app:backup:create <app_id>
+1.  #### app:backup:create <app_id>
 
     Back up files in app
     
     Arguments:
         
     * `<app_id>(string)` The ID of the app
+    
+2.  #### app:backup:list [-o][--organization_id] [--json][-j]
+
+    Return list of all your app backups
+    
+    Options:
+    
+    * `[-o][--organization_id](string)` Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
+    * `[-j][--json](bool){false}` Output as a raw json
     
 ### Files
 
