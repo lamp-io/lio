@@ -106,7 +106,7 @@ Commands
     
 ### App backups
 
-1.  #### app:backup:create <app_id>
+1.  #### app_backups:create <app_id>
 
     Back up files in app
     
@@ -114,7 +114,7 @@ Commands
         
     * `<app_id>(string)` The ID of the app
     
-2.  #### app:backup:list [-o][--organization_id] [-j][--json]
+2.  #### app_backups:list [-o][--organization_id] [-j][--json]
 
     Return list of all your app backups
     
