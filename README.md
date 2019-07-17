@@ -199,8 +199,7 @@ Commands
     * `<file_id>(string)` The ID of the file. The ID is also the file path relative to its app root.
     * `<dir>(string){$PWD}` Path to directory, where should be stored downloaded file. Default value current working directory
     
-
-4. #### files:update <app_id> <remote_path> <local_file> [-r][--recur] [--command] [--source]
+4. #### files:update <app_id> <remote_path> [<local_file>] [-r][--recur] [--command] [--source]
     
    This will update the file at specified file ID (file path including file name, relative to app root)
    
@@ -208,22 +207,9 @@ Commands
        
    * `<app_id(string)>` The ID of the app
    * `<remote_path>(string)` File path on app, that should be updated
-   * `<local_file>(string)` Path to a local file, which content will sent to remote 
-   
-   Options:
-   
-   * `[-r][--recur](bool){false}` Recur into directories
-   * `[--command](string)` Command that will be executed in your app (Allowed: 'fetch', 'move', 'unarchive')
-   * `[--source](string)` A URL to that will be retrieved if "command" is "fetch"
-   
-5. #### files:update:root <app_id>
+   * `<local_file>(string)[optional]{}` Path to a local file, which content will sent to remote. If not specified, will make your <remote_path> appache writable
 
-    This is only used to set apache_writeable for the root directory of an app
-    
-    Arguments:
-    * `<app_id(string)>` The ID of the app
-
-6. #### files:delete <app_id> <remote_path>
+5. #### files:delete <app_id> <remote_path>
 
     Delete file/directory on selected app
     

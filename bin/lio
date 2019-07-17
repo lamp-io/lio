@@ -16,7 +16,6 @@ use Console\App\Commands\Files\FilesListCommand;
 use Console\App\Commands\Apps\AppsDeleteCommand;
 use Console\App\Commands\Files\FilesUploadCommand;
 use Console\App\Commands\SelfUpdateCommand;
-use Console\App\Commands\Files\FilesUpdateRootCommand;
 use Console\App\Commands\Files\FilesDeleteCommand;
 use Console\App\Commands\Apps\AppsUpdateCommand;
 use Console\App\Commands\AppBackups\AppBackupsCreateCommand;
@@ -49,7 +48,6 @@ try {
 	$app->add(new AppBackupsDescribeCommand(new Client()));
 	$app->add(new AppBackupsDownloadCommand(new Client()));
 	$app->add(new AppBackupsDeleteCommand(new Client()));
-	$app->add(new FilesUpdateRootCommand(new Client()));
 	$app->run();
 } catch (Exception $exception) {
     echo $exception->getMessage() . PHP_EOL;

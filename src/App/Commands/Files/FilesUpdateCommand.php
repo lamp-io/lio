@@ -6,20 +6,11 @@ use Console\App\Commands\Command;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class FilesUpdateCommand extends Command
 {
-	const API_ENDPOINT = 'https://api.lamp.io/apps/%s/files/%s%s';
-
-	const ALLOWED_COMMANDS = [
-		'fetch', 'move', 'unarchive',
-	];
-
-	const OPTIONS_KEYS = [
-		'recur', 'command', 'source',
-	];
+	const API_ENDPOINT = 'https://api.lamp.io/apps/%s/files/%s';
 
 	protected static $defaultName = 'files:update';
 
@@ -32,10 +23,7 @@ class FilesUpdateCommand extends Command
 			->setHelp('https://www.lamp.io/api#/files/filesUpdateID')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
 			->addArgument('remote_path', InputArgument::REQUIRED, 'File path on app, that should be updated')
-			->addArgument('file', InputArgument::REQUIRED, 'Path to a local file, which content will sent to remote')
-			->addOption('recur', 'r', InputOption::VALUE_NONE, 'Recur into directories')
-			->addOption('command', null, InputOption::VALUE_REQUIRED, 'Command that will be executed in your app (Allowed: fetch, move, unarchive)')
-			->addOption('source', '', InputOption::VALUE_REQUIRED, 'A URL to that will be retrieved if "command" is "fetch"');
+			->addArgument('file', InputArgument::OPTIONAL, 'Path to a local file, which content will sent to remote. If not specified, will make your <remote_path> appache writable', '');
 	}
 
 	/**
@@ -48,15 +36,15 @@ class FilesUpdateCommand extends Command
 	{
 		parent::execute($input, $output);
 		try {
-			$this->validateArguments($input->getArgument('file'), $input->getOption('command'));
-
+			if (!empty($input->getArgument('file'))) {
+				$this->validateArguments($input->getArgument('file'));
+			}
 			$this->httpHelper->getClient()->request(
 				'PATCH',
 				sprintf(
 					self::API_ENDPOINT,
 					$input->getArgument('app_id'),
-					$input->getArgument('file'),
-					$this->httpHelper->optionsToQuery($input->getOptions(), self::OPTIONS_KEYS)
+					$input->getArgument('remote_path')
 				),
 				[
 					'headers' => $this->httpHelper->getHeaders(),
@@ -74,15 +62,11 @@ class FilesUpdateCommand extends Command
 
 	/**
 	 * @param $file
-	 * @param $command
 	 */
-	protected function validateArguments($file, $command)
+	protected function validateArguments($file)
 	{
 		if (!file_exists($file)) {
 			throw new \InvalidArgumentException('File not exists');
-		}
-		if (!empty($command) && !in_array($command, self::ALLOWED_COMMANDS)) {
-			throw new \InvalidArgumentException('Commands option not allowed, list of allowed options: ' . implode(', ', self::ALLOWED_COMMANDS));
 		}
 	}
 
@@ -96,11 +80,12 @@ class FilesUpdateCommand extends Command
 		return json_encode([
 			'data' => [
 				'attributes' =>
-					[
-						'apache_writeable' => true,
-						'contents'         => file_get_contents($localFile),
-						'target'           => 'string',
-					],
+					array_merge([
+						'apache_writable' => true,
+						'target'           => '',
+					], !empty($localFile) ? [
+						'contents' => file_get_contents($localFile),
+					] : []),
 				'id'         => $remoteFile,
 				'type'       => 'files',
 			],
