@@ -20,7 +20,6 @@ use Console\App\Commands\Files\FilesDeleteCommand;
 use Console\App\Commands\Apps\AppsUpdateCommand;
 use Console\App\Commands\AppBackups\AppBackupsCreateCommand;
 use Console\App\Commands\Files\FilesUpdateCommand;
-use Console\App\Commands\FilesDownloadCommand;
 use Console\App\Commands\AppBackups\AppBackupsDescribeCommand;
 use Console\App\Commands\AppBackups\AppBackupsDownloadCommand;
 use Console\App\Commands\AppBackups\AppBackupsDeleteCommand;
