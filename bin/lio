@@ -22,6 +22,8 @@ use Console\App\Commands\AppBackups\AppBackupsCreateCommand;
 use Console\App\Commands\Files\FilesUpdateCommand;
 use Console\App\Commands\FilesDownloadCommand;
 use Console\App\Commands\AppBackups\AppBackupsListCommand;
+use Console\App\Commands\Users\UsersListCommand;
+use Console\App\Commands\Files\FilesDownloadCommand;
 
 try {
 	$app = new Application();
@@ -39,6 +41,7 @@ try {
 	$app->add(new AppsDeleteCommand(new Client()));
 	$app->add(new FilesDeleteCommand(new Client()));
 	$app->add(new FilesDownloadCommand(new Client()));
+	$app->add(new UsersListCommand(new Client()));
 	$app->add(new AppBackupsListCommand(new Client()));
 	$app->run();
 } catch (Exception $exception) {
