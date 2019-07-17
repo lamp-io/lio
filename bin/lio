@@ -20,6 +20,7 @@ use Console\App\Commands\Files\FilesDeleteCommand;
 use Console\App\Commands\Apps\AppsUpdateCommand;
 use Console\App\Commands\AppBackups\AppBackupCreateCommand;
 use Console\App\Commands\Files\FilesUpdateCommand;
+use Console\App\Commands\Users\UsersListCommand;
 use Console\App\Commands\Files\FilesDownloadCommand;
 
 try {
@@ -38,6 +39,7 @@ try {
 	$app->add(new AppsDeleteCommand(new Client()));
 	$app->add(new FilesDeleteCommand(new Client()));
 	$app->add(new FilesDownloadCommand(new Client()));
+	$app->add(new UsersListCommand(new Client()));
 	$app->run();
 } catch (Exception $exception) {
     echo $exception->getMessage() . PHP_EOL;
