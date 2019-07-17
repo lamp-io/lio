@@ -20,7 +20,7 @@ use Console\App\Commands\Files\FilesDeleteCommand;
 use Console\App\Commands\Apps\AppsUpdateCommand;
 use Console\App\Commands\AppBackups\AppBackupCreateCommand;
 use Console\App\Commands\Files\FilesUpdateCommand;
-use Console\App\Commands\FilesDownloadCommand;
+use Console\App\Commands\Files\FilesDownloadCommand;
 
 try {
 	$app = new Application();
