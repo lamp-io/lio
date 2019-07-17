@@ -47,7 +47,7 @@ class AppBackupsCreateCommand extends Command
 			$output->writeln('<info>Backuping app with id ' . $input->getArgument('app_id') . ', started</info>');
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln('<error>' . $guzzleException->getMessage() . '</error>');
-			die();
+			exit(1);
 		}
 	}
 
