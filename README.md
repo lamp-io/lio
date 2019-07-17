@@ -199,14 +199,14 @@ Commands
     * `<file_id>(string)` The ID of the file. The ID is also the file path relative to its app root.
     * `<dir>(string){$PWD}` Path to directory, where should be stored downloaded file. Default value current working directory
     
-4. #### files:update <app_id> <remote_path> [<local_file>] [-r][--recur] [--command] [--source]
+4. #### files:update <app_id> [<remote_path>] [<local_file>] [-r][--recur] [--command] [--source]
     
    This will update the file at specified file ID (file path including file name, relative to app root)
    
    Arguments:
        
    * `<app_id(string)>` The ID of the app
-   * `<remote_path>(string)` File path on app, that should be updated
+   * `<remote_path>(string)[optional]{}` File path on app, that should be updated
    * `<local_file>(string)[optional]{}` Path to a local file, which content will sent to remote. If not specified, will make your <remote_path> appache writable
 
 5. #### files:delete <app_id> <remote_path>
