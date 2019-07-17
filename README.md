@@ -152,6 +152,15 @@ Commands
         
     * `<app_backup_id>(string)` The ID of the app backup
     
+2.  #### app_backups:list [-o][--organization_id] [-j][--json]
+
+    Return list of all your app backups
+    
+    Options:
+    
+    * `[-o][--organization_id](string)` Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
+    * `[-j][--json](bool){false}` Output as a raw json
+    
 ### Files
 
 1. #### files:list [-l][--limit] [--human-readable] [-r][--recursive] <app_id> <file_id>
@@ -180,18 +189,16 @@ Commands
     * `<app_id>(string)` The ID of the app
     * `<remote_path>(string)` Path on app, where uploaded file should be saved
     
-3. #### files:download <app_id> <file_id> [--gzip]
+3. #### files:download <app_id> <file_id> <dir>
 
     Download files from selected app in a zip archive.
     
     Arguments:
     
     * `<app_id>(string)` The ID of the app
-    * `<file_id>(string){/}` The ID of the file. The ID is also the file path relative to its app root. Default value its a root of your app
+    * `<file_id>(string)` The ID of the file. The ID is also the file path relative to its app root.
+    * `<dir>(string){$PWD}` Path to directory, where should be stored downloaded file. Default value current working directory
     
-    Options:
-    
-    * `[--gzip](bool){false}` Allow to download archive in a gzip archive
 
 4. #### files:update <app_id> <remote_path> <local_file> [-r][--recur] [--command] [--source]
     
@@ -227,14 +234,14 @@ Commands
 
 ### Users
 
-1. #### users:list [--filter[organization_id]][-o][--filter[email]][-e][--json][-j]
+1. #### users:list [--organization_id][-o] [--email][-e] [--json][-j]
 
     Get all users from your account
     
     Options:
     
-    * `[--filter[organization_id]][-o](string)` Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
-    * `[--filter[email]][-e](string)` Format size values from raw bytes to human readable format
+    * `[--organization_id][-o](string)` Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
+    * `[--email][-e](string)` Format size values from raw bytes to human readable format
     * `[-j][--json](bool){false}` Output as a raw json
     
 ### Phar updates

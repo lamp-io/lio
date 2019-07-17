@@ -18,12 +18,15 @@ use Console\App\Commands\Files\FilesUploadCommand;
 use Console\App\Commands\SelfUpdateCommand;
 use Console\App\Commands\Files\FilesDeleteCommand;
 use Console\App\Commands\Apps\AppsUpdateCommand;
-use Console\App\Commands\AppBackups\AppBackupCreateCommand;
+use Console\App\Commands\AppBackups\AppBackupsCreateCommand;
 use Console\App\Commands\Files\FilesUpdateCommand;
 use Console\App\Commands\FilesDownloadCommand;
 use Console\App\Commands\AppBackups\AppBackupsDescribeCommand;
 use Console\App\Commands\AppBackups\AppBackupsDownloadCommand;
 use Console\App\Commands\AppBackups\AppBackupsDeleteCommand;
+use Console\App\Commands\AppBackups\AppBackupsListCommand;
+use Console\App\Commands\Users\UsersListCommand;
+use Console\App\Commands\Files\FilesDownloadCommand;
 
 try {
 	$app = new Application();
@@ -36,11 +39,13 @@ try {
 	$app->add(new FilesUploadCommand(new Client()));
 	$app->add(new SelfUpdateCommand());
 	$app->add(new AppsUpdateCommand(new Client()));
-	$app->add(new AppBackupCreateCommand(new Client()));
+	$app->add(new AppBackupsCreateCommand(new Client()));
 	$app->add(new FilesUpdateCommand(new Client()));
 	$app->add(new AppsDeleteCommand(new Client()));
 	$app->add(new FilesDeleteCommand(new Client()));
 	$app->add(new FilesDownloadCommand(new Client()));
+	$app->add(new UsersListCommand(new Client()));
+	$app->add(new AppBackupsListCommand(new Client()));
 	$app->add(new AppBackupsDescribeCommand(new Client()));
 	$app->add(new AppBackupsDownloadCommand(new Client()));
 	$app->add(new AppBackupsDeleteCommand(new Client()));

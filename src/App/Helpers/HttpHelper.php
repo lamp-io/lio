@@ -87,14 +87,14 @@ class HttpHelper
 	 */
 	public function optionsToQuery(array $options, array $queryOptions): string
 	{
-		$query = '';
+		$query = [];
 		foreach ($options as $optionKey => $option) {
-			if (in_array($optionKey, $queryOptions) && !empty($option)) {
-				$query .= http_build_query([$optionKey => $option]);
+			if (array_key_exists($optionKey, $queryOptions) && !empty($option)) {
+				$query[$queryOptions[$optionKey]] = $option;
+			} elseif (in_array($optionKey, $queryOptions) && !empty($option)) {
+				$query[$optionKey] = $option;
 			}
 		}
-		return !empty($query) ? '?' . $query : $query;
+		return !empty($query) ? '?' . http_build_query($query) : '';
 	}
-
-
 }

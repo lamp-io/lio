@@ -9,9 +9,9 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class AppBackupCreateCommand extends Command
+class AppBackupsCreateCommand extends Command
 {
-	protected static $defaultName = 'app:backup:create';
+	protected static $defaultName = 'app_backups:create';
 
 	const API_ENDPOINT = 'https://api.lamp.io/app_backups';
 
