@@ -5,6 +5,7 @@ namespace Console\App\Commands\Files;
 
 
 use GuzzleHttp\Exception\GuzzleException;
+use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -21,6 +22,7 @@ class FilesUploadCommand extends Command
 	 */
 	protected function configure()
 	{
+		parent::configure();
 		$this->setDescription('Creates new file')
 			->setHelp('Upload file to selected app')
 			->addArgument('file', InputArgument::REQUIRED, 'Path to file, that should be uploaded')
@@ -43,6 +45,13 @@ class FilesUploadCommand extends Command
 		}
 
 		try {
+			ProgressBar::setFormatDefinition('custom', 'Uploading it %bar%');
+			$progressBar = new ProgressBar($output);
+			$progressBar->setFormat('custom');
+			$progressBar->setProgressCharacter('.');
+			$progressBar->setEmptyBarCharacter(' ');
+			$progressBar->setBarCharacter('.');
+			$progressBar->setBarWidth(30);
 			$this->httpHelper->getClient()->request(
 				'POST',
 				sprintf(self::API_ENDPOINT, $input->getArgument('app_id')),
@@ -60,11 +69,17 @@ class FilesUploadCommand extends Command
 							'contents' => fopen($input->getArgument('file'), 'r'),
 						],
 					],
+					'progress'  => function () use ($progressBar) {
+						$progressBar->advance();
+					},
 				]);
-			$output->writeln('<info>File ' . $this->getRemoteFileName(
-					$input->getArgument('remote_path'),
-					$input->getArgument('file')
-				) . ' successfully uploaded</info>');
+			$progressBar->finish();
+			if (empty($input->getOption('json'))) {
+				$output->writeln(PHP_EOL . '<info>File ' . $this->getRemoteFileName(
+						$input->getArgument('remote_path'),
+						$input->getArgument('file')
+					) . ' successfully uploaded</info>');
+			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
 			exit(1);
