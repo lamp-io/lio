@@ -68,6 +68,11 @@ class AppRunsNewCommand extends Command
 		}
 	}
 
+	/**
+	 * @param string $appId
+	 * @param string $command
+	 * @return string
+	 */
 	protected function getRequestBody(string $appId, string $command): string
 	{
 		return json_encode([
