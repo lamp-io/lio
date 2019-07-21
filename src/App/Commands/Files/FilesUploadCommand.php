@@ -5,7 +5,6 @@ namespace Console\App\Commands\Files;
 
 
 use GuzzleHttp\Exception\GuzzleException;
-use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -45,13 +44,7 @@ class FilesUploadCommand extends Command
 		}
 
 		try {
-			ProgressBar::setFormatDefinition('custom', 'Uploading it %bar%');
-			$progressBar = new ProgressBar($output);
-			$progressBar->setFormat('custom');
-			$progressBar->setProgressCharacter('.');
-			$progressBar->setEmptyBarCharacter(' ');
-			$progressBar->setBarCharacter('.');
-			$progressBar->setBarWidth(30);
+			$progressBar = self::getProgressBar('Uploading it', $output);
 			$this->httpHelper->getClient()->request(
 				'POST',
 				sprintf(self::API_ENDPOINT, $input->getArgument('app_id')),
@@ -73,7 +66,6 @@ class FilesUploadCommand extends Command
 						$progressBar->advance();
 					},
 				]);
-			$progressBar->finish();
 			if (empty($input->getOption('json'))) {
 				$output->writeln(PHP_EOL . '<info>File ' . $this->getRemoteFileName(
 						$input->getArgument('remote_path'),
