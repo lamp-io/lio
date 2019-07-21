@@ -77,6 +77,9 @@ class DeployCommand extends Command
 		}
 	}
 
+	/**
+	 * @param string $configFilePath
+	 */
 	protected function saveToConfig(string $configFilePath)
 	{
 		if (file_exists($configFilePath)) {
