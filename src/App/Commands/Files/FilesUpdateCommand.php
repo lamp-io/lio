@@ -19,6 +19,7 @@ class FilesUpdateCommand extends Command
 	 */
 	protected function configure()
 	{
+		parent::configure();
 		$this->setDescription('This will update the file at specified file ID (file path including file name, relative to app root)')
 			->setHelp('https://www.lamp.io/api#/files/filesUpdateID')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
@@ -53,7 +54,9 @@ class FilesUpdateCommand extends Command
 						$input->getArgument('remote_path')
 					),
 				]);
-			$output->writeln('<info>Success, file ' . $input->getArgument('remote_path') . ' has been updated</info>');
+			if (empty($input->getOption('json'))) {
+				$output->writeln('<info>Success, file ' . $input->getArgument('remote_path') . ' has been updated</info>');
+			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
 			exit(1);
@@ -82,7 +85,7 @@ class FilesUpdateCommand extends Command
 				'attributes' =>
 					array_merge([
 						'apache_writable' => true,
-						'target'           => '',
+						'target'          => '',
 					], !empty($localFile) ? [
 						'contents' => file_get_contents($localFile),
 					] : []),
