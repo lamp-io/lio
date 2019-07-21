@@ -201,7 +201,6 @@ abstract class DeployAbstract implements DeployInterface
 			'--json'      => true,
 		];
 		$appRunsDescribeCommand->run(new ArrayInput($args), $this->consoleOutput);
-		$this->consoleOutput->write(PHP_EOL);
 	}
 
 
