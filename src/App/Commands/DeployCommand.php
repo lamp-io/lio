@@ -32,9 +32,14 @@ class DeployCommand extends Command
 	const LAMP_IO_CONFIG = '.lamp.io';
 
 	/**
-	 * @var
+	 * @var array
 	 */
 	protected $config;
+
+	/**
+	 * @var bool
+	 */
+	protected $isNewApp = true;
 
 	/**
 	 *
@@ -56,19 +61,32 @@ class DeployCommand extends Command
 	{
 		parent::execute($input, $output);
 		try {
-			$this->getDeployObject($input->getOptions());
-			$deployObject = $this->getDeployObject($input->getOptions());
-			$configFilePath = rtrim($input->getArgument('dir'), '/') . DIRECTORY_SEPARATOR . self::LAMP_IO_CONFIG;
+			$deployObject = $this->getDeployObject($input->getOptions(), $input->getArgument('dir'));
+			$appPath = rtrim($input->getArgument('dir'), '/') . DIRECTORY_SEPARATOR;
+			$configFilePath = $appPath . self::LAMP_IO_CONFIG;
 			$this->setUpConfig($configFilePath);
-			$deployObject->isCorrectApp();
+			$deployObject->isCorrectApp($appPath);
 			$appId = $this->getAppId($output, $input);
-			$deployObject->deployApp($appId);
+			$this->saveToConfig($configFilePath);
+			$deployObject->deployApp($appId, $this->isNewApp);
 			$deployObject->deployDb();
 			$output->writeln('<info>Done, check it out at https://' . $appId . '.lamp.app/</info>');
 		} catch (Exception $exception) {
 			$output->writeln('<error>' . $exception->getMessage() . '</error>');
 			exit(1);
 		}
+	}
+
+	protected function saveToConfig(string $configFilePath)
+	{
+		if (file_exists($configFilePath)) {
+			return;
+		}
+
+		foreach ($this->config as $key => $value) {
+			file_put_contents($configFilePath, $key . '=' . $value . PHP_EOL);
+		}
+
 	}
 
 	/**
@@ -80,14 +98,15 @@ class DeployCommand extends Command
 	protected function getAppId(OutputInterface $output, InputInterface $input): string
 	{
 		if (!empty($this->config['app_id'])) {
+			$this->isNewApp = false;
 			return $this->config['app_id'];
 		}
 
 		$questionHelper = $this->getHelper('question');
-		$question = new ConfirmationQuestion('This looks like a new app, shall we create a lamp.io app for it?(y/n)');
+		$question = new ConfirmationQuestion('<info>This looks like a new app, shall we create a lamp.io app for it?(y/n)</info>');
 		if (!$questionHelper->ask($input, $output, $question)) {
-			$output->writeln('<info>You must to create new app or select to which app your project should be deplyed, in .lamp.io file inside of your project</info>');
-			exit(0);
+			$output->writeln('<info>You must to create new app or select to which app your project should be deployed, in .lamp.io file inside of your project</info>');
+			exit();
 		}
 		$appsNewCommand = $this->getApplication()->find(AppsNewCommand::getDefaultName());
 		$args = [
@@ -99,7 +118,8 @@ class DeployCommand extends Command
 		/** @var Document $document */
 		$document = Parser::parseResponseString($bufferOutput->fetch());
 		$appId = $document->get('data.id');
-		$output->writeln('Your new app successfully created, app id: ' . $appId);
+		$output->writeln('<info>' . $appId . ' created!</info>');
+		$this->setConfig('app_id', $appId);
 		return $appId;
 	}
 
@@ -141,25 +161,29 @@ class DeployCommand extends Command
 	{
 		$config = [];
 		$fileObject = new SplFileObject($configPath);
-		while (!$fileObject->eof()) {
-			if (!empty($fileObject->current())) {
-				$line = explode('=', str_replace(' ', '', $fileObject->current()));
-				$config[$line[0]] = $line[1];
+		$fileObject->setFlags(SplFileObject::READ_AHEAD | SplFileObject::SKIP_EMPTY);
+		foreach ($fileObject as $row) {
+			if (empty(trim($row))) {
+				continue;
 			}
+			$line = explode('=', str_replace(' ', '', trim($row)));
+			$config[$line[0]] = $line[1];
+
 		}
 		return $config;
 	}
 
 	/**
 	 * @param array $options
+	 * @param string $appDir
 	 * @return DeployInterface
 	 */
-	protected function getDeployObject(array $options): DeployInterface
+	protected function getDeployObject(array $options, string $appDir): DeployInterface
 	{
 		foreach ($options as $optionKey => $option) {
 			if ($option && array_key_exists($optionKey, self::DEPLOYS)) {
 				$deployClass = (self::DEPLOYS[$optionKey]);
-				return new $deployClass();
+				return new $deployClass(rtrim($appDir, '/'), $this->getApplication());
 			}
 		}
 		throw new InvalidArgumentException('App type for deployment, not specified, apps allowed' . implode(',', array_keys(self::DEPLOYS)));
