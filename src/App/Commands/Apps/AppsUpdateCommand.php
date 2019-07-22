@@ -21,10 +21,6 @@ class AppsUpdateCommand extends Command
 
 	const PHP_INI_OPTION_NAME = 'php_ini';
 
-	const DEFAULT_CLI_OPTIONS = [
-		'help', 'quiet', 'verbose', 'version', 'ansi', 'no-ansi', 'no-interaction',
-	];
-
 	protected static $defaultName = 'apps:update';
 
 	/**
