@@ -27,7 +27,7 @@ class AppRunsListCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Get all runned commands on all apps associated to your token ')
-			->setHelp('https://www.lamp.io/api#/app_runs/appRunsCreate');
+			->setHelp('https://www.lamp.io/api#/app_runs/appRunsList');
 	}
 
 	/**
