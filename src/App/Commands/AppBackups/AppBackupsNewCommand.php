@@ -11,7 +11,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class AppBackupsNewCommand extends Command
 {
-	protected static $defaultName = 'app_backups:create';
+	protected static $defaultName = 'app_backups:new';
 
 	const API_ENDPOINT = 'https://api.lamp.io/app_backups';
 
