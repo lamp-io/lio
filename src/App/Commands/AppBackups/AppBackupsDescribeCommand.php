@@ -23,10 +23,10 @@ class AppBackupsDescribeCommand extends Command
 	 */
 	protected function configure()
 	{
+		parent::configure();
 		$this->setDescription('Return an app backup')
 			->setHelp('https://www.lamp.io/api#/app_backups/appBackupsShow')
-			->addArgument('app_backup_id', InputArgument::REQUIRED, 'The ID of the app backup')
-			->addOption('json', 'j', InputOption::VALUE_NONE, 'Output as a raw json');
+			->addArgument('app_backup_id', InputArgument::REQUIRED, 'The ID of the app backup');
 	}
 
 	/**

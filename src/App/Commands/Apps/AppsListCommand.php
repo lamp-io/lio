@@ -25,9 +25,9 @@ class AppsListCommand extends Command
 	 */
 	protected function configure()
 	{
+		parent::configure();
 		$this->setDescription('gets the set of apps from the org associated with your token')
-			->setHelp('try rebooting')
-			->addOption('json', 'j', InputOption::VALUE_NONE, 'Output as a raw json');
+			->setHelp('try rebooting');
 	}
 
 	/**

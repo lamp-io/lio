@@ -19,6 +19,7 @@ class AppBackupsDeleteCommand extends Command
 	 */
 	protected function configure()
 	{
+		parent::configure();
 		$this->setDescription('Delete an app backup')
 			->setHelp('https://www.lamp.io/api#/app_backups/appBackupsShow')
 			->addArgument('app_backup_id', InputArgument::REQUIRED, 'The ID of the app backup');

@@ -27,10 +27,10 @@ class AppsDescribeCommand extends Command
 	 */
 	protected function configure()
 	{
+		parent::configure();
 		$this->setDescription('Gets your app description')
 			->setHelp('try rebooting')
-			->addArgument('app_id', InputArgument::REQUIRED, 'which app would you like to describe?')
-			->addOption('json', 'j', InputOption::VALUE_NONE, 'Output as a raw json');
+			->addArgument('app_id', InputArgument::REQUIRED, 'which app would you like to describe?');
 	}
 
 	/**
