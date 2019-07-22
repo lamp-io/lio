@@ -161,6 +161,35 @@ Commands
     * `[-o][--organization_id](string)` Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
     * `[-j][--json](bool){false}` Output as a raw json
     
+### App runs
+
+1. ### app_runs:new <app_id> <exec>
+
+    Run command on app'
+    
+    Arguments:
+    * `<app_id>(string)` The ID of the app
+    * `<exec>(string)` Command that will be ran
+    
+2. ###app_runs:describe
+
+    Run command on app
+    
+    Arguments:
+    * `<app_run_id>(string)` ID of runned command
+    
+3. ### app_runs:list
+
+    Get all runned commands on all apps associated to your token
+    
+4. ### app_runs:delete
+    
+    Delete runned command
+    
+    Arguments:
+    
+    * `<app_run_id>(string)` ID of runned command
+
 ### Files
 
 1. #### files:list [-l][--limit] [--human-readable] [-r][--recursive] <app_id> <file_id>
