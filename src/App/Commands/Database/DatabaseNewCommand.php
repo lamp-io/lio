@@ -19,6 +19,10 @@ class DatabaseNewCommand extends Command
 
 	const API_ENDPOINT = 'https://api.lamp.io/databases';
 
+	const EXCLUDE_FROM_OUTPUT = [
+		'my_cnf'
+	];
+
 	/**
 	 *
 	 */
@@ -113,7 +117,7 @@ class DatabaseNewCommand extends Command
 		$row = [$serializedDocument['data']['id']];
 
 		foreach ($serializedDocument['data']['attributes'] as $key => $value) {
-			if (!empty($value) && $key != 'my_cnf') {
+			if (!empty($value) && !in_array($key, self::EXCLUDE_FROM_OUTPUT)) {
 				array_push($headers, $key);
 				array_push($row, $value);
 			}
