@@ -20,6 +20,7 @@ class AppsDeleteCommand extends Command
 	 */
 	protected function configure()
 	{
+		parent::configure();
 		$this->setDescription('Delete an app')
 			->setHelp('try rebooting')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app');

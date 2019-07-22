@@ -33,10 +33,10 @@ class AppBackupsListCommand extends Command
 	 */
 	protected function configure()
 	{
+		parent::configure();
 		$this->setDescription('Return app backups')
 			->setHelp('https://www.lamp.io/api#/app_backups/appBackupsList')
-			->addOption('organization_id', 'o', InputOption::VALUE_REQUIRED, 'Comma-separated list of requested organization_ids. If omitted defaults to user\'s default organization')
-			->addOption('json', 'j', InputOption::VALUE_NONE, 'Output as raw json');
+			->addOption('organization_id', 'o', InputOption::VALUE_REQUIRED, 'Comma-separated list of requested organization_ids. If omitted defaults to user\'s default organization');
 	}
 
 	/**

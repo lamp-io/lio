@@ -21,6 +21,7 @@ class FilesUploadCommand extends Command
 	 */
 	protected function configure()
 	{
+		parent::configure();
 		$this->setDescription('Creates new file')
 			->setHelp('Upload file to selected app')
 			->addArgument('file', InputArgument::REQUIRED, 'Path to file, that should be uploaded')
@@ -43,6 +44,7 @@ class FilesUploadCommand extends Command
 		}
 
 		try {
+			$progressBar = self::getProgressBar('Uploading it', $output);
 			$this->httpHelper->getClient()->request(
 				'POST',
 				sprintf(self::API_ENDPOINT, $input->getArgument('app_id')),
@@ -60,11 +62,16 @@ class FilesUploadCommand extends Command
 							'contents' => fopen($input->getArgument('file'), 'r'),
 						],
 					],
+					'progress'  => function () use ($progressBar) {
+						$progressBar->advance();
+					},
 				]);
-			$output->writeln('<info>File ' . $this->getRemoteFileName(
-					$input->getArgument('remote_path'),
-					$input->getArgument('file')
-				) . ' successfully uploaded</info>');
+			if (empty($input->getOption('json'))) {
+				$output->writeln(PHP_EOL . '<info>File ' . $this->getRemoteFileName(
+						$input->getArgument('remote_path'),
+						$input->getArgument('file')
+					) . ' successfully uploaded</info>');
+			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
 			exit(1);

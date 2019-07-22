@@ -38,6 +38,7 @@ class FilesDownloadCommand extends Command
 	 */
 	protected function configure()
 	{
+		parent::configure();
 		$this->setDescription('Download files')
 			->setHelp('try rebooting')
 			->addArgument('app_id', InputArgument::REQUIRED, 'App ID')
