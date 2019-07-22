@@ -10,6 +10,7 @@ use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Input\InputOption;
 
 class Command extends BaseCommand
 {
@@ -19,6 +20,11 @@ class Command extends BaseCommand
 	{
 		parent::__construct($name);
 		$this->httpHelper = new HttpHelper($httpClient);
+	}
+
+	protected function configure()
+	{
+		$this->addOption('json', 'j', InputOption::VALUE_NONE, 'Output as a raw json');
 	}
 
 
