@@ -40,6 +40,7 @@ class FilesListCommand extends Command
 	 */
 	protected function configure()
 	{
+		parent::configure();
 		$this->setDescription('Return files from the root of an app')
 			->setHelp('try rebooting')
 			->addArgument('app_id', InputArgument::REQUIRED, 'From which app_id need to get fields?')

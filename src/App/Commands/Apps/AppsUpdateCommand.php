@@ -32,6 +32,7 @@ class AppsUpdateCommand extends Command
 	 */
 	protected function configure()
 	{
+		parent::configure();
 		$this->setDescription('Creates a new app')
 			->setHelp('Allow you to create app, api reference https://www.lamp.io/api#/apps/appsCreate')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')

@@ -1,22 +1,23 @@
 <?php
 
-namespace Console\App\Commands\AppBackups;
+namespace Console\App\Commands\AppRuns;
 
-use Console\App\Commands\Command;
+use Art4\JsonApiClient\Exception\ValidationException;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Console\App\Commands\Command;
+use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 use Symfony\Component\Console\Helper\Table;
-use Art4\JsonApiClient\Helper\Parser;
+use Art4\JsonApiClient\Serializer\ArraySerializer;
 
-class AppBackupsDescribeCommand extends Command
+class AppRunsDescribeCommand extends Command
 {
-	protected static $defaultName = 'app_backups:describe';
+	const API_ENDPOINT = 'https://api.lamp.io/app_runs/%s';
 
-	const API_ENDPOINT = 'https://api.lamp.io/app_backups/%s';
+	protected static $defaultName = 'app_runs:describe';
 
 	/**
 	 *
@@ -24,9 +25,9 @@ class AppBackupsDescribeCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('Return an app backup')
-			->setHelp('https://www.lamp.io/api#/app_backups/appBackupsShow')
-			->addArgument('app_backup_id', InputArgument::REQUIRED, 'The ID of the app backup');
+		$this->setDescription('Get info about runned command')
+			->setHelp('https://www.lamp.io/api#/app_runs/appRunsCreate')
+			->addArgument('app_run_id', InputArgument::REQUIRED, 'ID of runned command');
 	}
 
 	/**
@@ -44,7 +45,7 @@ class AppBackupsDescribeCommand extends Command
 				'GET',
 				sprintf(
 					self::API_ENDPOINT,
-					$input->getArgument('app_backup_id')
+					$input->getArgument('app_run_id')
 				),
 				[
 					'headers' => $this->httpHelper->getHeaders(),
@@ -58,8 +59,11 @@ class AppBackupsDescribeCommand extends Command
 				$table = $this->getOutputAsTable($document, new Table($output));
 				$table->render();
 			}
+		} catch (ValidationException $validationException) {
+			$output->writeln($validationException->getMessage());
+			exit(1);
 		} catch (GuzzleException $guzzleException) {
-			$output->writeln('<error>' . $guzzleException->getMessage() . '</error>');
+			$output->writeln($guzzleException->getMessage());
 			exit(1);
 		}
 	}
@@ -71,16 +75,18 @@ class AppBackupsDescribeCommand extends Command
 	 */
 	protected function getOutputAsTable(Document $document, Table $table): Table
 	{
-		$table->setHeaderTitle('App Backup ' . $document->get('data.id'));
-		$table->setHeaders(['App id', 'Complete', 'Created at', 'Organization id', 'Status', 'Updated at']);
-		$table->addRow([
-			$document->get('data.attributes.app_id'),
-			$document->get('data.attributes.complete'),
-			$document->get('data.attributes.created_at'),
-			$document->get('data.attributes.organization_id'),
-			$document->get('data.attributes.status'),
-			$document->get('data.attributes.updated_at'),
-		]);
+		$table->setHeaderTitle('App runs describe');
+		$serializer = new ArraySerializer(['recursive' => true]);
+		$appRuns = $serializer->serialize($document);
+		$tableHeader = ['id'];
+		$row = ['app_id' => $document->get('data.id')];
+		foreach ($appRuns['data']['attributes'] as $key => $attribute) {
+			array_push($row, $attribute);
+			array_push($tableHeader, $key);
+		}
+		$table->setHeaders($tableHeader);
+		$table->addRow($row);
+
 		return $table;
 	}
 }
