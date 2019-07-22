@@ -7,6 +7,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use InvalidArgumentException;
 
 class FilesUpdateUnarchiveCommand extends Command
 {
@@ -22,7 +23,7 @@ class FilesUpdateUnarchiveCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('This will update the file at specified file ID (file path including file name, relative to app root)')
+		$this->setDescription('Extract your archived file, on your app')
 			->setHelp('https://www.lamp.io/api#/files/filesUpdateID')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
 			->addArgument('remote_path', InputArgument::REQUIRED, 'File path on app, that should be unarchived');
@@ -71,7 +72,7 @@ class FilesUpdateUnarchiveCommand extends Command
 	protected function validateArguments($file)
 	{
 		if (!file_exists($file)) {
-			throw new \InvalidArgumentException('File not exists');
+			throw new InvalidArgumentException('File not exists');
 		}
 	}
 
