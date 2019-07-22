@@ -23,6 +23,30 @@ lio command [options] [arguments]
 
 Commands
 ------------
+### Global options
+    
+    * [-j][--json] Output as a raw json
+    * [-h][--help](bool) Display this help message
+    * [-q][--quiet](bool) Do not output any message
+    * [-V][--version](bool) Display this application version
+    * [--ansi](bool) Force ANSI output
+    * [--no-ansi](bool) Disable ANSI output
+    * [-n][--no-interaction](bool) Do not ask any interactive question
+    * [-v|vv|vvv][--verbose](bool) Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug
+
+### Deploy
+1. ### deploy [--laravel] [\<dir>]
+    Deploy your app.
+    
+    Arguments:
+    
+    * `<dir>[optional](string){$PWD}` Path to your project, default your current working directory
+    
+    Options:
+    * `[--laravel](bool){false}` Specify your app as a laravel project 
+    
+
+
 ### Token
 1.  #### auth [-u][--update_token]
 
@@ -37,9 +61,6 @@ Commands
 
     Will output you all your apps associated to your token
     
-    Options:
-    
-    * `[-j][--json](bool){false}` Output as a raw json
 
 2.  #### apps:describe <app_id>
 
@@ -49,9 +70,6 @@ Commands
 
     * `<app_id>(string)` The ID of the app
     
-    Options:
-        
-    * `[-j][--json](bool){false}` Output as a raw json
 
 3. #### apps:new <organization_id> [-d][--description] [--httpd_conf] [--max_replicas] [-m][--memory] [--min_replicas] [--php_ini] [-r][--replicas] [--vcpu] [--github_webhook_secret] [--webhook_run_command]
 
@@ -114,16 +132,15 @@ Commands
         
     * `<app_id>(string)` The ID of the app
 
-2.  #### app_backups:list [-o][--organization_id] [-j][--json]
+2.  #### app_backups:list [-o][--organization_id]
    
     Return list of all your app backups
     
     Options:
     
     * `[-o][--organization_id](string)` Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
-    * `[-j][--json](bool){false}` Output as a raw json
 
-3. #### app_backups:describe <app_backup_id> [-j][--json]
+3. #### app_backups:describe <app_backup_id> 
 
     Return an app backup
     
@@ -131,9 +148,6 @@ Commands
     
     * `<app_backup_id>(string)` The ID of the app backup
     
-    Options:
-        
-    * `[-j][--json](bool){false}` Output as a raw json
     
 4. #### app_backups:download <app_backup_id> <dir>
     
@@ -152,15 +166,31 @@ Commands
         
     * `<app_backup_id>(string)` The ID of the app backup
     
-2.  #### app_backups:list [-o][--organization_id] [-j][--json]
+6.  #### app_backups:list [-o][--organization_id]
 
     Return list of all your app backups
     
     Options:
     
     * `[-o][--organization_id](string)` Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
-    * `[-j][--json](bool){false}` Output as a raw json
     
+### App runs
+
+1. ### app_runs:new <app_id> <exec>
+
+    Run command on app'
+    
+    Arguments:
+    * `<app_id>(string)` The ID of the app
+    * `<exec>(string)` Command that will be ran
+    
+2. ###app_runs:describe
+
+    Run command on app
+    
+    Arguments:
+    * `<app_run_id>(string)` ID of runned command
+
 ### Files
 
 1. #### files:list [-l][--limit] [--human-readable] [-r][--recursive] <app_id> <file_id>
@@ -174,7 +204,6 @@ Commands
     
     Options:
     
-    * `[-j][--json](bool){false}` Output as a raw json
     * `[-l][--limit](int){1000}` The number of results to return in each response to a list operation. The default value is 1000 (the maximum allowed). Using a lower value may help if an operation times out
     * `[--human-readable](bool){false}` Format size values from raw bytes to human readable format
     * `[-r][--recursive](bool){false}` Command is performed on all files or objects under the specified path
@@ -218,9 +247,19 @@ Commands
     * `<app_id>(string)` The ID of the app
     * `<remote_path>(string)` Remote path on app, what file/directory you need to delete
 
+### Files sub commands: 
+
+1. #### files:update:unarchive <app_id> <remote_path>
+    Extract your archived file, on your app
+    
+    Arguments:
+    
+    * `<app_id>(string)` The ID of the app
+    * `<remote_path>(string)` File path on app, that should be unarchived
+
 ### Users
 
-1. #### users:list [--organization_id][-o] [--email][-e] [--json][-j]
+1. #### files:update:unarchive [--organization_id][-o] [--email][-e]
 
     Get all users from your account
     
@@ -228,7 +267,6 @@ Commands
     
     * `[--organization_id][-o](string)` Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
     * `[--email][-e](string)` Format size values from raw bytes to human readable format
-    * `[-j][--json](bool){false}` Output as a raw json
     
 ### Phar updates
 
