@@ -27,6 +27,7 @@ use Console\App\Commands\AppBackups\AppBackupsListCommand;
 use Console\App\Commands\Users\UsersListCommand;
 use Console\App\Commands\Files\FilesDownloadCommand;
 use Console\App\Commands\AppRuns\AppRunsListCommand;
+use Console\App\Commands\AppRuns\AppRunsDeleteCommand;
 
 try {
 	$app = new Application();
@@ -50,6 +51,7 @@ try {
 	$app->add(new AppBackupsDownloadCommand(new Client()));
 	$app->add(new AppBackupsDeleteCommand(new Client()));
 	$app->add(new AppRunsListCommand(new Client()));
+	$app->add(new AppRunsDeleteCommand(new Client()));
 	$app->run();
 } catch (Exception $exception) {
     echo $exception->getMessage() . PHP_EOL;
