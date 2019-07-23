@@ -28,8 +28,8 @@ class DatabaseDescribeCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('Create a new database')
-			->setHelp('https://www.lamp.io/api#/databases/databasesCreate')
+		$this->setDescription('Returns a database')
+			->setHelp('https://www.lamp.io/api#/databases/databasesShow')
 			->addArgument('database_id', InputArgument::REQUIRED, 'The id of database');
 	}
 
