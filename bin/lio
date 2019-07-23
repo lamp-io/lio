@@ -33,6 +33,7 @@ use Console\App\Commands\Files\SubCommands\FilesUpdateUnarchiveCommand;
 use Console\App\Commands\Database\DatabaseNewCommand;
 use Console\App\Commands\Database\DatabaseDescribeCommand;
 use Console\App\Commands\Database\DatabaseDeleteCommand;
+use Console\App\Commands\Database\DatabaseListCommand;
 
 try {
 	$app = new Application();
@@ -62,6 +63,7 @@ try {
 	$app->add(new DatabaseNewCommand(new Client()));
 	$app->add(new DatabaseDescribeCommand(new Client()));
 	$app->add(new DatabaseDeleteCommand(new Client()));
+	$app->add(new DatabaseListCommand(new Client()));
 	$app->run();
 } catch (Exception $exception) {
     echo $exception->getMessage() . PHP_EOL;
