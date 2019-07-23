@@ -20,7 +20,7 @@ class DatabaseDescribeCommand extends Command
 {
 	protected static $defaultName = 'database:describe';
 
-	const API_ENDPOINT = 'https://api.lamp.io/databases';
+	const API_ENDPOINT = 'https://api.lamp.io/databases/%s';
 
 	/**
 	 *
