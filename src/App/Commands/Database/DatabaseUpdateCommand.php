@@ -35,13 +35,13 @@ class DatabaseUpdateCommand extends Command
 		$this->setDescription('Update a database')
 			->setHelp('https://www.lamp.io/api#/databases/databasesUpdate')
 			->addArgument('database_id', InputArgument::REQUIRED, 'The id of database')
-			->addOption('description', 'd', InputOption::VALUE_REQUIRED, 'Description of your database', '')
-			->addOption('memory', 'm', InputOption::VALUE_REQUIRED, 'Amount of virtual memory on your database, default 512Mi', '512Mi')
-			->addOption('organization_id', null, InputOption::VALUE_REQUIRED, 'Name of your organization', '')
-			->addOption('my_cnf', null, InputOption::VALUE_REQUIRED, 'Path to your database config file', '')
-			->addOption('mysql_root_password', null, InputOption::VALUE_REQUIRED, 'Root password', '')
-			->addOption('ssd', null, InputOption::VALUE_REQUIRED, 'Size of ssd storage, default 1Gi', '1Gi')
-			->addOption('vcpu', null, InputOption::VALUE_REQUIRED, 'The number of virtual cpu cores available, default 0.25', '0.25');
+			->addOption('description', 'd', InputOption::VALUE_REQUIRED, 'Description of your database')
+			->addOption('memory', 'm', InputOption::VALUE_REQUIRED, 'Amount of virtual memory on your database')
+			->addOption('organization_id', null, InputOption::VALUE_REQUIRED, 'Name of your organization')
+			->addOption('my_cnf', null, InputOption::VALUE_REQUIRED, 'Path to your database config file')
+			->addOption('mysql_root_password', null, InputOption::VALUE_REQUIRED, 'Root password')
+			->addOption('ssd', null, InputOption::VALUE_REQUIRED, 'Size of ssd storage')
+			->addOption('vcpu', null, InputOption::VALUE_REQUIRED, 'The number of virtual cpu cores available');
 	}
 
 	/**
@@ -53,6 +53,9 @@ class DatabaseUpdateCommand extends Command
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
+
+		$this->getRequestBody($input);
+
 		try {
 			$response = $this->httpHelper->getClient()->request(
 				'PATCH',
@@ -94,7 +97,7 @@ class DatabaseUpdateCommand extends Command
 			throw  new InvalidArgumentException('Path to mysql config not valid');
 		}
 
-		return json_encode([
+		$body = [
 			'data' => [
 				'attributes' => array_merge([
 					'description'         => $input->getOption('description'),
@@ -107,7 +110,15 @@ class DatabaseUpdateCommand extends Command
 				'id'         => $input->getArgument('database_id'),
 				'type'       => 'databases',
 			],
-		]);
+		];
+
+		$body['data']['attributes'] = array_filter($body['data']['attributes'], function ($val, $key) {
+			if (!empty($val)) {
+				return [$key => $val];
+			}
+		}, ARRAY_FILTER_USE_BOTH);
+
+		return json_encode($body);
 	}
 
 
