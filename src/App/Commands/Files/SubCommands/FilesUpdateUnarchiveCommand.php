@@ -1,18 +1,21 @@
 <?php
 
-namespace Console\App\Commands\Files;
+namespace Console\App\Commands\Files\SubCommands;
 
 use Console\App\Commands\Command;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use InvalidArgumentException;
 
-class FilesUpdateCommand extends Command
+class FilesUpdateUnarchiveCommand extends Command
 {
-	const API_ENDPOINT = 'https://api.lamp.io/apps/%s/files/%s';
+	const API_ENDPOINT = 'https://api.lamp.io/apps/%s/files/%s/?%s';
 
-	protected static $defaultName = 'files:update';
+	protected static $defaultName = 'files:update:unarchive';
+
+	protected $subCommand = ['command' => 'unarchive'];
 
 	/**
 	 *
@@ -20,11 +23,10 @@ class FilesUpdateCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('This will update the file at specified file ID (file path including file name, relative to app root)')
+		$this->setDescription('Extract your archived file, on your app')
 			->setHelp('https://www.lamp.io/api#/files/filesUpdateID')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addArgument('remote_path', InputArgument::OPTIONAL, 'File path on app, that should be updated.  If not specified, will make your app root appache writable', '')
-			->addArgument('file', InputArgument::OPTIONAL, 'Path to a local file, which content will sent to remote. If not specified, will make your <remote_path> appache writable', '');
+			->addArgument('remote_path', InputArgument::REQUIRED, 'File path on app, that should be unarchived');
 	}
 
 	/**
@@ -37,22 +39,23 @@ class FilesUpdateCommand extends Command
 	{
 		parent::execute($input, $output);
 		try {
-			if (!empty($input->getArgument('file'))) {
-				$this->validateArguments($input->getArgument('file'));
-			}
+			$progressBar = self::getProgressBar('Extracting it', $output);
 			$this->httpHelper->getClient()->request(
 				'PATCH',
 				sprintf(
 					self::API_ENDPOINT,
 					$input->getArgument('app_id'),
-					$input->getArgument('remote_path')
+					ltrim($input->getArgument('remote_path'), '/'),
+					http_build_query($this->subCommand)
 				),
 				[
-					'headers' => $this->httpHelper->getHeaders(),
-					'body'    => $this->getRequestBody(
-						$input->getArgument('file'),
+					'headers'  => $this->httpHelper->getHeaders(),
+					'body'     => $this->getRequestBody(
 						$input->getArgument('remote_path')
 					),
+					'progress' => function () use ($progressBar) {
+						$progressBar->advance();
+					},
 				]);
 			if (empty($input->getOption('json'))) {
 				$output->writeln('<info>Success, file ' . $input->getArgument('remote_path') . ' has been updated</info>');
@@ -69,30 +72,22 @@ class FilesUpdateCommand extends Command
 	protected function validateArguments($file)
 	{
 		if (!file_exists($file)) {
-			throw new \InvalidArgumentException('File not exists');
+			throw new InvalidArgumentException('File not exists');
 		}
 	}
 
 	/**
-	 * @param string $localFile
 	 * @param string $remoteFile
 	 * @return string
 	 */
-	protected function getRequestBody(string $localFile, string $remoteFile): string
+	protected function getRequestBody(string $remoteFile): string
 	{
 		return json_encode([
 			'data' => [
-				'attributes' =>
-					array_merge([
-						'apache_writable' => true,
-						'target'          => '',
-					], !empty($localFile) ? [
-						'contents' => file_get_contents($localFile),
-					] : []),
-				'id'         => $remoteFile,
-				'type'       => 'files',
+				'id'   => ltrim($remoteFile, '/'),
+				'type' => 'files',
 			],
-		]);
+		], JSON_UNESCAPED_SLASHES);
 
 	}
 

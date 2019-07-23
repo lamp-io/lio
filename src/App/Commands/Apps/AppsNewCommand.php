@@ -34,6 +34,7 @@ class AppsNewCommand extends Command
 	 */
 	protected function configure()
 	{
+		parent::configure();
 		$this->setDescription('Creates a new app')
 			->setHelp('Allow you to create app, api reference https://www.lamp.io/api#/apps/appsCreate')
 			->addArgument('organization_id', InputArgument::OPTIONAL, 'The ID(uuid) of the organization this app belongs to. STRING')
@@ -68,20 +69,18 @@ class AppsNewCommand extends Command
 					'body'    => $this->getRequestBody($input),
 				]
 			);
+			if (!empty($input->getOption('json'))) {
+				$output->writeln($response->getBody()->getContents());
+			} else {
+				/** @var Document $document */
+				$document = Parser::parseResponseString($response->getBody()->getContents());
+				$output->writeln('Your new app successfully created, app id: ' . $document->get('data.id'));
+			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
 			exit(1);
 		} catch (\InvalidArgumentException $invalidArgumentException) {
 			$output->writeln($invalidArgumentException->getMessage());
-			exit(1);
-		}
-
-		try {
-			/** @var Document $document */
-			$document = Parser::parseResponseString($response->getBody()->getContents());
-			$output->writeln('Your new app successfully created, app id: ' . $document->get('data.id'));
-		} catch (ValidationException $e) {
-			$output->writeln($e->getMessage());
 			exit(1);
 		}
 	}
