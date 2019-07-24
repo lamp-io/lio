@@ -35,6 +35,8 @@ use Console\App\Commands\Database\DatabaseDescribeCommand;
 use Console\App\Commands\Database\DatabaseDeleteCommand;
 use Console\App\Commands\Database\DatabaseListCommand;
 use Console\App\Commands\Database\DatabaseUpdateCommand;
+use Console\App\Commands\AppRuns\AppRunsListCommand;
+use Console\App\Commands\AppRuns\AppRunsDeleteCommand;
 
 try {
 	$app = new Application();
@@ -61,6 +63,8 @@ try {
 	$app->add(new AppRunsNewCommand(new Client()));
 	$app->add(new AppRunsDescribeCommand(new Client()));
 	$app->add(new FilesUpdateUnarchiveCommand(new Client()));
+	$app->add(new AppRunsListCommand(new Client()));
+	$app->add(new AppRunsDeleteCommand(new Client()));
 	$app->add(new DatabaseNewCommand(new Client()));
 	$app->add(new DatabaseDescribeCommand(new Client()));
 	$app->add(new DatabaseDeleteCommand(new Client()));
