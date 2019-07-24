@@ -30,6 +30,8 @@ use Console\App\Commands\DeployCommand;
 use Console\App\Commands\AppRuns\AppRunsNewCommand;
 use Console\App\Commands\AppRuns\AppRunsDescribeCommand;
 use Console\App\Commands\Files\SubCommands\FilesUpdateUnarchiveCommand;
+use Console\App\Commands\AppRuns\AppRunsListCommand;
+use Console\App\Commands\AppRuns\AppRunsDeleteCommand;
 
 try {
 	$app = new Application();
@@ -56,6 +58,8 @@ try {
 	$app->add(new AppRunsNewCommand(new Client()));
 	$app->add(new AppRunsDescribeCommand(new Client()));
 	$app->add(new FilesUpdateUnarchiveCommand(new Client()));
+	$app->add(new AppRunsListCommand(new Client()));
+	$app->add(new AppRunsDeleteCommand(new Client()));
 	$app->run();
 } catch (Exception $exception) {
     echo $exception->getMessage() . PHP_EOL;
