@@ -15,6 +15,9 @@ use Symfony\Component\Console\Helper\ProgressBar;
 
 class Command extends BaseCommand
 {
+	const DEFAULT_CLI_OPTIONS = [
+		'help', 'quiet', 'verbose', 'version', 'ansi', 'no-ansi', 'no-interaction', 'json',
+	];
 	protected $httpHelper;
 
 	public function __construct(ClientInterface $httpClient, $name = null)

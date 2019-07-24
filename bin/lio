@@ -18,7 +18,7 @@ use Console\App\Commands\Files\FilesUploadCommand;
 use Console\App\Commands\SelfUpdateCommand;
 use Console\App\Commands\Files\FilesDeleteCommand;
 use Console\App\Commands\Apps\AppsUpdateCommand;
-use Console\App\Commands\AppBackups\AppBackupsCreateCommand;
+use Console\App\Commands\AppBackups\AppBackupsNewCommand;
 use Console\App\Commands\Files\FilesUpdateCommand;
 use Console\App\Commands\AppBackups\AppBackupsDescribeCommand;
 use Console\App\Commands\AppBackups\AppBackupsDownloadCommand;
@@ -30,6 +30,11 @@ use Console\App\Commands\DeployCommand;
 use Console\App\Commands\AppRuns\AppRunsNewCommand;
 use Console\App\Commands\AppRuns\AppRunsDescribeCommand;
 use Console\App\Commands\Files\SubCommands\FilesUpdateUnarchiveCommand;
+use Console\App\Commands\Database\DatabaseNewCommand;
+use Console\App\Commands\Database\DatabaseDescribeCommand;
+use Console\App\Commands\Database\DatabaseDeleteCommand;
+use Console\App\Commands\Database\DatabaseListCommand;
+use Console\App\Commands\Database\DatabaseUpdateCommand;
 use Console\App\Commands\AppRuns\AppRunsListCommand;
 use Console\App\Commands\AppRuns\AppRunsDeleteCommand;
 
@@ -44,7 +49,7 @@ try {
 	$app->add(new FilesUploadCommand(new Client()));
 	$app->add(new SelfUpdateCommand());
 	$app->add(new AppsUpdateCommand(new Client()));
-	$app->add(new AppBackupsCreateCommand(new Client()));
+	$app->add(new AppBackupsNewCommand(new Client()));
 	$app->add(new FilesUpdateCommand(new Client()));
 	$app->add(new AppsDeleteCommand(new Client()));
 	$app->add(new FilesDeleteCommand(new Client()));
@@ -60,6 +65,11 @@ try {
 	$app->add(new FilesUpdateUnarchiveCommand(new Client()));
 	$app->add(new AppRunsListCommand(new Client()));
 	$app->add(new AppRunsDeleteCommand(new Client()));
+	$app->add(new DatabaseNewCommand(new Client()));
+	$app->add(new DatabaseDescribeCommand(new Client()));
+	$app->add(new DatabaseDeleteCommand(new Client()));
+	$app->add(new DatabaseListCommand(new Client()));
+	$app->add(new DatabaseUpdateCommand(new Client()));
 	$app->run();
 } catch (Exception $exception) {
     echo $exception->getMessage() . PHP_EOL;

@@ -190,6 +190,65 @@ Commands
     
     Arguments:
     * `<app_run_id>(string)` ID of runned command
+    
+### Databases 
+
+1. ### database:new  [-d][--description] [-m][--memory] [--organization_id] [--my_cnf] [--mysql_root_password] [--ssd] [--vcpu]
+
+   Create a new database
+    
+   Options:
+   
+   * `[-d][--description](string)` Description of your database
+   * `[-m][--memory](string){512Mi}` Amount of virtual memory on your database
+   * `[--organization_id](string)` Name of your organization
+   * `[--my_cnf](string)` Path to your database config file
+   * `[--mysql_root_password](string)` Root password
+   * `[--ssd](string){1Gi}` Size of ssd storage
+   * `[--vcpu](float){0.25}` The number of virtual cpu cores available, default 0.25
+   
+2. ### database:delete <database_id>
+
+    Delete a database
+    
+    Arguments:
+    
+    *`<database_id>(string)` The id of database
+    
+3. ### database:update <database_id> [-d][--description] [-m][--memory] [--organization_id] [--my_cnf] [--mysql_root_password] [--ssd] [--vcpu]
+    
+    Update a database
+    
+    Arguments:
+        
+    *`<database_id>(string)` The id of database
+    
+    Options:
+    
+   * `[-d][--description](string)` Description of your database
+   * `[-m][--memory](string)` Amount of virtual memory on your database
+   * `[--organization_id](string)` Name of your organization
+   * `[--my_cnf](string)` Path to your database config file
+   * `[--mysql_root_password](string)` Root password
+   * `[--ssd](string)` Size of ssd storage
+   * `[--vcpu](float)` The number of virtual cpu cores available, default 0.25
+    
+    
+4. ### database:list [--organization_id]
+
+    Returns all allowed databases
+    
+    Options:
+    
+    * `organization_id` Filter output by organization id value
+    
+5. ### database:describe <database_id>
+
+    Returns a database
+    
+    Arguments:
+    
+    *`<database_id>(string)` The id of database
 
 ### Files
 
