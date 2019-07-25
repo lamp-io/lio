@@ -193,7 +193,7 @@ Commands
     
 ### Databases 
 
-1. ### database:new  [-d][--description] [-m][--memory] [--organization_id] [--my_cnf] [--mysql_root_password] [--ssd] [--vcpu]
+1. ### databases:new  [-d][--description] [-m][--memory] [--organization_id] [--my_cnf] [--mysql_root_password] [--ssd] [--vcpu]
 
    Create a new database
     
@@ -207,7 +207,7 @@ Commands
    * `[--ssd](string){1Gi}` Size of ssd storage
    * `[--vcpu](float){0.25}` The number of virtual cpu cores available, default 0.25
    
-2. ### database:delete <database_id>
+2. ### databases:delete <database_id>
 
     Delete a database
     
@@ -215,7 +215,7 @@ Commands
     
     *`<database_id>(string)` The id of database
     
-3. ### database:update <database_id> [-d][--description] [-m][--memory] [--organization_id] [--my_cnf] [--mysql_root_password] [--ssd] [--vcpu]
+3. ### databases:update <database_id> [-d][--description] [-m][--memory] [--organization_id] [--my_cnf] [--mysql_root_password] [--ssd] [--vcpu]
     
     Update a database
     
@@ -234,7 +234,7 @@ Commands
    * `[--vcpu](float)` The number of virtual cpu cores available, default 0.25
     
     
-4. ### database:list [--organization_id]
+4. ### databases:list [--organization_id]
 
     Returns all allowed databases
     
@@ -242,7 +242,7 @@ Commands
     
     * `organization_id` Filter output by organization id value
     
-5. ### database:describe <database_id>
+5. ### databases:describe <database_id>
 
     Returns a database
     

@@ -30,11 +30,11 @@ use Console\App\Commands\DeployCommand;
 use Console\App\Commands\AppRuns\AppRunsNewCommand;
 use Console\App\Commands\AppRuns\AppRunsDescribeCommand;
 use Console\App\Commands\Files\SubCommands\FilesUpdateUnarchiveCommand;
-use Console\App\Commands\Database\DatabaseNewCommand;
-use Console\App\Commands\Database\DatabaseDescribeCommand;
-use Console\App\Commands\Database\DatabaseDeleteCommand;
-use Console\App\Commands\Database\DatabaseListCommand;
-use Console\App\Commands\Database\DatabaseUpdateCommand;
+use Console\App\Commands\Databases\DatabasesNewCommand;
+use Console\App\Commands\Databases\DatabasesDescribeCommand;
+use Console\App\Commands\Databases\DatabasesDeleteCommand;
+use Console\App\Commands\Databases\DatabasesListCommand;
+use Console\App\Commands\Databases\DatabasesUpdateCommand;
 use Console\App\Commands\AppRuns\AppRunsListCommand;
 use Console\App\Commands\AppRuns\AppRunsDeleteCommand;
 
@@ -65,11 +65,11 @@ try {
 	$app->add(new FilesUpdateUnarchiveCommand(new Client()));
 	$app->add(new AppRunsListCommand(new Client()));
 	$app->add(new AppRunsDeleteCommand(new Client()));
-	$app->add(new DatabaseNewCommand(new Client()));
-	$app->add(new DatabaseDescribeCommand(new Client()));
-	$app->add(new DatabaseDeleteCommand(new Client()));
-	$app->add(new DatabaseListCommand(new Client()));
-	$app->add(new DatabaseUpdateCommand(new Client()));
+	$app->add(new DatabasesNewCommand(new Client()));
+	$app->add(new DatabasesDescribeCommand(new Client()));
+	$app->add(new DatabasesDeleteCommand(new Client()));
+	$app->add(new DatabasesListCommand(new Client()));
+	$app->add(new DatabasesUpdateCommand(new Client()));
 	$app->run();
 } catch (Exception $exception) {
     echo $exception->getMessage() . PHP_EOL;
