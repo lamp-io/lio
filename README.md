@@ -193,7 +193,7 @@ Commands
     
 ### Databases 
 
-1. ### databases:new  [-d][--description] [-m][--memory] [--organization_id] [--my_cnf] [--mysql_root_password] [--ssd] [--vcpu]
+1. ### databases:new  [-d][--description] [-m][--memory] [--organization_id] [--my_cnf] [--ssd] [--vcpu]
 
    Create a new database
     
@@ -203,7 +203,6 @@ Commands
    * `[-m][--memory](string){512Mi}` Amount of virtual memory on your database
    * `[--organization_id](string)` Name of your organization
    * `[--my_cnf](string)` Path to your database config file
-   * `[--mysql_root_password](string)` Root password
    * `[--ssd](string){1Gi}` Size of ssd storage
    * `[--vcpu](float){0.25}` The number of virtual cpu cores available, default 0.25
    
@@ -229,7 +228,7 @@ Commands
    * `[-m][--memory](string)` Amount of virtual memory on your database
    * `[--organization_id](string)` Name of your organization
    * `[--my_cnf](string)` Path to your database config file
-   * `[--mysql_root_password](string)` Root password
+   * `[--mysql_root_password](bool)` If you need to update root password, set it as true
    * `[--ssd](string)` Size of ssd storage
    * `[--vcpu](float)` The number of virtual cpu cores available, default 0.25
     
