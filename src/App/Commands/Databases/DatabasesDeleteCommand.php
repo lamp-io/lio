@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Console\App\Commands\Database;
+namespace Console\App\Commands\Databases;
 
 use Console\App\Commands\Command;
 use Exception;
@@ -11,9 +11,9 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class DatabaseDeleteCommand extends Command
+class DatabasesDeleteCommand extends Command
 {
-	protected static $defaultName = 'database:delete';
+	protected static $defaultName = 'databases:delete';
 
 	const API_ENDPOINT = 'https://api.lamp.io/databases/%s';
 
