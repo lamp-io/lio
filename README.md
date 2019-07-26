@@ -94,7 +94,7 @@ Commands
     
 4. #### apps:update <app_id> <organization_id>  [-d][--description] [--httpd_conf] [--max_replicas] [-m][--memory] [--min_replicas] [--php_ini] [-r][--replicas] [--vcpu]
     
-    Will allow you to update selected app
+    Will allow you to update selected app. Command should be executed with at least one option
     
     Arguments:
     
@@ -217,7 +217,7 @@ Commands
     
 3. ### databases:update <database_id> [-d][--description] [-m][--memory] [--organization_id] [--my_cnf] [--mysql_root_password] [--ssd] [--vcpu]
     
-    Update a database
+    Update a database. Command should be executed with at least one option
     
     Arguments:
         
