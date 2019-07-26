@@ -10,11 +10,15 @@ use Art4\JsonApiClient\V1\Document;
 use Console\App\Commands\Command;
 use GuzzleHttp\Exception\GuzzleException;
 use InvalidArgumentException;
+use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Helper\Table;
+use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 class DatabasesUpdateCommand extends Command
 {
@@ -54,8 +58,6 @@ class DatabasesUpdateCommand extends Command
 	{
 		parent::execute($input, $output);
 
-		$this->getRequestBody($input);
-
 		try {
 			$response = $this->httpHelper->getClient()->request(
 				'PATCH',
@@ -66,7 +68,7 @@ class DatabasesUpdateCommand extends Command
 				),
 				[
 					'headers' => $this->httpHelper->getHeaders(),
-					'body'    => $this->getRequestBody($input),
+					'body'    => $this->getRequestBody($input, $output),
 				]
 			);
 			if (!empty($input->getOption('json'))) {
@@ -87,11 +89,14 @@ class DatabasesUpdateCommand extends Command
 
 	}
 
+
 	/**
 	 * @param InputInterface $input
+	 * @param OutputInterface $output
 	 * @return string
+	 * @throws \Exception
 	 */
-	protected function getRequestBody(InputInterface $input): string
+	protected function getRequestBody(InputInterface $input, OutputInterface $output): string
 	{
 		if (!empty($input->getOption('my_cnf')) && !file_exists($input->getOption('my_cnf'))) {
 			throw  new InvalidArgumentException('Path to mysql config not valid');
@@ -118,7 +123,41 @@ class DatabasesUpdateCommand extends Command
 			}
 		}, ARRAY_FILTER_USE_BOTH);
 
+		if (empty($body['data']['attributes'])) {
+			$body['data']['attributes'] = $this->handleEmptyAttrRequest($input, $output);
+		}
+
 		return json_encode($body);
+	}
+
+	/**
+	 * @param InputInterface $input
+	 * @param OutputInterface $output
+	 * @return array
+	 * @throws \Exception
+	 */
+	protected function handleEmptyAttrRequest(InputInterface $input, OutputInterface $output): array
+	{
+		/** @var QuestionHelper $questionHelper */
+		$questionHelper = $this->getHelper('question');
+		$question = new ConfirmationQuestion('<info>An update with no changes will restart your database, are you sure? (Y/n)</info>');
+		if (!$questionHelper->ask($input, $output, $question)) {
+			$output->writeln("<info>Please add options and re-run command</info>");
+			exit();
+		}
+
+		$appsNewCommand = $this->getApplication()->find(DatabasesDescribeCommand::getDefaultName());
+		$args = [
+			'command'     => DatabasesDescribeCommand::getDefaultName(),
+			'database_id' => $input->getArgument('database_id'),
+			'--json'      => true,
+		];
+		$bufferedOutput = new BufferedOutput();
+		$appsNewCommand->run(new ArrayInput($args), $bufferedOutput);
+		/** @var Document $document */
+		$document = Parser::parseResponseString($bufferedOutput->fetch());
+		return ['description' => $document->get('data.attributes.description')];
+
 	}
 
 
