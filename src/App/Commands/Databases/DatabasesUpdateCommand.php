@@ -124,42 +124,12 @@ class DatabasesUpdateCommand extends Command
 		}, ARRAY_FILTER_USE_BOTH);
 
 		if (empty($body['data']['attributes'])) {
-			$body['data']['attributes'] = $this->handleEmptyAttrRequest($input, $output);
+			$output->writeln('<error>Command requires at least one option to be executed</error>');
+			exit(1);
 		}
 
 		return json_encode($body);
 	}
-
-	/**
-	 * @param InputInterface $input
-	 * @param OutputInterface $output
-	 * @return array
-	 * @throws \Exception
-	 */
-	protected function handleEmptyAttrRequest(InputInterface $input, OutputInterface $output): array
-	{
-		/** @var QuestionHelper $questionHelper */
-		$questionHelper = $this->getHelper('question');
-		$question = new ConfirmationQuestion('<info>An update with no changes will restart your database, are you sure? (Y/n)</info>');
-		if (!$questionHelper->ask($input, $output, $question)) {
-			$output->writeln("<info>Please add options and re-run command</info>");
-			exit();
-		}
-
-		$appsNewCommand = $this->getApplication()->find(DatabasesDescribeCommand::getDefaultName());
-		$args = [
-			'command'     => DatabasesDescribeCommand::getDefaultName(),
-			'database_id' => $input->getArgument('database_id'),
-			'--json'      => true,
-		];
-		$bufferedOutput = new BufferedOutput();
-		$appsNewCommand->run(new ArrayInput($args), $bufferedOutput);
-		/** @var Document $document */
-		$document = Parser::parseResponseString($bufferedOutput->fetch());
-		return ['description' => $document->get('data.attributes.description')];
-
-	}
-
 
 	/**
 	 * @param Document $document
