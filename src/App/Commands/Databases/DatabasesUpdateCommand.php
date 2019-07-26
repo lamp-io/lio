@@ -138,7 +138,12 @@ class DatabasesUpdateCommand extends Command
 		}
 
 		if (empty($attributes)) {
-			$output->writeln('<error>Command requires at least one option to be executed</error>');
+			$commandOptions = array_filter($input->getOptions(), function ($key) {
+				if (!in_array($key, self::DEFAULT_CLI_OPTIONS)) {
+					return '--' . $key;
+				}
+			}, ARRAY_FILTER_USE_KEY);
+			$output->writeln('<comment>Command requires at least one option to be executed. List of allowed options:' . implode(PHP_EOL, array_keys($commandOptions)) . '</comment>');
 			exit(1);
 		}
 
