@@ -10,15 +10,11 @@ use Art4\JsonApiClient\V1\Document;
 use Console\App\Commands\Command;
 use GuzzleHttp\Exception\GuzzleException;
 use InvalidArgumentException;
-use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Helper\Table;
-use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 class DatabasesUpdateCommand extends Command
 {
@@ -101,34 +97,29 @@ class DatabasesUpdateCommand extends Command
 		if (!empty($input->getOption('my_cnf')) && !file_exists($input->getOption('my_cnf'))) {
 			throw  new InvalidArgumentException('Path to mysql config not valid');
 		}
-
-		$body = [
-			'data' => [
-				'attributes' => array_merge([
-					'description'         => $input->getOption('description'),
-					'memory'              => $input->getOption('memory'),
-					'my_cnf'              => !(empty($input->getOption('my_cnf'))) ? file_get_contents($input->getOption('my_cnf')) : '',
-					'mysql_root_password' => $input->getOption('mysql_root_password'),
-					'ssd'                 => $input->getOption('ssd'),
-					'vcpu'                => (float)$input->getOption('vcpu'),
-				], !empty($input->getOption('organization_id')) ? ['organization_id' => $input->getOption('organization_id')] : []),
-				'id'         => $input->getArgument('database_id'),
-				'type'       => 'databases',
-			],
-		];
-
-		$body['data']['attributes'] = array_filter($body['data']['attributes'], function ($val, $key) {
-			if (!empty($val)) {
-				return [$key => $val];
+		$attributes = [];
+		foreach ($input->getOptions() as $key => $val) {
+			if (!in_array($key, self::DEFAULT_CLI_OPTIONS) && !empty($val)) {
+				if ($key == 'my_cnf') {
+					$attributes[$key] = file_get_contents($val);
+				} else {
+					$attributes[$key] = $val;
+				}
 			}
-		}, ARRAY_FILTER_USE_BOTH);
+		}
 
-		if (empty($body['data']['attributes'])) {
+		if (empty($attributes)) {
 			$output->writeln('<error>Command requires at least one option to be executed</error>');
 			exit(1);
 		}
 
-		return json_encode($body);
+		return json_encode([
+			'data' => [
+				'attributes' => $attributes,
+				'id'         => $input->getArgument('database_id'),
+				'type'       => 'databases',
+			],
+		]);
 	}
 
 	/**
