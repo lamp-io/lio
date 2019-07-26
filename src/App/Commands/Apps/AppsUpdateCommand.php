@@ -147,7 +147,7 @@ class AppsUpdateCommand extends Command
 					return '--' . $key;
 				}
 			}, ARRAY_FILTER_USE_KEY);
-			$output->writeln('<comment>Command requires at least one option to be executed. List of allowed options:' . implode(PHP_EOL, array_keys($commandOptions)) . '</comment>');
+			$output->writeln('<comment>Command requires at least one option to be executed. List of allowed options:' . PHP_EOL . implode(PHP_EOL, array_keys($commandOptions)) . '</comment>');
 			exit(1);
 		}
 
