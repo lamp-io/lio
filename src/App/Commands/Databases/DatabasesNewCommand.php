@@ -3,8 +3,10 @@
 namespace Console\App\Commands\Databases;
 
 use Console\App\Commands\Command;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use InvalidArgumentException;
+use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -12,6 +14,7 @@ use Art4\JsonApiClient\V1\Document;
 use Symfony\Component\Console\Helper\Table;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\Helper\Parser;
+use Symfony\Component\Console\Question\Question;
 
 class DatabasesNewCommand extends Command
 {
@@ -20,7 +23,8 @@ class DatabasesNewCommand extends Command
 	const API_ENDPOINT = 'https://api.lamp.io/databases';
 
 	const EXCLUDE_FROM_OUTPUT = [
-		'my_cnf'
+		'my_cnf',
+		//		'mysql_root_password',
 	];
 
 	/**
@@ -35,7 +39,6 @@ class DatabasesNewCommand extends Command
 			->addOption('memory', 'm', InputOption::VALUE_REQUIRED, 'Amount of virtual memory on your database, default 512Mi', '512Mi')
 			->addOption('organization_id', null, InputOption::VALUE_REQUIRED, 'Name of your organization', '')
 			->addOption('my_cnf', null, InputOption::VALUE_REQUIRED, 'Path to your database config file', '')
-			->addOption('mysql_root_password', null, InputOption::VALUE_REQUIRED, 'Root password', '')
 			->addOption('ssd', null, InputOption::VALUE_REQUIRED, 'Size of ssd storage, default 1Gi', '1Gi')
 			->addOption('vcpu', null, InputOption::VALUE_REQUIRED, 'The number of virtual cpu cores available, default 0.25', '0.25');
 	}
@@ -49,13 +52,36 @@ class DatabasesNewCommand extends Command
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
+		/** @var QuestionHelper $helper */
+		$helper = $this->getHelper('question');
+		$question = new Question('<info>Please write your root_password for database</info>');
+		$question->setHidden(true);
+		$question->setValidator(function ($value) {
+			$uppercase = preg_match('@[A-Z]@', $value);
+			$lowercase = preg_match('@[a-z]@', $value);
+			$number = preg_match('@[0-9]@', $value);
+			$length = strlen($value) >= 15;
+			if (!$uppercase || !$lowercase || !$number || !$length) {
+				$exceptionMessage = [
+					'* Must be a minimum of 15 characters',
+					'* Must contain at least 1 number',
+					'* Must contain at least one uppercase character',
+					'* Must contain at least one lowercase character',
+				];
+				throw new Exception(PHP_EOL . implode(PHP_EOL, $exceptionMessage));
+			}
+
+			return $value;
+		});
+		$question->setMaxAttempts(10);
+		$password = $helper->ask($input, $output, $question);
 		try {
 			$response = $this->httpHelper->getClient()->request(
 				'POST',
 				self::API_ENDPOINT,
 				[
 					'headers' => $this->httpHelper->getHeaders(),
-					'body'    => $this->getRequestBody($input),
+					'body'    => $this->getRequestBody($input, $password),
 				]
 			);
 			if (!empty($input->getOption('json'))) {
@@ -78,9 +104,10 @@ class DatabasesNewCommand extends Command
 
 	/**
 	 * @param InputInterface $input
+	 * @param string $password
 	 * @return string
 	 */
-	protected function getRequestBody(InputInterface $input): string
+	protected function getRequestBody(InputInterface $input, string $password): string
 	{
 		if (!empty($input->getOption('my_cnf')) && !file_exists($input->getOption('my_cnf'))) {
 			throw  new InvalidArgumentException('Path to mysql config not valid');
@@ -92,7 +119,7 @@ class DatabasesNewCommand extends Command
 					'description'         => $input->getOption('description'),
 					'memory'              => $input->getOption('memory'),
 					'my_cnf'              => !(empty($input->getOption('my_cnf'))) ? file_get_contents($input->getOption('my_cnf')) : '',
-					'mysql_root_password' => $input->getOption('mysql_root_password'),
+					'mysql_root_password' => $password,
 					'ssd'                 => $input->getOption('ssd'),
 					'vcpu'                => (float)$input->getOption('vcpu'),
 				], !empty($input->getOption('organization_id')) ? ['organization_id' => $input->getOption('organization_id')] : []),
