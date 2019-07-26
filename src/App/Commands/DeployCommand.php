@@ -106,7 +106,7 @@ class DeployCommand extends Command
 		}
 
 		$questionHelper = $this->getHelper('question');
-		$question = new ConfirmationQuestion('<info>This looks like a new app, shall we create a lamp.io app for it?(y/n)</info>');
+		$question = new ConfirmationQuestion('<info>This looks like a new app, shall we create a lamp.io app for it? (Y/n):</info>');
 		if (!$questionHelper->ask($input, $output, $question)) {
 			$output->writeln('<info>You must to create new app or select to which app your project should be deployed, in .lamp.io file inside of your project</info>');
 			exit();
@@ -189,7 +189,7 @@ class DeployCommand extends Command
 				return new $deployClass(rtrim($appDir, '/'), $this->getApplication());
 			}
 		}
-		throw new InvalidArgumentException('App type for deployment, not specified, apps allowed' . implode(',', array_keys(self::DEPLOYS)));
+		throw new InvalidArgumentException('App type for deployment, not specified, apps allowed ' . implode(',', array_keys(self::DEPLOYS)));
 	}
 
 }
