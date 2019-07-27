@@ -6,6 +6,7 @@ if (file_exists(dirname(__DIR__, 3) . '/autoload.php')) {
 	require_once dirname(__DIR__) . '/vendor/autoload.php';
 }
 
+use Console\App\Commands\DbBackups\DbBackupsList;
 use Console\App\Commands\DbBackups\DbBackupsNewCommand;
 use Symfony\Component\Console\Application;
 use Console\App\Commands\Apps\AppsDescribeCommand;
@@ -72,6 +73,7 @@ try {
 	$app->add(new DatabasesListCommand(new Client()));
 	$app->add(new DatabasesUpdateCommand(new Client()));
 	$app->add(new DbBackupsNewCommand(new Client()));
+	$app->add(new DbBackupsList(new Client()));
 	$app->run();
 } catch (Exception $exception) {
     echo $exception->getMessage() . PHP_EOL;
