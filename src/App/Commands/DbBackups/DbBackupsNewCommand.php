@@ -66,7 +66,7 @@ class DbBackupsNewCommand extends Command
 				'attributes' => [
 					'database_id' => $dbId,
 				],
-				'type'       => 'app_backups',
+				'type'       => 'db_backups',
 			],
 		]);
 	}
