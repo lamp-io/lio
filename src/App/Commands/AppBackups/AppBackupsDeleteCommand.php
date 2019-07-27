@@ -4,9 +4,11 @@ namespace Console\App\Commands\AppBackups;
 
 use Console\App\Commands\Command;
 use GuzzleHttp\Exception\GuzzleException;
+use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 class AppBackupsDeleteCommand extends Command
 {
@@ -34,9 +36,14 @@ class AppBackupsDeleteCommand extends Command
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
-
+		/** @var QuestionHelper $helper */
+		$helper = $this->getHelper('question');
+		$question = new ConfirmationQuestion('<info>Are you sure you want to delete app backup? (y/N)</info>', false);
+		if (!$helper->ask($input, $output, $question)) {
+			exit(0);
+		}
 		try {
-			$this->httpHelper->getClient()->request(
+			$response = $this->httpHelper->getClient()->request(
 				'DELETE',
 				sprintf(
 					self::API_ENDPOINT,
@@ -47,10 +54,13 @@ class AppBackupsDeleteCommand extends Command
 				]
 
 			);
-			$output->writeln(
-				'<info>Backup deleted ' . $input->getArgument('app_backup_id') . '</info>'
-			);
-
+			if (!empty($input->getOption('json'))) {
+				$output->writeln($response->getBody()->getContents());
+			} else {
+				$output->writeln(
+					'<info>Backup deleted ' . $input->getArgument('app_backup_id') . '</info>'
+				);
+			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln('<error>' . $guzzleException->getMessage() . '</error>');
 			die();
