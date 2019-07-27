@@ -233,7 +233,6 @@ Commands
    * `[--ssd](string)` Size of ssd storage
    * `[--vcpu](float)` The number of virtual cpu cores available, default 0.25
     
-    
 4. ### databases:list [--organization_id]
 
     Returns all allowed databases
@@ -249,6 +248,75 @@ Commands
     Arguments:
     
     *`<database_id>(string)` The id of database
+
+### Database backups
+
+1. ### db_backups:new <database_id>
+
+    Back up files in database
+    
+    Arguments:
+    
+    *`<database_id>(string)` The id of database
+    
+2. ### db_backups:delete <db_backup_id>
+
+    Delete a db backup
+    
+    Arguments:
+        
+    *`<db_backup_id>(string)` The ID of the db backup
+    
+3. ###db_backups:list [--organization_id][-o]
+
+    Return db backups
+    
+    Options:
+    
+    * `organization_id` Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
+    
+4. ### db_backups:describe <db_backup_id>
+
+    Return a db backup
+    
+    Arguments:
+    
+    *`<db_backup_id>(string)` The ID of the db backup
+    
+### Database restore jobs
+
+1. ### db_restores:new 
+
+    Create db restore job (restore a db backup to a database)
+    
+    Arguments:
+    
+    *`<database_id>(string)` The id of database
+    *`<db_backup_id>(string)` The ID of the db backup
+    
+2. ### db_restores:delete <db_restore_id>
+
+    Delete a db restore job
+    
+    Arguments:
+    
+    *`<db_restore_id>(string)` The ID of the db restore
+      
+3. ### db_restores:list [--organization_id][-o]
+
+    Return db restore jobs
+    
+    Options:
+    
+    * `organization_id` Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
+    
+4. ### db_restores:describe <db_restore_id>
+
+    Return a db restore job
+    
+    Arguments:
+    
+    *`<db_restore_id>(string)` The ID of the db restore
 
 ### Files
 
