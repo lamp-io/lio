@@ -6,6 +6,7 @@ if (file_exists(dirname(__DIR__, 3) . '/autoload.php')) {
 	require_once dirname(__DIR__) . '/vendor/autoload.php';
 }
 
+use Console\App\Commands\DbBackups\DbBackupsDeleteCommand;
 use Console\App\Commands\DbBackups\DbBackupsDescribeCommand;
 use Console\App\Commands\DbBackups\DbBackupsListCommand;
 use Console\App\Commands\DbBackups\DbBackupsNewCommand;
@@ -76,6 +77,7 @@ try {
 	$app->add(new DbBackupsNewCommand(new Client()));
 	$app->add(new DbBackupsListCommand(new Client()));
 	$app->add(new DbBackupsDescribeCommand(new Client()));
+	$app->add(new DbBackupsDeleteCommand(new Client()));
 	$app->run();
 } catch (Exception $exception) {
     echo $exception->getMessage() . PHP_EOL;
