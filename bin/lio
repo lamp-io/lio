@@ -6,6 +6,7 @@ if (file_exists(dirname(__DIR__, 3) . '/autoload.php')) {
 	require_once dirname(__DIR__) . '/vendor/autoload.php';
 }
 
+use Console\App\Commands\DbRestores\DbRestoresDescribeCommand;
 use Console\App\Commands\DbRestores\DbRestoresListCommand;
 use Console\App\Commands\DbRestores\DbRestoresNewCommand;
 use Console\App\Commands\DbBackups\DbBackupsDeleteCommand;
@@ -82,6 +83,7 @@ try {
 	$app->add(new DbBackupsDeleteCommand(new Client()));
 	$app->add(new DbRestoresNewCommand(new Client()));
 	$app->add(new DbRestoresListCommand(new Client()));
+	$app->add(new DbRestoresDescribeCommand(new Client()));
 	$app->run();
 } catch (Exception $exception) {
     echo $exception->getMessage() . PHP_EOL;
