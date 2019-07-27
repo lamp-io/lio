@@ -15,7 +15,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class DbBackupsList extends Command
+class DbBackupsListCommand extends Command
 {
 	const API_ENDPOINT = 'https://api.lamp.io/db_backups%s';
 
