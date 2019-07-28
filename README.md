@@ -384,9 +384,22 @@ Commands
     * `<app_id>(string)` The ID of the app
     * `<remote_path>(string)` File path on app, that should be unarchived
 
+### Logs
+
+1. ### logs:list [--organization_id][-o] [--pod_name][-p] [--start_time] [--end_time]
+
+    Return logs
+    
+    Options
+    
+    * `[--organization_id][-o](string)` One organization_id. If omitted defaults to user's default organization
+    * `[--pod_name][-p](string)` One pod_name. Uses wildcard prefix match
+    * `[--start_time](string){date - 10min}` Start time conforming to RFC3339. Defaults to 10 minutes in the past
+    * `[--end_time](string){date}` End time conforming to RFC3339. Defaults to now
+
 ### Users
 
-1. #### files:update:unarchive [--organization_id][-o] [--email][-e]
+1. #### users:list [--organization_id][-o] [--email][-e]
 
     Get all users from your account
     
