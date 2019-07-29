@@ -309,6 +309,7 @@ Commands
 ### Files sub commands: 
 
 1. #### files:update:unarchive <app_id> <remote_path>
+
     Extract your archived file, on your app
     
     Arguments:
@@ -316,6 +317,26 @@ Commands
     * `<app_id>(string)` The ID of the app
     * `<remote_path>(string)` File path on app, that should be unarchived
 
+### Organizations
+
+1. ### organizations:update <organization_id> [--name] [--promo_code] [-p][--payment]
+
+    Update an organization
+    
+    Arguments:
+    
+    * `<organization_id>(string)` The ID of the organization
+    
+    Options:
+    
+    * `[--name](string)` New organization name
+    * `[--promo_code]`  Apply promo code
+    * `[-p][--payment]` New Stripe source id
+
+2. ### organizations:list
+
+    Returns this user's organizations
+    
 ### Users
 
 1. #### files:update:unarchive [--organization_id][-o] [--email][-e]

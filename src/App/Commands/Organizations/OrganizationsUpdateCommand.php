@@ -39,8 +39,8 @@ class OrganizationsUpdateCommand extends Command
 		$this->setDescription('Update an organization')
 			->setHelp('https://www.lamp.io/api#/organizations/organizationsUpdate')
 			->addArgument('organization_id', InputArgument::REQUIRED, 'The ID of the organization')
-			->addOption('name', null, InputOption::VALUE_REQUIRED, 'Organization name')
-			->addOption('promo_code', null, InputOption::VALUE_REQUIRED, 'Promo code')
+			->addOption('name', null, InputOption::VALUE_REQUIRED, 'New organization name')
+			->addOption('promo_code', null, InputOption::VALUE_REQUIRED, 'Apply promo code')
 			->addOption('payment', 'p', InputOption::VALUE_REQUIRED, 'Stripe source id');
 	}
 
