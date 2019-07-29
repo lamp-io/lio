@@ -3,6 +3,7 @@
 namespace Console\App\Commands\Databases;
 
 use Console\App\Commands\Command;
+use Console\App\Helpers\PasswordHelper;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use InvalidArgumentException;
@@ -14,7 +15,6 @@ use Art4\JsonApiClient\V1\Document;
 use Symfony\Component\Console\Helper\Table;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\Helper\Parser;
-use Symfony\Component\Console\Question\Question;
 
 class DatabasesNewCommand extends Command
 {
@@ -24,8 +24,12 @@ class DatabasesNewCommand extends Command
 
 	const EXCLUDE_FROM_OUTPUT = [
 		'my_cnf',
-		//		'mysql_root_password',
 	];
+
+	/**
+	 * @var bool
+	 */
+	protected $isPasswordSet;
 
 	/**
 	 *
@@ -47,34 +51,16 @@ class DatabasesNewCommand extends Command
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
 	 * @return int|void|null
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
 		/** @var QuestionHelper $helper */
 		$helper = $this->getHelper('question');
-		$question = new Question('<info>Please write your root_password for database</info>');
-		$question->setHidden(true);
-		$question->setValidator(function ($value) {
-			$uppercase = preg_match('@[A-Z]@', $value);
-			$lowercase = preg_match('@[a-z]@', $value);
-			$number = preg_match('@[0-9]@', $value);
-			$length = strlen($value) >= 15;
-			if (!$uppercase || !$lowercase || !$number || !$length) {
-				$exceptionMessage = [
-					'* Must be a minimum of 15 characters',
-					'* Must contain at least 1 number',
-					'* Must contain at least one uppercase character',
-					'* Must contain at least one lowercase character',
-				];
-				throw new Exception(PHP_EOL . implode(PHP_EOL, $exceptionMessage));
-			}
-
-			return $value;
-		});
-		$question->setMaxAttempts(10);
+		$question = PasswordHelper::getPasswordQuestion();
 		$password = $helper->ask($input, $output, $question);
+		$this->isPasswordSet = $password !== ' ';
 		try {
 			$response = $this->httpHelper->getClient()->request(
 				'POST',
@@ -87,6 +73,9 @@ class DatabasesNewCommand extends Command
 			if (!empty($input->getOption('json'))) {
 				$output->writeln($response->getBody()->getContents());
 			} else {
+				if (!$this->isPasswordSet) {
+					$output->writeln('<error>Warning: This is the last chance to copy the mysql root password, we do not keep it.</error>');
+				}
 				/** @var Document $document */
 				$document = Parser::parseResponseString($response->getBody()->getContents());
 				$table = $this->getOutputAsTable($document, new Table($output));
@@ -113,19 +102,24 @@ class DatabasesNewCommand extends Command
 			throw  new InvalidArgumentException('Path to mysql config not valid');
 		}
 
-		return json_encode([
-			'data' => [
-				'attributes' => array_merge([
-					'description'         => $input->getOption('description'),
-					'memory'              => $input->getOption('memory'),
-					'my_cnf'              => !(empty($input->getOption('my_cnf'))) ? file_get_contents($input->getOption('my_cnf')) : '',
-					'mysql_root_password' => $password,
-					'ssd'                 => $input->getOption('ssd'),
-					'vcpu'                => (float)$input->getOption('vcpu'),
-				], !empty($input->getOption('organization_id')) ? ['organization_id' => $input->getOption('organization_id')] : []),
-				'type'       => 'databases',
-			],
-		]);
+		$attributes = [];
+		foreach ($input->getOptions() as $optionKey => $option) {
+			if (!in_array($optionKey, self::DEFAULT_CLI_OPTIONS) && !empty($option)) {
+				$attributes[$optionKey] = ($optionKey == 'vcpu') ? (float)$option : $option;
+			}
+		}
+		if ($password != ' ') {
+			$attributes['mysql_root_password'] = $password;
+		}
+
+		return json_encode(
+			[
+				'data' => [
+					'attributes' => $attributes,
+					'type'       => 'databases',
+				],
+			]
+		);
 	}
 
 
@@ -144,6 +138,9 @@ class DatabasesNewCommand extends Command
 
 		foreach ($serializedDocument['data']['attributes'] as $key => $value) {
 			if (!empty($value) && !in_array($key, self::EXCLUDE_FROM_OUTPUT)) {
+				if ($key == 'mysql_root_password' && $this->isPasswordSet) {
+					continue;
+				}
 				array_push($headers, $key);
 				array_push($row, $value);
 			}
