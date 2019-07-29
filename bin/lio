@@ -8,6 +8,7 @@ if (file_exists(dirname(__DIR__, 3) . '/autoload.php')) {
 
 use Console\App\Commands\Organizations\OrganizationsListCommand;
 use Console\App\Commands\Organizations\OrganizationsUpdateCommand;
+use Console\App\Commands\Tokens\TokensNewCommand;
 use Symfony\Component\Console\Application;
 use Console\App\Commands\Apps\AppsDescribeCommand;
 use Console\App\Commands\Apps\AppsListCommand;
@@ -74,6 +75,7 @@ try {
 	$app->add(new DatabasesUpdateCommand(new Client()));
 	$app->add(new OrganizationsListCommand(new Client()));
 	$app->add(new OrganizationsUpdateCommand(new Client()));
+	$app->add(new TokensNewCommand(new Client()));
 	$app->run();
 } catch (Exception $exception) {
     echo $exception->getMessage() . PHP_EOL;
