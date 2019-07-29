@@ -94,7 +94,7 @@ Commands
     
 4. #### apps:update <app_id> <organization_id>  [-d][--description] [--httpd_conf] [--max_replicas] [-m][--memory] [--min_replicas] [--php_ini] [-r][--replicas] [--vcpu]
     
-    Will allow you to update selected app
+    Will allow you to update selected app. Command should be executed with at least one option
     
     Arguments:
     
@@ -193,7 +193,7 @@ Commands
     
 ### Databases 
 
-1. ### databases:new  [-d][--description] [-m][--memory] [--organization_id] [--my_cnf] [--mysql_root_password] [--ssd] [--vcpu]
+1. ### databases:new  [-d][--description] [-m][--memory] [--organization_id] [--my_cnf] [--ssd] [--vcpu]
 
    Create a new database
     
@@ -203,7 +203,6 @@ Commands
    * `[-m][--memory](string){512Mi}` Amount of virtual memory on your database
    * `[--organization_id](string)` Name of your organization
    * `[--my_cnf](string)` Path to your database config file
-   * `[--mysql_root_password](string)` Root password
    * `[--ssd](string){1Gi}` Size of ssd storage
    * `[--vcpu](float){0.25}` The number of virtual cpu cores available, default 0.25
    
@@ -217,7 +216,7 @@ Commands
     
 3. ### databases:update <database_id> [-d][--description] [-m][--memory] [--organization_id] [--my_cnf] [--mysql_root_password] [--ssd] [--vcpu]
     
-    Update a database
+    Update a database. Command should be executed with at least one option
     
     Arguments:
         
@@ -229,7 +228,7 @@ Commands
    * `[-m][--memory](string)` Amount of virtual memory on your database
    * `[--organization_id](string)` Name of your organization
    * `[--my_cnf](string)` Path to your database config file
-   * `[--mysql_root_password](string)` Root password
+   * `[--mysql_root_password](bool)` If you need to update root password, set it as true
    * `[--ssd](string)` Size of ssd storage
    * `[--vcpu](float)` The number of virtual cpu cores available, default 0.25
     
