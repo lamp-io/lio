@@ -29,7 +29,6 @@ class DatabasesUpdateCommand extends Command
 
 	const EXCLUDE_FROM_OUTPUT = [
 		'my_cnf',
-		//		'mysql_root_password',
 	];
 
 	/**
