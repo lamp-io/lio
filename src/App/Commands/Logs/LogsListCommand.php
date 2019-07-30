@@ -85,6 +85,10 @@ class LogsListCommand extends Command
 		}
 	}
 
+	/**
+	 * @param array $logs
+	 * @return array
+	 */
 	protected function sortByPods(array $logs): array
 	{
 		$sortedByPods = [];
