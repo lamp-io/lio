@@ -76,7 +76,7 @@ class AppRunsListCommand extends Command
 		$serializer = new ArraySerializer(['recursive' => true]);
 		$appRuns = $serializer->serialize($document->get('data'));
 		$table->setHeaders(['Id', 'App ID', 'Complete', 'Command', 'Execution date', 'Complete date']);
-		$sortedData = $this->sortData($appRuns, 'created_at');
+		$sortedData = $this->sortData($appRuns, 'updated_at');
 		$lastElement = end($sortedData);
 		foreach ($sortedData as $key => $data) {
 			$table->addRow([

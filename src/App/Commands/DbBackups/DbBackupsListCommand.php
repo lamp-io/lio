@@ -90,7 +90,7 @@ class DbBackupsListCommand extends Command
 		]);
 		$serializer = new ArraySerializer(['recursive' => true]);
 		$serializedDocument = $serializer->serialize($document);
-		$sortedData = $this->sortData($serializedDocument['data'], 'created_at');
+		$sortedData = $this->sortData($serializedDocument['data'], 'updated_at');
 		$lastElement = end($sortedData);
 		foreach ($sortedData as $key => $value) {
 			$table->addRow([

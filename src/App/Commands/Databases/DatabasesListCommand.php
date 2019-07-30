@@ -87,7 +87,7 @@ class DatabasesListCommand extends Command
 		$serializedDocument = $serializer->serialize($document);
 		$header = ['Id', 'Attributes'];
 		$table->setHeaders($header);
-		$sortedData = $this->sortData($serializedDocument['data'], 'created_at');
+		$sortedData = $this->sortData($serializedDocument['data'], 'updated_at');
 		$lastElement = end($sortedData);
 		foreach ($sortedData as $key => $data) {
 			$row = [$data['id']];
