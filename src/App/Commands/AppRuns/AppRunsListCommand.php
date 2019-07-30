@@ -74,18 +74,20 @@ class AppRunsListCommand extends Command
 	{
 		$table->setHeaderTitle('App runs list');
 		$serializer = new ArraySerializer(['recursive' => true]);
-		$appRuns = $serializer->serialize($document);
+		$appRuns = $serializer->serialize($document->get('data'));
 		$table->setHeaders(['Id', 'App ID', 'Complete', 'Command', 'Execution date', 'Complete date']);
-		foreach ($appRuns['data'] as $key => $attribute) {
+		$sortedData = $this->sortData($appRuns, 'created_at');
+		$lastElement = end($sortedData);
+		foreach ($sortedData as $key => $data) {
 			$table->addRow([
-				$attribute['id'],
-				$attribute['attributes']['app_id'],
-				$attribute['attributes']['complete'],
-				wordwrap($attribute['attributes']['command'], 20, PHP_EOL),
-				$attribute['attributes']['created_at'],
-				$attribute['attributes']['updated_at'],
+				$data['id'],
+				$data['attributes']['app_id'],
+				$data['attributes']['complete'],
+				wordwrap($data['attributes']['command'], 20, PHP_EOL),
+				$data['attributes']['created_at'],
+				$data['attributes']['updated_at'],
 			]);
-			if ($key != count($appRuns['data']) - 1) {
+			if ($data != $lastElement) {
 				$table->addRow(new TableSeparator());
 			}
 		}

@@ -90,18 +90,20 @@ class DbRestoresListCommand extends Command
 		]);
 		$serializer = new ArraySerializer(['recursive' => true]);
 		$serializedDocument = $serializer->serialize($document);
-		foreach ($serializedDocument['data'] as $key => $value) {
+		$sortedData = $this->sortData($serializedDocument['data'], 'created_at');
+		$lastElement = end($sortedData);
+		foreach ($sortedData as $key => $value) {
 			$table->addRow([
 				$value['id'],
-				$document->get('data.' . $key . '.attributes.target_database_id'),
-				$document->get('data.' . $key . '.attributes.db_backup_id'),
-				$document->get('data.' . $key . '.attributes.complete'),
-				$document->get('data.' . $key . '.attributes.created_at'),
-				$document->get('data.' . $key . '.attributes.organization_id'),
-				$document->get('data.' . $key . '.attributes.status'),
-				$document->get('data.' . $key . '.attributes.updated_at'),
+				$value['attributes']['target_database_id'],
+				$value['attributes']['db_backup_id'],
+				($value['attributes']['complete']) ? 'true' : 'false',
+				$value['attributes']['created_at'],
+				$value['attributes']['organization_id'],
+				$value['attributes']['status'],
+				$value['attributes']['updated_at'],
 			]);
-			if ($key != count($serializedDocument['data']) - 1) {
+			if ($value != $lastElement) {
 				$table->addRow(new TableSeparator());
 			}
 
