@@ -3,22 +3,30 @@
 namespace Console\App\Helpers;
 
 use Exception;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
 
 class PasswordHelper
 {
 	/**
+	 * @param string $questionOutput
+	 * @param mixed $default
+	 * @param OutputInterface $output
 	 * @return Question
 	 */
-	public static function getPasswordQuestion(): Question
+	public static function getPasswordQuestion(string $questionOutput, $default, OutputInterface $output): Question
 	{
-		$question = new Question('<info>Please provide a password for the MySQL root user (leave blank for a randomly generated one)</info>', ' ');
+		$question = new Question($questionOutput, $default);
 		$question->setHiddenFallback(false);
 		$question->setHidden(true);
-		$question->setValidator(function ($value) {
+		$question->setValidator(function ($value) use($output) {
 			$number = preg_match('/[0-9]|[\W]+/', $value);
 			$length = strlen($value) >= 8;
-			if ((!$length || !$number) && $value !== ' ') {
+			if (is_null($value)) {
+				$output->writeln('<error>Error: Refusing to set empty password</error>');
+				exit(1);
+			}
+			if ((!$length || !$number)) {
 				$exceptionMessage = [
 					'* Must be a minimum of 8 characters',
 					'* Must contain at least 1 number or 1 symbol',
@@ -32,17 +40,4 @@ class PasswordHelper
 
 		return $question;
 	}
-
-	public static function generateRandomPassword(int $size): string
-	{
-		$alphabet = "abcdefghijklmnopqrstuwxyzABCDEFGHIJKLMNOPQRSTUWXYZ0123456789!@#$%^&*(){}";
-		$pass = [];
-		$alphaLength = strlen($alphabet) - 1;
-		for ($i = 0; $i < $size; $i++) {
-			$n = rand(0, $alphaLength);
-			$pass[] = $alphabet[$n];
-		}
-		return implode($pass);
-	}
-
 }

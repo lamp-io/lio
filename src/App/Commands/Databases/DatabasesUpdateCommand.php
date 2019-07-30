@@ -25,16 +25,10 @@ class DatabasesUpdateCommand extends Command
 
 	const API_ENDPOINT = 'https://api.lamp.io/databases/%s';
 
-	const RANDOM_PASSWORD_SIZE = 16;
-
 	const EXCLUDE_FROM_OUTPUT = [
 		'my_cnf',
+		'mysql_root_password',
 	];
-
-	/**
-	 * @var
-	 */
-	protected $isPasswordSet;
 
 	/**
 	 *
@@ -58,7 +52,7 @@ class DatabasesUpdateCommand extends Command
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
 	 * @return int|void|null
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -66,9 +60,12 @@ class DatabasesUpdateCommand extends Command
 		if ($input->getOption('mysql_root_password')) {
 			/** @var QuestionHelper $helper */
 			$helper = $this->getHelper('question');
-			$question = PasswordHelper::getPasswordQuestion();
+			$question = PasswordHelper::getPasswordQuestion(
+				'<info>Please provide a password for the MySQL root user</info>',
+				null,
+				$output
+			);
 			$password = $helper->ask($input, $output, $question);
-			$this->isPasswordSet = $password !== ' ';
 			$input->setOption('mysql_root_password', $password);
 		}
 		try {
@@ -86,9 +83,6 @@ class DatabasesUpdateCommand extends Command
 			if (!empty($input->getOption('json'))) {
 				$output->writeln($response->getBody()->getContents());
 			} else {
-				if (!$this->isPasswordSet && !empty($input->getOption('mysql_root_password'))) {
-					$output->writeln('<error>Warning: This is the last chance to copy the mysql root password, we do not keep it.</error>');
-				}
 				/** @var Document $document */
 				$document = Parser::parseResponseString($response->getBody()->getContents());
 				$table = $this->getOutputAsTable($document, new Table($output));
@@ -121,8 +115,6 @@ class DatabasesUpdateCommand extends Command
 			if (!in_array($key, self::DEFAULT_CLI_OPTIONS) && !empty($val)) {
 				if ($key == 'my_cnf') {
 					$attributes[$key] = file_get_contents($val);
-				} elseif ($key == 'mysql_root_password' && !$this->isPasswordSet) {
-					$attributes[$key] = PasswordHelper::generateRandomPassword(self::RANDOM_PASSWORD_SIZE);
 				} else {
 					$attributes[$key] = $val;
 				}
@@ -160,12 +152,8 @@ class DatabasesUpdateCommand extends Command
 		$serializedDocument = $serializer->serialize($document);
 		$headers = ['Id'];
 		$row = [$serializedDocument['data']['id']];
-
 		foreach ($serializedDocument['data']['attributes'] as $key => $value) {
 			if (!empty($value) && !in_array($key, self::EXCLUDE_FROM_OUTPUT)) {
-				if ($this->isPasswordSet && $key === 'mysql_root_password') {
-					continue;
-				}
 				array_push($headers, $key);
 				array_push($row, $value);
 			}

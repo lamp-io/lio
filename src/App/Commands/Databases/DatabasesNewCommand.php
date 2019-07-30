@@ -24,12 +24,9 @@ class DatabasesNewCommand extends Command
 
 	const EXCLUDE_FROM_OUTPUT = [
 		'my_cnf',
+		'mysql_root_password',
 	];
 
-	/**
-	 * @var bool
-	 */
-	protected $isPasswordSet;
 
 	/**
 	 *
@@ -58,9 +55,12 @@ class DatabasesNewCommand extends Command
 		parent::execute($input, $output);
 		/** @var QuestionHelper $helper */
 		$helper = $this->getHelper('question');
-		$question = PasswordHelper::getPasswordQuestion();
+		$question = PasswordHelper::getPasswordQuestion(
+			'<info>Please provide a password for the MySQL root user (leave blank for a randomly generated one)</info>',
+			null,
+			$output
+		);
 		$password = $helper->ask($input, $output, $question);
-		$this->isPasswordSet = $password !== ' ';
 		try {
 			$response = $this->httpHelper->getClient()->request(
 				'POST',
@@ -73,9 +73,6 @@ class DatabasesNewCommand extends Command
 			if (!empty($input->getOption('json'))) {
 				$output->writeln($response->getBody()->getContents());
 			} else {
-				if (!$this->isPasswordSet) {
-					$output->writeln('<error>Warning: This is the last chance to copy the mysql root password, we do not keep it.</error>');
-				}
 				/** @var Document $document */
 				$document = Parser::parseResponseString($response->getBody()->getContents());
 				$table = $this->getOutputAsTable($document, new Table($output));
@@ -108,9 +105,8 @@ class DatabasesNewCommand extends Command
 				$attributes[$optionKey] = ($optionKey == 'vcpu') ? (float)$option : $option;
 			}
 		}
-		if ($password != ' ') {
-			$attributes['mysql_root_password'] = $password;
-		}
+		$attributes['mysql_root_password'] = $password;
+
 
 		return json_encode(
 			[
@@ -138,9 +134,6 @@ class DatabasesNewCommand extends Command
 
 		foreach ($serializedDocument['data']['attributes'] as $key => $value) {
 			if (!empty($value) && !in_array($key, self::EXCLUDE_FROM_OUTPUT)) {
-				if ($key == 'mysql_root_password' && $this->isPasswordSet) {
-					continue;
-				}
 				array_push($headers, $key);
 				array_push($row, $value);
 			}
