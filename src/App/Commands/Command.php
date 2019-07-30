@@ -86,7 +86,11 @@ class Command extends BaseCommand
 	protected function sortData(array $data, string $fieldName): array
 	{
 		uasort($data, function ($a, $b) use ($fieldName) {
-			return $a['attributes'][$fieldName] <=> $b['attributes'][$fieldName];
+			if (!isset($a['attributes'][$fieldName]) || !isset($b['attributes'][$fieldName])) {
+				return $a;
+			} else {
+				return $a['attributes'][$fieldName] <=> $b['attributes'][$fieldName];
+			}
 		});
 
 		return $data;
