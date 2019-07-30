@@ -36,6 +36,11 @@ class FilesListCommand extends Command
 	protected $rawJsonResponse = [];
 
 	/**
+	 * @var array
+	 */
+	protected $dataToOutput = [];
+
+	/**
 	 *
 	 */
 	protected function configure()
@@ -45,7 +50,6 @@ class FilesListCommand extends Command
 			->setHelp('try rebooting')
 			->addArgument('app_id', InputArgument::REQUIRED, 'From which app_id need to get fields?')
 			->addArgument('file_id', InputArgument::OPTIONAL, 'The ID of the file. The ID is also the file path relative to its app root.', '/')
-			->addOption('json', 'j', InputOption::VALUE_NONE, 'Output as a raw json')
 			->addOption('limit', 'l', InputOption::VALUE_REQUIRED, ' The number of results to return in each response to a list operation. The default value is 1000 (the maximum allowed). Using a lower value may help if an operation times out', self::MAX_LIMIT)
 			->addOption('human-readable', '', InputOption::VALUE_NONE, 'Format size values from raw bytes to human readable format')
 			->addOption('recursive', 'r', InputOption::VALUE_NONE, 'Command is performed on all files or objects under the specified path');
@@ -61,10 +65,13 @@ class FilesListCommand extends Command
 	{
 		parent::execute($input, $output);
 		try {
-			$table = new Table($output);
-			$table->setStyle('compact');
-			$this->prepareOutput($input, $table, $input->getArgument('file_id'));
-			empty($input->getOption('json')) ? $table->render() : $output->writeln(json_encode($this->rawJsonResponse));
+			$this->prepareOutput($input, $input->getArgument('file_id'));
+			if (!empty($input->getOption('json'))) {
+				$output->writeln(json_encode($this->rawJsonResponse));
+			} else {
+				$table = $this->getOutputAsTable($this->dataToOutput, new Table($output));
+				$table->render();
+			}
 
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
@@ -77,13 +84,44 @@ class FilesListCommand extends Command
 	}
 
 	/**
-	 * @param InputInterface $input
+	 * @param array $data
+	 * @param string $fieldName
+	 * @return array
+	 */
+	protected function sortData(array $data, string $fieldName): array
+	{
+		uasort($data, function ($a, $b) use ($fieldName) {
+			return $a[$fieldName] <=> $b[$fieldName];
+		});
+
+		return $data;
+	}
+
+	/**
+	 * @param array $data
 	 * @param Table $table
+	 * @return Table
+	 */
+	protected function getOutputAsTable(array $data, Table $table): Table
+	{
+		$table->setStyle('compact');
+		foreach ($this->sortData($data, 'timestamp') as $val) {
+			$table->addRow([
+				$val['timestamp'],
+				$val['size'],
+				$val['fileName'],
+			]);
+		}
+		return $table;
+	}
+
+	/**
+	 * @param InputInterface $input
 	 * @param string $filePath
 	 * @throws GuzzleException
 	 * @throws  ValidationException
 	 */
-	protected function prepareOutput(InputInterface $input, Table $table, string $filePath)
+	protected function prepareOutput(InputInterface $input, string $filePath)
 	{
 		if ($this->counter == $input->getOption('limit') || $this->counter == self::MAX_LIMIT) {
 			return;
@@ -108,14 +146,15 @@ class FilesListCommand extends Command
 			if (empty($val['relationships']) || in_array($val['id'], $siblings)) {
 				continue;
 			}
-			$table->addRow(explode(' ', $this->formatFileInfo(
+			$this->dataToOutput[] = $this->formatFileInfo(
 				$val['id'],
 				$val['attributes'],
 				$input->getOption('human-readable')
-			)));
+			);
+
 			$this->counter += 1;
 			if ($val['attributes']['is_dir'] && !empty($input->getOption('recursive'))) {
-				$this->prepareOutput($input, $table, $val['id']);
+				$this->prepareOutput($input, $val['id']);
 			}
 		}
 	}
@@ -144,13 +183,18 @@ class FilesListCommand extends Command
 	 * @param string $fileName
 	 * @param array $fileAttributes
 	 * @param bool $isHumanReadable
-	 * @return string
+	 * @return array
 	 */
-	protected function formatFileInfo(string $fileName, array $fileAttributes, bool $isHumanReadable = true): string
+	protected function formatFileInfo(string $fileName, array $fileAttributes, bool $isHumanReadable = true): array
 	{
 		$date = date('Y-m-d H:i:s', strtotime($fileAttributes['modify_time']));
 		$size = $isHumanReadable ? $this->formatBytes($fileAttributes['size']) : $fileAttributes['size'];
-		return $date . '  ' . $size . '  ' . $fileName;
+		$fileName = $fileAttributes['is_dir'] ? $fileName . '/' : $fileName;
+		return [
+			'timestamp' => $date,
+			'size'      => $size,
+			'fileName'  => $fileName,
+		];
 	}
 
 	/**
