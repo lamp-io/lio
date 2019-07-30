@@ -69,7 +69,12 @@ class LogsListCommand extends Command
 			} else {
 				/** @var Document $document */
 				$document = Parser::parseResponseString($response->getBody()->getContents());
-				$this->getOutputAsTable($document, $output);
+				$serializer = new ArraySerializer(['recursive' => true]);
+				$logsSortedByPods = $this->sortByPods($serializer->serialize($document));
+				foreach ($logsSortedByPods as $podName => $podLogs) {
+					$table = $this->getOutputAsTable($podLogs, $podName, new Table($output));
+					$table->render();
+				}
 			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
@@ -80,29 +85,44 @@ class LogsListCommand extends Command
 		}
 	}
 
-	/**
-	 * @param Document $document
-	 * @param OutputInterface $output
-	 */
-	protected function getOutputAsTable(Document $document, OutputInterface $output)
+	protected function sortByPods(array $logs): array
 	{
-		$serializer = new ArraySerializer(['recursive' => true]);
-		$serializedDocument = $serializer->serialize($document);
-		foreach ($serializedDocument['data'] as $key => $data) {
+		$sortedByPods = [];
+		foreach ($logs['data'] as $key => $data) {
 			$rows = [];
-			$headers = [];
 			foreach ($data['attributes'] as $attributeKey => $attribute) {
-				array_push($headers, $attributeKey);
-				$rows[] = trim(preg_replace(
-						'/\s\s+|\t/', ' ', wordwrap($attribute, 40)
+				if (empty($attribute)) {
+					continue;
+				}
+				$rows[$attributeKey] = trim(preg_replace(
+						'/\s\s+|\t/', ' ', $attribute
 					)) . PHP_EOL;
 			}
-			$table = new Table($output);
-			$table->setHeaderTitle('Logs ' . $data['id']);
-			$table->setHeaders($headers);
-			$table->addRow($rows);
-			$table->render();
-			unset($rows, $headers, $table);
+			$sortedByPods[$rows['pod_name']][] = [
+				'pod_name'  => trim($rows['pod_name']),
+				'timestamp' => trim($rows['timestamp']),
+				'payload'   => trim($rows['payload']),
+			];
 		}
+		return $sortedByPods;
+	}
+
+
+	/**
+	 * @param array $podLogs
+	 * @param string $podName
+	 * @param Table $table
+	 * @return Table
+	 */
+	protected function getOutputAsTable(array $podLogs, string $podName, Table $table): Table
+	{
+		$table->setHeaderTitle('Pod ' . trim($podName, PHP_EOL));
+		$table->setHeaders([
+			'Timestamp', 'Payload',
+		]);
+		foreach ($podLogs as $key => $data) {
+			$table->addRow([$data['timestamp'], $data['payload']]);
+		}
+		return $table;
 	}
 }
