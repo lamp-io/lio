@@ -6,6 +6,7 @@ use Console\App\Helpers\AuthHelper;
 use Console\App\Helpers\HttpHelper;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\Console\Command\Command as BaseCommand;
+use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -40,6 +41,7 @@ class Command extends BaseCommand
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
+		$output->getFormatter()->setStyle('warning', new OutputFormatterStyle('black', 'yellow'));
 		if (!AuthHelper::isTokenExist()) {
 			$this->callAuthCommand();
 		}

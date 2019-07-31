@@ -3,11 +3,9 @@
 namespace Console\App\Commands\Databases;
 
 use Console\App\Commands\Command;
-use Console\App\Helpers\PasswordHelper;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use InvalidArgumentException;
-use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -26,7 +24,6 @@ class DatabasesNewCommand extends Command
 		'my_cnf',
 		'mysql_root_password',
 	];
-
 
 	/**
 	 *
@@ -53,21 +50,13 @@ class DatabasesNewCommand extends Command
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
-		/** @var QuestionHelper $helper */
-		$helper = $this->getHelper('question');
-		$question = PasswordHelper::getPasswordQuestion(
-			'<info>Please provide a password for the MySQL root user (leave blank for a randomly generated one)</info>',
-			null,
-			$output
-		);
-		$password = $helper->ask($input, $output, $question);
 		try {
 			$response = $this->httpHelper->getClient()->request(
 				'POST',
 				self::API_ENDPOINT,
 				[
 					'headers' => $this->httpHelper->getHeaders(),
-					'body'    => $this->getRequestBody($input, $password),
+					'body'    => $this->getRequestBody($input),
 				]
 			);
 			if (!empty($input->getOption('json'))) {
@@ -77,6 +66,10 @@ class DatabasesNewCommand extends Command
 				$document = Parser::parseResponseString($response->getBody()->getContents());
 				$table = $this->getOutputAsTable($document, new Table($output));
 				$table->render();
+				$password = $document->get('data.attributes.mysql_root_password');
+				$output->writeln(
+					'<warning>Database password: ' . $password . '</warning>' . PHP_EOL . '<warning>WARNING: This is the last opportunity to see this password!</warning>'
+				);
 			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
@@ -90,10 +83,9 @@ class DatabasesNewCommand extends Command
 
 	/**
 	 * @param InputInterface $input
-	 * @param string $password
 	 * @return string
 	 */
-	protected function getRequestBody(InputInterface $input, string $password): string
+	protected function getRequestBody(InputInterface $input): string
 	{
 		if (!empty($input->getOption('my_cnf')) && !file_exists($input->getOption('my_cnf'))) {
 			throw  new InvalidArgumentException('Path to mysql config not valid');
@@ -105,8 +97,6 @@ class DatabasesNewCommand extends Command
 				$attributes[$optionKey] = ($optionKey == 'vcpu') ? (float)$option : $option;
 			}
 		}
-		$attributes['mysql_root_password'] = $password;
-
 
 		return json_encode(
 			[
