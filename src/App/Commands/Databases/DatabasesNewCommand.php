@@ -3,8 +3,11 @@
 namespace Console\App\Commands\Databases;
 
 use Console\App\Commands\Command;
+use Console\App\Helpers\PasswordHelper;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use InvalidArgumentException;
+use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -20,8 +23,10 @@ class DatabasesNewCommand extends Command
 	const API_ENDPOINT = 'https://api.lamp.io/databases';
 
 	const EXCLUDE_FROM_OUTPUT = [
-		'my_cnf'
+		'my_cnf',
+		'mysql_root_password',
 	];
+
 
 	/**
 	 *
@@ -35,7 +40,6 @@ class DatabasesNewCommand extends Command
 			->addOption('memory', 'm', InputOption::VALUE_REQUIRED, 'Amount of virtual memory on your database, default 512Mi', '512Mi')
 			->addOption('organization_id', null, InputOption::VALUE_REQUIRED, 'Name of your organization', '')
 			->addOption('my_cnf', null, InputOption::VALUE_REQUIRED, 'Path to your database config file', '')
-			->addOption('mysql_root_password', null, InputOption::VALUE_REQUIRED, 'Root password', '')
 			->addOption('ssd', null, InputOption::VALUE_REQUIRED, 'Size of ssd storage, default 1Gi', '1Gi')
 			->addOption('vcpu', null, InputOption::VALUE_REQUIRED, 'The number of virtual cpu cores available, default 0.25', '0.25');
 	}
@@ -44,18 +48,26 @@ class DatabasesNewCommand extends Command
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
 	 * @return int|void|null
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
+		/** @var QuestionHelper $helper */
+		$helper = $this->getHelper('question');
+		$question = PasswordHelper::getPasswordQuestion(
+			'<info>Please provide a password for the MySQL root user (leave blank for a randomly generated one)</info>',
+			null,
+			$output
+		);
+		$password = $helper->ask($input, $output, $question);
 		try {
 			$response = $this->httpHelper->getClient()->request(
 				'POST',
 				self::API_ENDPOINT,
 				[
 					'headers' => $this->httpHelper->getHeaders(),
-					'body'    => $this->getRequestBody($input),
+					'body'    => $this->getRequestBody($input, $password),
 				]
 			);
 			if (!empty($input->getOption('json'))) {
@@ -78,27 +90,32 @@ class DatabasesNewCommand extends Command
 
 	/**
 	 * @param InputInterface $input
+	 * @param string $password
 	 * @return string
 	 */
-	protected function getRequestBody(InputInterface $input): string
+	protected function getRequestBody(InputInterface $input, string $password): string
 	{
 		if (!empty($input->getOption('my_cnf')) && !file_exists($input->getOption('my_cnf'))) {
 			throw  new InvalidArgumentException('Path to mysql config not valid');
 		}
 
-		return json_encode([
-			'data' => [
-				'attributes' => array_merge([
-					'description'         => $input->getOption('description'),
-					'memory'              => $input->getOption('memory'),
-					'my_cnf'              => !(empty($input->getOption('my_cnf'))) ? file_get_contents($input->getOption('my_cnf')) : '',
-					'mysql_root_password' => $input->getOption('mysql_root_password'),
-					'ssd'                 => $input->getOption('ssd'),
-					'vcpu'                => (float)$input->getOption('vcpu'),
-				], !empty($input->getOption('organization_id')) ? ['organization_id' => $input->getOption('organization_id')] : []),
-				'type'       => 'databases',
-			],
-		]);
+		$attributes = [];
+		foreach ($input->getOptions() as $optionKey => $option) {
+			if (!in_array($optionKey, self::DEFAULT_CLI_OPTIONS) && !empty($option)) {
+				$attributes[$optionKey] = ($optionKey == 'vcpu') ? (float)$option : $option;
+			}
+		}
+		$attributes['mysql_root_password'] = $password;
+
+
+		return json_encode(
+			[
+				'data' => [
+					'attributes' => $attributes,
+					'type'       => 'databases',
+				],
+			]
+		);
 	}
 
 

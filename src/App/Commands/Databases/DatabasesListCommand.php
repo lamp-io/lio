@@ -93,20 +93,25 @@ class DatabasesListCommand extends Command
 			$row = [$data['id']];
 			$attributeArray = [];
 			foreach ($data['attributes'] as $attributeKey => $attribute) {
-				if ($attributeKey != 'my_cnf') {
-					$attributeArray[] = $attributeKey . ' : ' . wordwrap($attribute, 50);
+				if ($attributeKey == 'my_cnf' && !empty($attribute)) {
+					$mysqlConfig = $attributeKey . ' : ' . trim(preg_replace(
+							'/\s\s+|\t/', ' ', wordwrap($attribute, 40)
+						));
 				} else {
 					$attributeArray[] = $attributeKey . ' : ' . $attribute;
 				}
 			}
-			$row[] = (implode(PHP_EOL, $attributeArray));
+			$attributes = implode(PHP_EOL, $attributeArray);
+			$attributes .= !empty($mysqlConfig) ? PHP_EOL . $mysqlConfig : '';
+			unset($mysqlConfig);
+			$row[] = $attributes;
 			$table->addRow($row);
 			if ($data != $lastElement) {
 				$table->addRow(new TableSeparator());
 			}
 
 		}
-		$table->setColumnWidth(1, 200);
+
 		return $table;
 
 	}

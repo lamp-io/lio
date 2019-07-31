@@ -84,7 +84,9 @@ class DatabasesDescribeCommand extends Command
 		$row = [$document->get('data.id')];
 		foreach ($serializer->serialize($document)['data']['attributes'] as $attributeKey => $attribute) {
 			array_push(
-				$row, ($attributeKey != 'my_cnf') ? $attribute : wordwrap($attribute, 30)
+				$row, ($attributeKey != 'my_cnf') ? $attribute : trim(preg_replace(
+				'/\s\s+|\t/', ' ', wordwrap($attribute, 40)
+			))
 			);
 			array_push($headers, $attributeKey);
 		}
