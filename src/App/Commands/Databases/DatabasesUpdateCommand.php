@@ -8,6 +8,7 @@ use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\V1\Document;
 use Console\App\Commands\Command;
+use Console\App\Helpers\PasswordHelper;
 use GuzzleHttp\Exception\GuzzleException;
 use InvalidArgumentException;
 use Symfony\Component\Console\Helper\Table;
@@ -16,7 +17,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Helper\QuestionHelper;
-use Symfony\Component\Console\Question\Question;
 use Exception;
 
 class DatabasesUpdateCommand extends Command
@@ -52,7 +52,7 @@ class DatabasesUpdateCommand extends Command
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
 	 * @return int|void|null
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -60,26 +60,11 @@ class DatabasesUpdateCommand extends Command
 		if ($input->getOption('mysql_root_password')) {
 			/** @var QuestionHelper $helper */
 			$helper = $this->getHelper('question');
-			$question = new Question('<info>Please write your root_password for database</info>');
-			$question->setHidden(true);
-			$question->setValidator(function ($value) {
-				$uppercase = preg_match('@[A-Z]@', $value);
-				$lowercase = preg_match('@[a-z]@', $value);
-				$number = preg_match('@[0-9]@', $value);
-				$length = strlen($value) >= 15;
-				if (!$uppercase || !$lowercase || !$number || !$length) {
-					$exceptionMessage = [
-						'* Must be a minimum of 15 characters',
-						'* Must contain at least 1 number',
-						'* Must contain at least one uppercase character',
-						'* Must contain at least one lowercase character',
-					];
-					throw new Exception(PHP_EOL . implode(PHP_EOL, $exceptionMessage));
-				}
-
-				return $value;
-			});
-			$question->setMaxAttempts(10);
+			$question = PasswordHelper::getPasswordQuestion(
+				'<info>Please provide a password for the MySQL root user</info>',
+				null,
+				$output
+			);
 			$password = $helper->ask($input, $output, $question);
 			$input->setOption('mysql_root_password', $password);
 		}
@@ -89,7 +74,6 @@ class DatabasesUpdateCommand extends Command
 				sprintf(
 					self::API_ENDPOINT,
 					$input->getArgument('database_id')
-
 				),
 				[
 					'headers' => $this->httpHelper->getHeaders(),
@@ -119,7 +103,7 @@ class DatabasesUpdateCommand extends Command
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
 	 * @return string
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	protected function getRequestBody(InputInterface $input, OutputInterface $output): string
 	{
@@ -168,7 +152,6 @@ class DatabasesUpdateCommand extends Command
 		$serializedDocument = $serializer->serialize($document);
 		$headers = ['Id'];
 		$row = [$serializedDocument['data']['id']];
-
 		foreach ($serializedDocument['data']['attributes'] as $key => $value) {
 			if (!empty($value) && !in_array($key, self::EXCLUDE_FROM_OUTPUT)) {
 				array_push($headers, $key);
