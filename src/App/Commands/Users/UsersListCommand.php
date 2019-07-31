@@ -88,7 +88,9 @@ class UsersListCommand extends Command
 		]);
 		$serializer = new ArraySerializer(['recursive' => true]);
 		$serializedDocument = $serializer->serialize($document);
-		foreach ($serializedDocument['data'] as $key => $value) {
+		$sortedData = $this->sortData($serializedDocument['data'], 'updated_at');
+		$lastElement = end($sortedData);
+		foreach ($sortedData as $key => $value) {
 			$row = [$value['id'], $value['type']];
 			if (!empty($value['attributes'])) {
 				$attributes = [];
@@ -103,7 +105,7 @@ class UsersListCommand extends Command
 				$row[] = (implode(PHP_EOL, $attributes));
 				$table->addRow($row);
 			}
-			if ($key != count($serializedDocument['data']) - 1) {
+			if ($lastElement != $value) {
 				$table->addRow(new TableSeparator());
 			}
 		}

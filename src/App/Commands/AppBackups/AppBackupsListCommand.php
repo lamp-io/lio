@@ -91,17 +91,19 @@ class AppBackupsListCommand extends Command
 		]);
 		$serializer = new ArraySerializer(['recursive' => true]);
 		$serializedDocument = $serializer->serialize($document);
-		foreach ($serializedDocument['data'] as $key => $value) {
+		$sortedData = $this->sortData($serializedDocument['data'], 'updated_at');
+		$lastElement = end($sortedData);
+		foreach ($sortedData as $key => $data) {
 			$table->addRow([
-				$value['id'],
-				$document->get('data.' . $key . '.attributes.app_id'),
-				$document->get('data.' . $key . '.attributes.complete'),
-				$document->get('data.' . $key . '.attributes.created_at'),
-				$document->get('data.' . $key . '.attributes.organization_id'),
-				$document->get('data.' . $key . '.attributes.status'),
-				$document->get('data.' . $key . '.attributes.updated_at'),
+				$data['id'],
+				$data['attributes']['app_id'],
+				$data['attributes']['complete'],
+				$data['attributes']['created_at'],
+				$data['attributes']['organization_id'],
+				$data['attributes']['status'],
+				$data['attributes']['updated_at'],
 			]);
-			if ($key != count($serializedDocument['data']) - 1) {
+			if ($data != $lastElement) {
 				$table->addRow(new TableSeparator());
 			}
 
