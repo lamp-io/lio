@@ -87,7 +87,9 @@ class DatabasesListCommand extends Command
 		$serializedDocument = $serializer->serialize($document);
 		$header = ['Id', 'Attributes'];
 		$table->setHeaders($header);
-		foreach ($serializedDocument['data'] as $key => $data) {
+		$sortedData = $this->sortData($serializedDocument['data'], 'updated_at');
+		$lastElement = end($sortedData);
+		foreach ($sortedData as $key => $data) {
 			$row = [$data['id']];
 			$attributeArray = [];
 			foreach ($data['attributes'] as $attributeKey => $attribute) {
@@ -99,7 +101,7 @@ class DatabasesListCommand extends Command
 			}
 			$row[] = (implode(PHP_EOL, $attributeArray));
 			$table->addRow($row);
-			if ($key != count($serializedDocument['data']) - 1) {
+			if ($data != $lastElement) {
 				$table->addRow(new TableSeparator());
 			}
 

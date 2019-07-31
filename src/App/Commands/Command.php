@@ -35,8 +35,8 @@ class Command extends BaseCommand
 	/**
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
-	 * @throws \Exception
 	 * @return int|null|void
+	 * @throws \Exception
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -76,5 +76,23 @@ class Command extends BaseCommand
 		];
 		$input = new ArrayInput($args);
 		$authCommand->run($input, new ConsoleOutput());
+	}
+
+	/**
+	 * @param array $data
+	 * @param string $fieldName
+	 * @return array
+	 */
+	protected function sortData(array $data, string $fieldName): array
+	{
+		uasort($data, function ($a, $b) use ($fieldName) {
+			if (!isset($a['attributes'][$fieldName]) || !isset($b['attributes'][$fieldName])) {
+				return $a;
+			} else {
+				return $a['attributes'][$fieldName] <=> $b['attributes'][$fieldName];
+			}
+		});
+
+		return $data;
 	}
 }
