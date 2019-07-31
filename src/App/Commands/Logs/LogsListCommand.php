@@ -10,6 +10,7 @@ use Console\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Helper\Table;
+use Symfony\Component\Console\Helper\TableSeparator;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -24,6 +25,7 @@ class LogsListCommand extends Command
 		'start_time'      => 'filter[start_time]',
 		'end_time'        => 'filter[end_time]',
 	];
+
 	/**
 	 * @var string
 	 */
@@ -69,12 +71,8 @@ class LogsListCommand extends Command
 			} else {
 				/** @var Document $document */
 				$document = Parser::parseResponseString($response->getBody()->getContents());
-				$serializer = new ArraySerializer(['recursive' => true]);
-				$logsSortedByPods = $this->sortByPods($serializer->serialize($document));
-				foreach ($logsSortedByPods as $podName => $podLogs) {
-					$table = $this->getOutputAsTable($podLogs, $podName, new Table($output));
-					$table->render();
-				}
+				$table = $this->getOutputAsTable($document, new Table($output));
+				$table->render();
 			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
@@ -85,47 +83,30 @@ class LogsListCommand extends Command
 		}
 	}
 
-	/**
-	 * @param array $logs
-	 * @return array
-	 */
-	protected function sortByPods(array $logs): array
-	{
-		$sortedByPods = [];
-		foreach ($logs['data'] as $key => $data) {
-			$rows = [];
-			foreach ($data['attributes'] as $attributeKey => $attribute) {
-				if (empty($attribute)) {
-					continue;
-				}
-				$rows[$attributeKey] = trim(preg_replace(
-						'/\s\s+|\t/', ' ', $attribute
-					)) . PHP_EOL;
-			}
-			$sortedByPods[$rows['pod_name']][] = [
-				'pod_name'  => trim($rows['pod_name']),
-				'timestamp' => trim($rows['timestamp']),
-				'payload'   => trim($rows['payload']),
-			];
-		}
-		return $sortedByPods;
-	}
-
 
 	/**
-	 * @param array $podLogs
-	 * @param string $podName
+	 * @param Document $document
 	 * @param Table $table
 	 * @return Table
 	 */
-	protected function getOutputAsTable(array $podLogs, string $podName, Table $table): Table
+	protected function getOutputAsTable(Document $document, Table $table): Table
 	{
-		$table->setHeaderTitle('Pod ' . trim($podName, PHP_EOL));
+		$table->setHeaderTitle('Logs');
+		$table->setStyle('box');
 		$table->setHeaders([
-			'Timestamp', 'Payload',
+			'timestamp', 'pod_name', 'payload',
 		]);
-		foreach ($podLogs as $key => $data) {
-			$table->addRow([$data['timestamp'], $data['payload']]);
+		$serializer = new ArraySerializer(['recursive' => true]);
+		$sortedData = $this->sortData($serializer->serialize($document)['data'], 'timestamp');
+		$lastElement = end($sortedData);
+		foreach ($sortedData as $key => $data) {
+			$payload = wordwrap(trim(preg_replace(
+				'/\s\s+|\t/', ' ', $data['attributes']['payload']
+			)), 80);
+			$table->addRow([$data['attributes']['timestamp'], $data['attributes']['pod_name'], $payload]);
+			if ($lastElement != $data) {
+				$table->addRow(new TableSeparator());
+			}
 		}
 		return $table;
 	}
