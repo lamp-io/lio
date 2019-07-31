@@ -84,7 +84,9 @@ class OrganizationsListCommand extends Command
 		]);
 		$serializer = new ArraySerializer(['recursive' => true]);
 		$serializedDocument = $serializer->serialize($document);
-		foreach ($serializedDocument['data'] as $key => $data) {
+		$sortedData = $this->sortData($serializedDocument['data'], 'updated_at');
+		$lastElement = end($sortedData);
+		foreach ($sortedData as $key => $data) {
 			$attributes = [];
 			foreach ($data['attributes'] as $attributeKey => $attribute) {
 				array_push($attributes, $attributeKey . ' : ' . $attribute);
@@ -94,7 +96,7 @@ class OrganizationsListCommand extends Command
 				implode(PHP_EOL, $attributes),
 			]);
 
-			if ($key != count($serializedDocument['data']) - 1) {
+			if ($lastElement != $data) {
 				$table->addRow(new TableSeparator());
 			}
 		}
