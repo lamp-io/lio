@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Console\App\Commands\Organizations;
+namespace Console\App\Commands\Tokens;
 
 
 use Art4\JsonApiClient\Exception\ValidationException;
@@ -16,14 +16,14 @@ use Symfony\Component\Console\Helper\TableSeparator;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class OrganizationsListCommand extends Command
+class TokensListCommand extends Command
 {
-	const API_ENDPOINT = 'https://api.lamp.io/organizations';
+	const API_ENDPOINT = 'https://api.lamp.io/tokens';
 
 	/**
 	 * @var string
 	 */
-	protected static $defaultName = 'organizations:list';
+	protected static $defaultName = 'tokens:list';
 
 	/**
 	 *
@@ -31,8 +31,8 @@ class OrganizationsListCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('Returns this user\'s organizations')
-			->setHelp('https://www.lamp.io/api#/organizations/organizationsList');
+		$this->setDescription('Returns all tokens for this user')
+			->setHelp('https://www.lamp.io/api#/tokens/tokensList');
 	}
 
 	/**
@@ -77,7 +77,7 @@ class OrganizationsListCommand extends Command
 	 */
 	protected function getOutputAsTable(Document $document, Table $table): Table
 	{
-		$table->setHeaderTitle('Organizations');
+		$table->setHeaderTitle('Tokens');
 		$table->setStyle('box');
 		$table->setHeaders([
 			'Id', 'Attributes',

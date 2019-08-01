@@ -94,6 +94,9 @@ try {
 	$app->add(new OrganizationsListCommand(new Client()));
 	$app->add(new OrganizationsUpdateCommand(new Client()));
 	$app->add(new TokensNewCommand(new Client()));
+	$app->add(new OrganizationsListCommand(new Client()));
+	$app->add(new OrganizationsUpdateCommand(new Client()));
+	$app->add(new TokensNewCommand(new Client()));
 	$app->run();
 } catch (Exception $exception) {
     echo $exception->getMessage() . PHP_EOL;
