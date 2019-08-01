@@ -91,7 +91,13 @@ class FilesListCommand extends Command
 	protected function sortData(array $data, string $fieldName): array
 	{
 		uasort($data, function ($a, $b) use ($fieldName) {
-			return $a[$fieldName] <=> $b[$fieldName];
+			if ($a['isDir'] && !$b['isDir']) {
+				return -1;
+			} elseif (!$a['isDir'] && $b['isDir']) {
+				return 1;
+			} else {
+				return $a[$fieldName] <=> $b[$fieldName];
+			}
 		});
 
 		return $data;
@@ -105,7 +111,7 @@ class FilesListCommand extends Command
 	protected function getOutputAsTable(array $data, Table $table): Table
 	{
 		$table->setStyle('compact');
-		foreach ($this->sortData($data, 'timestamp') as $val) {
+		foreach ($this->sortData($data, 'fileName') as $val) {
 			$table->addRow([
 				$val['timestamp'],
 				$val['size'],
@@ -191,6 +197,7 @@ class FilesListCommand extends Command
 		$size = $isHumanReadable ? $this->formatBytes($fileAttributes['size']) : $fileAttributes['size'];
 		$fileName = $fileAttributes['is_dir'] ? $fileName . '/' : $fileName;
 		return [
+			'isDir'     => $fileAttributes['is_dir'],
 			'timestamp' => $date,
 			'size'      => $size,
 			'fileName'  => $fileName,

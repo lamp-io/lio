@@ -3,9 +3,11 @@
 namespace Console\App\Commands\Databases;
 
 use Console\App\Commands\Command;
+use Console\App\Helpers\PasswordHelper;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use InvalidArgumentException;
+use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -26,6 +28,12 @@ class DatabasesNewCommand extends Command
 	];
 
 	/**
+	 * @var
+	 * string
+	 */
+	protected $password = '';
+
+	/**
 	 *
 	 */
 	protected function configure()
@@ -36,6 +44,7 @@ class DatabasesNewCommand extends Command
 			->addOption('description', 'd', InputOption::VALUE_REQUIRED, 'Description of your database', '')
 			->addOption('memory', 'm', InputOption::VALUE_REQUIRED, 'Amount of virtual memory on your database, default 512Mi', '512Mi')
 			->addOption('organization_id', null, InputOption::VALUE_REQUIRED, 'Name of your organization', '')
+			->addOption('mysql_root_password', null, InputOption::VALUE_OPTIONAL, 'Root password', false)
 			->addOption('my_cnf', null, InputOption::VALUE_REQUIRED, 'Path to your database config file', '')
 			->addOption('ssd', null, InputOption::VALUE_REQUIRED, 'Size of ssd storage, default 1Gi', '1Gi')
 			->addOption('vcpu', null, InputOption::VALUE_REQUIRED, 'The number of virtual cpu cores available, default 0.25', '0.25');
@@ -50,6 +59,11 @@ class DatabasesNewCommand extends Command
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
+
+		if ($this->isPassWordOptionExist($input)) {
+			$this->password = $this->handlePasswordOption($input, $output);
+		}
+
 		try {
 			$response = $this->httpHelper->getClient()->request(
 				'POST',
@@ -66,10 +80,12 @@ class DatabasesNewCommand extends Command
 				$document = Parser::parseResponseString($response->getBody()->getContents());
 				$table = $this->getOutputAsTable($document, new Table($output));
 				$table->render();
-				$password = $document->get('data.attributes.mysql_root_password');
-				$output->writeln(
-					'<warning>Database password: ' . $password . '</warning>' . PHP_EOL . '<warning>WARNING: This is the last opportunity to see this password!</warning>'
-				);
+				if (empty($this->password)) {
+					$password = $document->get('data.attributes.mysql_root_password');
+					$output->writeln(
+						'<warning>Database password: ' . $password . '</warning>' . PHP_EOL . '<warning>WARNING: This is the last opportunity to see this password!</warning>'
+					);
+				}
 			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
@@ -78,8 +94,44 @@ class DatabasesNewCommand extends Command
 			$output->writeln($invalidArgumentException->getMessage());
 			exit(1);
 		}
-
 	}
+
+	/**
+	 * @param InputInterface $input
+	 * @return bool
+	 */
+	protected function isPassWordOptionExist(InputInterface $input): bool
+	{
+		return $input->getOption('mysql_root_password') !== false;
+	}
+
+	/**
+	 * @param InputInterface $input
+	 * @param OutputInterface $output
+	 * @return string
+	 */
+	protected function handlePasswordOption(InputInterface $input, OutputInterface $output): string
+	{
+		if (is_string($input->getOption('mysql_root_password'))) {
+			if (empty(trim($input->getOption('mysql_root_password')))) {
+				$output->writeln('<error>Error: Refusing to set empty password</error>');
+				exit(1);
+			}
+			$password = $input->getOption('mysql_root_password');
+		} else {
+			/** @var QuestionHelper $helper */
+			$helper = $this->getHelper('question');
+			$question = PasswordHelper::getPasswordQuestion(
+				'<info>Please provide a password for the MySQL root user</info>',
+				null,
+				$output
+			);
+			$password = $helper->ask($input, $output, $question);
+		}
+
+		return $password;
+	}
+
 
 	/**
 	 * @param InputInterface $input
@@ -96,6 +148,10 @@ class DatabasesNewCommand extends Command
 			if (!in_array($optionKey, self::DEFAULT_CLI_OPTIONS) && !empty($option)) {
 				$attributes[$optionKey] = ($optionKey == 'vcpu') ? (float)$option : $option;
 			}
+		}
+
+		if (!empty($this->password)) {
+			$attributes['mysql_root_password'] = $this->password;
 		}
 
 		return json_encode(
