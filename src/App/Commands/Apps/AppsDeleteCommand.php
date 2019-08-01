@@ -39,7 +39,7 @@ class AppsDeleteCommand extends Command
 		parent::execute($input, $output);
 		/** @var QuestionHelper $helper */
 		$helper = $this->getHelper('question');
-		$question = new ConfirmationQuestion('<info>Are you sure you want to delete database? (y/N)</info>', false);
+		$question = new ConfirmationQuestion('<info>Are you sure you want to delete app? (y/N)</info>', false);
 		if (!$helper->ask($input, $output, $question)) {
 			exit(0);
 		}
