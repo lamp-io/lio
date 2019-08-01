@@ -82,9 +82,9 @@ class AppRunsDescribeCommand extends Command
 		$row = ['app_id' => $document->get('data.id')];
 		foreach ($appRuns['data']['attributes'] as $key => $attribute) {
 			if ($key == 'command') {
-				$attribute = trim(preg_replace(
-					'/\s\s+|\t/', ' ', wordwrap($attribute, 20)
-				));
+				$attribute = wordwrap(trim(preg_replace(
+					'/\s\s+|\t/', ' ', $attribute
+				)), 20);
 			}
 			array_push($row, $attribute);
 			array_push($tableHeader, $key);

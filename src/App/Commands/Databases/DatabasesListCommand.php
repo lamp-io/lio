@@ -94,9 +94,9 @@ class DatabasesListCommand extends Command
 			$attributeArray = [];
 			foreach ($data['attributes'] as $attributeKey => $attribute) {
 				if ($attributeKey == 'my_cnf' && !empty($attribute)) {
-					$mysqlConfig = $attributeKey . ' : ' . trim(preg_replace(
-							'/\s\s+|\t/', ' ', wordwrap($attribute, 40)
-						));
+					$mysqlConfig = $attributeKey . ' : ' . wordwrap(trim(preg_replace(
+							'/\s\s+|\t/', ' ', $attribute
+						)), 40);
 				} else {
 					$attributeArray[] = $attributeKey . ' : ' . $attribute;
 				}
