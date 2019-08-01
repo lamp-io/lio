@@ -95,10 +95,6 @@ class FilesListCommand extends Command
 				return -1;
 			} elseif (!$a['isDir'] && $b['isDir']) {
 				return 1;
-			} elseif ($a[$fieldName][0] == '.' && $b[$fieldName][0] != '.') {
-				return 1;
-			} elseif ($a[$fieldName][0] != '.' && $b[$fieldName][0] == '.') {
-				return -1;
 			} else {
 				return $a[$fieldName] <=> $b[$fieldName];
 			}
