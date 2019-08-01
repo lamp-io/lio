@@ -6,6 +6,7 @@ use Console\App\Helpers\AuthHelper;
 use Console\App\Helpers\HttpHelper;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\Console\Command\Command as BaseCommand;
+use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -35,11 +36,12 @@ class Command extends BaseCommand
 	/**
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
-	 * @throws \Exception
 	 * @return int|null|void
+	 * @throws \Exception
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
+		$output->getFormatter()->setStyle('warning', new OutputFormatterStyle('black', 'yellow'));
 		if (!AuthHelper::isTokenExist()) {
 			$this->callAuthCommand();
 		}
@@ -76,5 +78,23 @@ class Command extends BaseCommand
 		];
 		$input = new ArrayInput($args);
 		$authCommand->run($input, new ConsoleOutput());
+	}
+
+	/**
+	 * @param array $data
+	 * @param string $fieldName
+	 * @return array
+	 */
+	protected function sortData(array $data, string $fieldName): array
+	{
+		uasort($data, function ($a, $b) use ($fieldName) {
+			if (!isset($a['attributes'][$fieldName]) || !isset($b['attributes'][$fieldName])) {
+				return $a;
+			} else {
+				return $a['attributes'][$fieldName] <=> $b['attributes'][$fieldName];
+			}
+		});
+
+		return $data;
 	}
 }
