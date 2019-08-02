@@ -10,6 +10,7 @@ use Console\App\Commands\Organizations\OrganizationsListCommand;
 use Console\App\Commands\Organizations\OrganizationsUpdateCommand;
 use Console\App\Commands\OrganizationUsers\OrganizationUsersDescribeCommand;
 use Console\App\Commands\OrganizationUsers\OrganizationUsersListCommand;
+use Console\App\Commands\OrganizationUsers\OrganizationUsersUpdateCommand;
 use Console\App\Commands\Tokens\TokensDeleteCommand;
 use Console\App\Commands\Tokens\TokensDescribeCommand;
 use Console\App\Commands\Tokens\TokensListCommand;
@@ -109,6 +110,7 @@ try {
 	$app->add(new TokensUpdateCommand(new Client()));
 	$app->add(new OrganizationUsersListCommand(new Client()));
 	$app->add(new OrganizationUsersDescribeCommand(new Client()));
+	$app->add(new OrganizationUsersUpdateCommand(new Client()));
 	$app->run();
 } catch (Exception $exception) {
     echo $exception->getMessage() . PHP_EOL;
