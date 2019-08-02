@@ -418,6 +418,36 @@ Commands
 
     Returns this user's organizations
     
+###Organization users
+
+1. ### organization_users:update <organization_user_id> [--admin]
+
+    Update an organization/user relationship (Allow to set/remove selected user role as an organization admin)
+    
+    Arguments:
+    
+    * `<organization_user_id>(string)` The ID of the organization_use
+    
+    Options:
+    
+    * `[--admin](bool)` Set selected user as admin of organization (if you need to remove admin role from selected user, just omit this option)
+    
+2. ### organizations_users:list [--organization_id]
+
+    Returns organization/user relationships
+    
+    Options:
+    
+    * `[--organization_id](string)` Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
+    
+3. ### organizations_users:describe <organization_user_id> 
+
+    Returns a organization/user relationship
+    
+    Arguments:
+    
+    * `<organization_user_id>(string)` The ID of the organization_use
+    
 ### Tokens
 
 1. ### tokens:new [--description][-d] [--enable]
