@@ -77,7 +77,7 @@ class TokensListCommand extends Command
 	 */
 	protected function getOutputAsTable(Document $document, Table $table): Table
 	{
-		$table->setHeaderTitle('Token');
+		$table->setHeaderTitle('Tokens');
 		$table->setStyle('box');
 		$table->setHeaders([
 			'Id', 'Attributes',
