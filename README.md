@@ -47,7 +47,7 @@ Commands
     
 
 
-### Token
+### Auth
 1.  #### auth [-u][--update_token]
 
     Will ask you to input your auth token
@@ -417,6 +417,50 @@ Commands
 2. ### organizations:list
 
     Returns this user's organizations
+    
+### Tokens
+
+1. ### tokens:new [--description][-d] [--enable]
+
+    Creates a new token
+    
+    Options:
+    
+    * `[--description][-d](string)` Token description
+    * `[--enable](bool)` Enable new token (By default created token will be disabled)
+    
+2. ### tokens:delete <token_id>
+
+     Delete a token
+     
+     Arguments:
+         
+     * `<token_id>(string)` The ID of the token
+     
+3. ### tokens:update <token_id> [--enable] [--disable]
+ 
+    Update a token. If execute without options, it will disable token
+    
+    Arguments:
+             
+     * `<token_id>(string)` The ID of the token
+     
+     Options:
+     
+     * `[--enable](bool)` Enable new token
+     * `[--disable](bool)` Disable token
+    
+4. ### tokens:list 
+
+    Returns all tokens for this user
+    
+5. ### tokens:describe <token_id>
+    
+    Returns a token
+    
+    Arguments:
+             
+     * `<token_id>(string)` The ID of the token
     
 ### Users
 
