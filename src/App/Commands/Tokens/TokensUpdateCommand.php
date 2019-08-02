@@ -35,8 +35,8 @@ class TokensUpdateCommand extends Command
 		$this->setDescription('Returns all tokens for this user')
 			->setHelp('https://www.lamp.io/api#/tokens/tokensList')
 			->addArgument('token_id', InputArgument::REQUIRED, 'The ID of the token')
-			->addOption('enable', 'e', InputOption::VALUE_NONE, 'Enable token')
-			->addOption('disable', 'd', InputOption::VALUE_NONE, 'Disable token');
+			->addOption('enable', null, InputOption::VALUE_NONE, 'Enable token')
+			->addOption('disable', null, InputOption::VALUE_NONE, 'Disable token');
 	}
 
 	/**
