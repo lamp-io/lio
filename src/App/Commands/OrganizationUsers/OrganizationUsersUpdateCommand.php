@@ -32,7 +32,7 @@ class OrganizationUsersUpdateCommand extends Command
 		parent::configure();
 		$this->setDescription('Update an organization/user relationship (Allow to set/remove selected user role as an organization admin)')
 			->setHelp('https://www.lamp.io/api#/organization_users/organizationUsersUpdate')
-			->addArgument('organization_user_id', InputArgument::REQUIRED, 'The ID of the token')
+			->addArgument('organization_user_id', InputArgument::REQUIRED, 'The ID of the organization_user')
 			->addOption('admin', null, InputOption::VALUE_NONE, 'Set selected user as admin of organization (if you need to remove admin role from selected user, just omit this option )');
 	}
 

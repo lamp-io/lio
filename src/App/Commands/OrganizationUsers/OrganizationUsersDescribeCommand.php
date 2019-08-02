@@ -31,7 +31,7 @@ class OrganizationUsersDescribeCommand extends Command
 		parent::configure();
 		$this->setDescription('Returns a organization/user relationship')
 			->setHelp('https://www.lamp.io/api#/organization_users/organizationUsersShow')
-			->addArgument('organization_user_id', InputArgument::REQUIRED, 'The ID of the organization_user.');
+			->addArgument('organization_user_id', InputArgument::REQUIRED, 'The ID of the organization_user');
 	}
 
 	/**
