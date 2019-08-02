@@ -5,13 +5,10 @@ namespace Console\App\Commands\Tokens;
 
 
 use Art4\JsonApiClient\Exception\ValidationException;
-use Art4\JsonApiClient\Serializer\ArraySerializer;
-use Art4\JsonApiClient\V1\Document;
 use Console\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Helper\QuestionHelper;
-use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -78,30 +75,5 @@ class TokensDeleteCommand extends Command
 			$output->writeln($e->getMessage());
 			exit(1);
 		}
-	}
-
-	/**
-	 * @param Document $document
-	 * @param Table $table
-	 * @return Table
-	 */
-	protected function getOutputAsTable(Document $document, Table $table): Table
-	{
-		$table->setHeaderTitle('Tokens');
-		$table->setStyle('box');
-		$table->setHeaders([
-			'Id', 'Attributes',
-		]);
-		$serializer = new ArraySerializer(['recursive' => true]);
-		$serializedDocument = $serializer->serialize($document);
-		$attributes = [];
-		foreach ($serializedDocument['data']['attributes'] as $attributeKey => $attribute) {
-			array_push($attributes, $attributeKey . ' : ' . $attribute);
-		}
-		$table->addRow([
-			$serializedDocument['data']['id'],
-			implode(PHP_EOL, $attributes),
-		]);
-		return $table;
 	}
 }
