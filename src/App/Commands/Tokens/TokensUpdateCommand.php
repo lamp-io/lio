@@ -32,7 +32,7 @@ class TokensUpdateCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('Returns all tokens for this user')
+		$this->setDescription('Update a token')
 			->setHelp('https://www.lamp.io/api#/tokens/tokensList')
 			->addArgument('token_id', InputArgument::REQUIRED, 'The ID of the token')
 			->addOption('enable', null, InputOption::VALUE_NONE, 'Enable token')
