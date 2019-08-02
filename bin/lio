@@ -8,6 +8,7 @@ if (file_exists(dirname(__DIR__, 3) . '/autoload.php')) {
 
 use Console\App\Commands\Organizations\OrganizationsListCommand;
 use Console\App\Commands\Organizations\OrganizationsUpdateCommand;
+use Console\App\Commands\OrganizationUsers\OrganizationUsersListCommand;
 use Console\App\Commands\Tokens\TokensDeleteCommand;
 use Console\App\Commands\Tokens\TokensDescribeCommand;
 use Console\App\Commands\Tokens\TokensListCommand;
@@ -105,6 +106,7 @@ try {
 	$app->add(new TokensDescribeCommand(new Client()));
 	$app->add(new TokensDeleteCommand(new Client()));
 	$app->add(new TokensUpdateCommand(new Client()));
+	$app->add(new OrganizationUsersListCommand(new Client()));
 	$app->run();
 } catch (Exception $exception) {
     echo $exception->getMessage() . PHP_EOL;
