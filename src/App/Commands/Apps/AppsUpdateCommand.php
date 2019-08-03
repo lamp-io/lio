@@ -148,7 +148,7 @@ class AppsUpdateCommand extends Command
 			}
 		}, ARRAY_FILTER_USE_BOTH);
 
-		if (!empty($attributes)) {
+		if (empty($attributes)) {
 			throw new InvalidArgumentException('Command requires at least one option to be executed.');
 		}
 
