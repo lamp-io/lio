@@ -34,7 +34,7 @@ class SelfUpdateCommand extends Command
 	{
 		if (!\Phar::running()) {
 			$output->writeln('<error>Cant execute command. This command works only under phar build</error>');
-			exit(1);
+			return 1;
 		}
 		$this->version = $this->getApplication()->getVersion();
 		$updater = new Updater(null, false);
@@ -94,7 +94,7 @@ class SelfUpdateCommand extends Command
 			}
 		} catch (\Exception $e) {
 			$output->writeln(sprintf('Error: <error>%s</error>', $e->getMessage()));
-			exit(1);
+			return 1;
 		}
 	}
 
