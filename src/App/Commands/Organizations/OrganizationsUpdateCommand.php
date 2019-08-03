@@ -11,6 +11,7 @@ use Art4\JsonApiClient\V1\Document;
 use Console\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -63,7 +64,7 @@ class OrganizationsUpdateCommand extends Command
 				),
 				[
 					'headers' => $this->httpHelper->getHeaders(),
-					'body'    => $this->getRequestBody($input, $output),
+					'body'    => $this->getRequestBody($input),
 				]
 			);
 			if (!empty($input->getOption('json'))) {
@@ -76,19 +77,18 @@ class OrganizationsUpdateCommand extends Command
 			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
-			exit(1);
+			return 1;
 		} catch (ValidationException $e) {
 			$output->writeln($e->getMessage());
-			exit(1);
+			return 1;
 		}
 	}
 
 	/**
 	 * @param InputInterface $input
-	 * @param OutputInterface $output
 	 * @return string
 	 */
-	protected function getRequestBody(InputInterface $input, OutputInterface $output): string
+	protected function getRequestBody(InputInterface $input): string
 	{
 		$attributes = [];
 		foreach ($input->getOptions() as $optionKey => $optionValue) {
@@ -99,13 +99,7 @@ class OrganizationsUpdateCommand extends Command
 
 		}
 		if (empty($attributes)) {
-			$commandOptions = array_filter($input->getOptions(), function ($key) {
-				if (!in_array($key, self::DEFAULT_CLI_OPTIONS)) {
-					return '--' . $key;
-				}
-			}, ARRAY_FILTER_USE_KEY);
-			$output->writeln('<comment>Command requires at least one option to be executed. List of allowed options:' . PHP_EOL . implode(PHP_EOL, array_keys($commandOptions)) . '</comment>');
-			exit(1);
+			throw new InvalidArgumentException('Command requires at least one option to be executed');
 		}
 		return json_encode([
 			'data' => [
