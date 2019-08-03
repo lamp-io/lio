@@ -59,7 +59,7 @@ class DbRestoresDescribeCommand extends Command
 			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln('<error>' . $guzzleException->getMessage() . '</error>');
-			exit(1);
+			return 1;
 		}
 	}
 

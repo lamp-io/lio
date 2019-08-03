@@ -61,10 +61,10 @@ class AppRunsNewCommand extends Command
 			}
 		} catch (ValidationException $validationException) {
 			$output->writeln($validationException->getMessage());
-			exit(1);
+			return 1;
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
-			exit(1);
+			return 1;
 		}
 	}
 

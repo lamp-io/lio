@@ -40,7 +40,7 @@ class FilesUploadCommand extends Command
 		parent::execute($input, $output);
 		if (!file_exists($input->getArgument('file'))) {
 			$output->writeln('<error>File not exists</error>');
-			exit(1);
+			return 1;
 		}
 
 		try {
@@ -74,7 +74,7 @@ class FilesUploadCommand extends Command
 			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
-			exit(1);
+			return 1;
 		}
 	}
 
