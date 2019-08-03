@@ -59,43 +59,40 @@ class SelfUpdateCommand extends Command
 
 
 	/**
+	 * @param OutputInterface $output
 	 * @param Updater $updater
 	 */
 	protected function update(Updater $updater, OutputInterface $output)
 	{
 		$output->writeln('Updating...' . PHP_EOL);
-		try {
-			$result = $updater->update();
-			$newVersion = $updater->getNewVersion();
-			$oldVersion = $updater->getOldVersion();
-			if (strlen($newVersion) == 40) {
-				$newVersion = 'dev-' . $newVersion;
-			}
-			if (strlen($oldVersion) == 40) {
-				$oldVersion = 'dev-' . $oldVersion;
-			}
-
-			if ($result) {
-				$output->writeln('<info>Lio cli has been updated.</info>>');
-				$output->writeln(sprintf(
-					'<info>Current version is:</info> <options=bold>%s</options=bold>.',
-					$newVersion
-				));
-				$output->writeln(sprintf(
-					'<info>Previous version was:</info> <options=bold>%s</options=bold>.',
-					$oldVersion
-				));
-			} else {
-				$output->writeln('<info>Lio cli currently up to date.</info>');
-				$output->writeln(sprintf(
-					'<info>Current version is:</info> <options=bold>%s</options=bold>.',
-					$oldVersion
-				));
-			}
-		} catch (\Exception $e) {
-			$output->writeln(sprintf('Error: <error>%s</error>', $e->getMessage()));
-			return 1;
+		$result = $updater->update();
+		$newVersion = $updater->getNewVersion();
+		$oldVersion = $updater->getOldVersion();
+		if (strlen($newVersion) == 40) {
+			$newVersion = 'dev-' . $newVersion;
 		}
+		if (strlen($oldVersion) == 40) {
+			$oldVersion = 'dev-' . $oldVersion;
+		}
+
+		if ($result) {
+			$output->writeln('<info>Lio cli has been updated.</info>>');
+			$output->writeln(sprintf(
+				'<info>Current version is:</info> <options=bold>%s</options=bold>.',
+				$newVersion
+			));
+			$output->writeln(sprintf(
+				'<info>Previous version was:</info> <options=bold>%s</options=bold>.',
+				$oldVersion
+			));
+		} else {
+			$output->writeln('<info>Lio cli currently up to date.</info>');
+			$output->writeln(sprintf(
+				'<info>Current version is:</info> <options=bold>%s</options=bold>.',
+				$oldVersion
+			));
+		}
+
 	}
 
 	/**
