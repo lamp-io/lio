@@ -11,6 +11,7 @@ use Console\App\Commands\Command;
 use Console\App\Helpers\PasswordHelper;
 use GuzzleHttp\Exception\GuzzleException;
 use InvalidArgumentException;
+use Symfony\Component\Console\Exception\InvalidArgumentException as CliInvalidArgumentException;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -77,7 +78,7 @@ class DatabasesUpdateCommand extends Command
 				),
 				[
 					'headers' => $this->httpHelper->getHeaders(),
-					'body'    => $this->getRequestBody($input, $output),
+					'body'    => $this->getRequestBody($input),
 				]
 			);
 			if (!empty($input->getOption('json'))) {
@@ -101,11 +102,10 @@ class DatabasesUpdateCommand extends Command
 
 	/**
 	 * @param InputInterface $input
-	 * @param OutputInterface $output
 	 * @return string
 	 * @throws Exception
 	 */
-	protected function getRequestBody(InputInterface $input, OutputInterface $output): string
+	protected function getRequestBody(InputInterface $input): string
 	{
 		if (!empty($input->getOption('my_cnf')) && !file_exists($input->getOption('my_cnf'))) {
 			throw  new InvalidArgumentException('Path to mysql config not valid');
@@ -115,6 +115,8 @@ class DatabasesUpdateCommand extends Command
 			if (!in_array($key, self::DEFAULT_CLI_OPTIONS) && !empty($val)) {
 				if ($key == 'my_cnf') {
 					$attributes[$key] = file_get_contents($val);
+				} elseif ($key == 'vcpu') {
+					$attributes[$key] = (float)$val;
 				} else {
 					$attributes[$key] = $val;
 				}
@@ -122,13 +124,7 @@ class DatabasesUpdateCommand extends Command
 		}
 
 		if (empty($attributes)) {
-			$commandOptions = array_filter($input->getOptions(), function ($key) {
-				if (!in_array($key, self::DEFAULT_CLI_OPTIONS)) {
-					return '--' . $key;
-				}
-			}, ARRAY_FILTER_USE_KEY);
-			$output->writeln('<comment>Command requires at least one option to be executed. List of allowed options:' . PHP_EOL . implode(PHP_EOL, array_keys($commandOptions)) . '</comment>');
-			exit(1);
+			throw new CliInvalidArgumentException('Command requires at least one option to be executed. List of allowed options');
 		}
 
 		return json_encode([
