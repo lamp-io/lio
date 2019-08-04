@@ -14,6 +14,7 @@ use Console\App\Commands\DbBackups\DbBackupsDeleteCommand;
 use Console\App\Commands\DbBackups\DbBackupsDescribeCommand;
 use Console\App\Commands\DbBackups\DbBackupsListCommand;
 use Console\App\Commands\DbBackups\DbBackupsNewCommand;
+use Console\App\Commands\Files\SubCommands\FilesUpdateMoveCommand;
 use Console\App\Commands\Logs\LogsListCommand;
 use Symfony\Component\Console\Application;
 use Console\App\Commands\Apps\AppsDescribeCommand;
@@ -88,8 +89,9 @@ try {
 	$app->add(new DbRestoresDescribeCommand(new Client()));
 	$app->add(new DbRestoresDeleteCommand(new Client()));
 	$app->add(new LogsListCommand(new Client()));
+	$app->add(new FilesUpdateMoveCommand(new Client()));
 	$app->run();
 } catch (Exception $exception) {
-    echo $exception->getMessage() . PHP_EOL;
-    exit(1);
+	echo $exception->getMessage() . PHP_EOL;
+	exit(1);
 }
