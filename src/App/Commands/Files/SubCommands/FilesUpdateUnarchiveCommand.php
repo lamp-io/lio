@@ -7,7 +7,6 @@ use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use InvalidArgumentException;
 
 class FilesUpdateUnarchiveCommand extends Command
 {
@@ -63,16 +62,6 @@ class FilesUpdateUnarchiveCommand extends Command
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
 			exit(1);
-		}
-	}
-
-	/**
-	 * @param $file
-	 */
-	protected function validateArguments($file)
-	{
-		if (!file_exists($file)) {
-			throw new InvalidArgumentException('File not exists');
 		}
 	}
 
