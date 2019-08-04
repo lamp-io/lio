@@ -459,13 +459,17 @@ Commands
     * `[--description][-d](string)` Token description
     * `[--enable](bool)` Enable new token (By default created token will be disabled)
     
-2. ### tokens:delete <token_id>
+2. ### tokens:delete <token_id> [-yes][-y]
 
      Delete a token
      
      Arguments:
          
      * `<token_id>(string)` The ID of the token
+     
+     Options:
+     
+     * `[-yes][-y](bool)` Skip confirm delete question
      
 3. ### tokens:update <token_id> [--enable] [--disable]
  

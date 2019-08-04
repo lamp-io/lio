@@ -8,11 +8,10 @@ use Art4\JsonApiClient\Exception\ValidationException;
 use Console\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
-use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 class TokensDeleteCommand extends Command
 {
@@ -31,7 +30,8 @@ class TokensDeleteCommand extends Command
 		parent::configure();
 		$this->setDescription('Delete a token')
 			->setHelp('https://www.lamp.io/api#/tokens/tokensDelete')
-			->addArgument('token_id', InputArgument::REQUIRED, 'The ID of the token.');
+			->addArgument('token_id', InputArgument::REQUIRED, 'The ID of the token.')
+			->addOption('yes', 'y', InputOption::VALUE_NONE, 'Skip confirm delete question');
 	}
 
 	/**
@@ -45,11 +45,8 @@ class TokensDeleteCommand extends Command
 		parent::execute($input, $output);
 
 		try {
-			/** @var QuestionHelper $helper */
-			$helper = $this->getHelper('question');
-			$question = new ConfirmationQuestion('<info>Are you sure you want to token? (y/N)</info>', false);
-			if (!$helper->ask($input, $output, $question)) {
-				exit(0);
+			if (!$this->askConfirm('<info>Are you sure you want to token? (y/N)</info>', $output, $input)) {
+				return 0;
 			}
 			$response = $this->httpHelper->getClient()->request(
 				'DELETE',
