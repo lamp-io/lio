@@ -192,7 +192,18 @@ Commands
     * `<app_id>(string)` The ID of the app
     * `<exec>(string)` Command that will be ran
     
-2. ###app_runs:describe
+2. ### app_runs:delete <app_run_id>
+    
+    Delete runned command
+    
+    Arguments:
+    * `<app_run_id>(string)` ID of runned command
+    
+3. ### app_runs:list
+
+    Get all runned commands on all apps associated to your token
+    
+4. ### app_runs:describe
 
     Run command on app
     
