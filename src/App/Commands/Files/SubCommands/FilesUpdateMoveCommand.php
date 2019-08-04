@@ -29,7 +29,7 @@ class FilesUpdateMoveCommand extends Command
 			->setHelp('https://www.lamp.io/api#/files/filesUpdateID')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
 			->addArgument('remote_path', InputArgument::REQUIRED, 'File path on app, that should be moved')
-			->addArgument('move_path', InputArgument::REQUIRED, 'File path on app, which should be moved. NOTE: * target directory MUST exists, * move path should contain same name as a target file');
+			->addArgument('move_path', InputArgument::REQUIRED, 'File path on app, which should be moved. NOTE: * target directory MUST exists, * move path MUST have same name as a target file');
 	}
 
 	/**

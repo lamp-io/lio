@@ -30,7 +30,7 @@ class FilesUpdateFetchCommand extends Command
 			->setHelp('https://www.lamp.io/api#/files/filesUpdateID')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
 			->addArgument('remote_path', InputArgument::REQUIRED, 'File path on app, that should be filled with fetched data')
-			->addArgument('source', InputArgument::REQUIRED, 'A URL to that will be retrieved if "command" is "fetch"');
+			->addArgument('source', InputArgument::REQUIRED, 'A URL that should be fetched');
 	}
 
 	/**
