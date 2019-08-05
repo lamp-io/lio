@@ -8,6 +8,7 @@ use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\V1\Document;
 use Console\App\Commands\Command;
+use Console\App\Helpers\PasswordHelper;
 use GuzzleHttp\Exception\GuzzleException;
 use InvalidArgumentException;
 use Symfony\Component\Console\Helper\Table;
@@ -15,6 +16,8 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Helper\QuestionHelper;
+use Exception;
 
 class DatabasesUpdateCommand extends Command
 {
@@ -24,6 +27,7 @@ class DatabasesUpdateCommand extends Command
 
 	const EXCLUDE_FROM_OUTPUT = [
 		'my_cnf',
+		'mysql_root_password',
 	];
 
 	/**
@@ -39,7 +43,7 @@ class DatabasesUpdateCommand extends Command
 			->addOption('memory', 'm', InputOption::VALUE_REQUIRED, 'Amount of virtual memory on your database')
 			->addOption('organization_id', null, InputOption::VALUE_REQUIRED, 'Name of your organization')
 			->addOption('my_cnf', null, InputOption::VALUE_REQUIRED, 'Path to your database config file')
-			->addOption('mysql_root_password', null, InputOption::VALUE_REQUIRED, 'Root password')
+			->addOption('mysql_root_password', null, InputOption::VALUE_NONE, 'Root password')
 			->addOption('ssd', null, InputOption::VALUE_REQUIRED, 'Size of ssd storage')
 			->addOption('vcpu', null, InputOption::VALUE_REQUIRED, 'The number of virtual cpu cores available');
 	}
@@ -48,25 +52,32 @@ class DatabasesUpdateCommand extends Command
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
 	 * @return int|void|null
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
-
-		$this->getRequestBody($input);
-
+		if ($input->getOption('mysql_root_password')) {
+			/** @var QuestionHelper $helper */
+			$helper = $this->getHelper('question');
+			$question = PasswordHelper::getPasswordQuestion(
+				'<info>Please provide a password for the MySQL root user</info>',
+				null,
+				$output
+			);
+			$password = $helper->ask($input, $output, $question);
+			$input->setOption('mysql_root_password', $password);
+		}
 		try {
 			$response = $this->httpHelper->getClient()->request(
 				'PATCH',
 				sprintf(
 					self::API_ENDPOINT,
 					$input->getArgument('database_id')
-
 				),
 				[
 					'headers' => $this->httpHelper->getHeaders(),
-					'body'    => $this->getRequestBody($input),
+					'body'    => $this->getRequestBody($input, $output),
 				]
 			);
 			if (!empty($input->getOption('json'))) {
@@ -87,40 +98,47 @@ class DatabasesUpdateCommand extends Command
 
 	}
 
+
 	/**
 	 * @param InputInterface $input
+	 * @param OutputInterface $output
 	 * @return string
+	 * @throws Exception
 	 */
-	protected function getRequestBody(InputInterface $input): string
+	protected function getRequestBody(InputInterface $input, OutputInterface $output): string
 	{
 		if (!empty($input->getOption('my_cnf')) && !file_exists($input->getOption('my_cnf'))) {
 			throw  new InvalidArgumentException('Path to mysql config not valid');
 		}
+		$attributes = [];
+		foreach ($input->getOptions() as $key => $val) {
+			if (!in_array($key, self::DEFAULT_CLI_OPTIONS) && !empty($val)) {
+				if ($key == 'my_cnf') {
+					$attributes[$key] = file_get_contents($val);
+				} else {
+					$attributes[$key] = $val;
+				}
+			}
+		}
 
-		$body = [
+		if (empty($attributes)) {
+			$commandOptions = array_filter($input->getOptions(), function ($key) {
+				if (!in_array($key, self::DEFAULT_CLI_OPTIONS)) {
+					return '--' . $key;
+				}
+			}, ARRAY_FILTER_USE_KEY);
+			$output->writeln('<comment>Command requires at least one option to be executed. List of allowed options:' . PHP_EOL . implode(PHP_EOL, array_keys($commandOptions)) . '</comment>');
+			exit(1);
+		}
+
+		return json_encode([
 			'data' => [
-				'attributes' => array_merge([
-					'description'         => $input->getOption('description'),
-					'memory'              => $input->getOption('memory'),
-					'my_cnf'              => !(empty($input->getOption('my_cnf'))) ? file_get_contents($input->getOption('my_cnf')) : '',
-					'mysql_root_password' => $input->getOption('mysql_root_password'),
-					'ssd'                 => $input->getOption('ssd'),
-					'vcpu'                => (float)$input->getOption('vcpu'),
-				], !empty($input->getOption('organization_id')) ? ['organization_id' => $input->getOption('organization_id')] : []),
+				'attributes' => $attributes,
 				'id'         => $input->getArgument('database_id'),
 				'type'       => 'databases',
 			],
-		];
-
-		$body['data']['attributes'] = array_filter($body['data']['attributes'], function ($val, $key) {
-			if (!empty($val)) {
-				return [$key => $val];
-			}
-		}, ARRAY_FILTER_USE_BOTH);
-
-		return json_encode($body);
+		]);
 	}
-
 
 	/**
 	 * @param Document $document
@@ -134,7 +152,6 @@ class DatabasesUpdateCommand extends Command
 		$serializedDocument = $serializer->serialize($document);
 		$headers = ['Id'];
 		$row = [$serializedDocument['data']['id']];
-
 		foreach ($serializedDocument['data']['attributes'] as $key => $value) {
 			if (!empty($value) && !in_array($key, self::EXCLUDE_FROM_OUTPUT)) {
 				array_push($headers, $key);

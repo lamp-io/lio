@@ -6,12 +6,14 @@ use Console\App\Commands\Command;
 use Art4\JsonApiClient\Exception\ValidationException;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
+use Symfony\Component\Console\Helper\Table;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Art4\JsonApiClient\Serializer\ArraySerializer;
 
 class AppsUpdateCommand extends Command
 {
@@ -20,6 +22,10 @@ class AppsUpdateCommand extends Command
 	const HTTPD_CONF_OPTION_NAME = 'httpd_conf';
 
 	const PHP_INI_OPTION_NAME = 'php_ini';
+
+	const EXCLUDE_FROM_OUTPUT = [
+		'ssh_pub_key',
+	];
 
 	protected static $defaultName = 'apps:update';
 
@@ -32,7 +38,7 @@ class AppsUpdateCommand extends Command
 		$this->setDescription('Creates a new app')
 			->setHelp('Allow you to create app, api reference https://www.lamp.io/api#/apps/appsCreate')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addArgument('organization_id', InputArgument::OPTIONAL, 'The ID(uuid) of the organization this app belongs to. STRING')
+			->addOption('organization_id', null, InputOption::VALUE_REQUIRED, 'The ID(uuid) of the organization this app belongs to. STRING')
 			->addOption('description', 'd', InputOption::VALUE_REQUIRED, 'A description', '')
 			->addOption(self::HTTPD_CONF_OPTION_NAME, null, InputOption::VALUE_REQUIRED, 'Path to your httpd.conf', '')
 			->addOption('max_replicas', null, InputOption::VALUE_REQUIRED, 'The maximum number of auto-scaled replicas INT', '')
@@ -61,10 +67,10 @@ class AppsUpdateCommand extends Command
 				sprintf(
 					self::API_ENDPOINT,
 					$input->getArgument('app_id')
-					),
+				),
 				[
 					'headers' => $this->httpHelper->getHeaders(),
-					'body'    => $this->getRequestBody($input),
+					'body'    => $this->getRequestBody($input, $output),
 				]
 			);
 		} catch (GuzzleException $guzzleException) {
@@ -76,9 +82,14 @@ class AppsUpdateCommand extends Command
 		}
 
 		try {
-			/** @var Document $document */
-			$document = Parser::parseResponseString($response->getBody()->getContents());
-			$output->writeln('Your app ' . $document->get('data.id') .  ' successfully updated');
+			if (!empty($input->getOption('json'))) {
+				$output->writeln($response->getBody()->getContents());
+			} else {
+				/** @var Document $document */
+				$document = Parser::parseResponseString($response->getBody()->getContents());
+				$table = $this->getOutputAsTable($document, new Table($output));
+				$table->render();
+			}
 		} catch (ValidationException $e) {
 			$output->writeln($e->getMessage());
 			exit(1);
@@ -86,25 +97,59 @@ class AppsUpdateCommand extends Command
 	}
 
 	/**
+	 * @param Document $document
+	 * @param Table $table
+	 * @return Table
+	 */
+	protected function getOutputAsTable(Document $document, Table $table): Table
+	{
+		$table->setHeaderTitle('App');
+		$serializer = new ArraySerializer(['recursive' => true]);
+		$serializedDocument = $serializer->serialize($document);
+		$headers = ['Id', 'Attributes'];
+		$row = [$serializedDocument['data']['id']];
+		$attributes = [];
+		foreach ($serializedDocument['data']['attributes'] as $key => $attribute) {
+			if (!empty($attribute) && !in_array($key, self::EXCLUDE_FROM_OUTPUT)) {
+				$attributes[] = $key . ' : ' . trim(preg_replace(
+						'/\s\s+|\t/', ' ', wordwrap($attribute, 40)
+					));
+			}
+		}
+		$row[] = implode(PHP_EOL, $attributes);
+		$table->setHeaders($headers);
+		$table->addRow($row);
+		return $table;
+	}
+
+
+	/**
 	 * @param InputInterface $input
+	 * @param OutputInterface $output
 	 * @return string
 	 */
-	protected function getRequestBody(InputInterface $input): string
+	protected function getRequestBody(InputInterface $input, OutputInterface $output): string
 	{
 		$attributes = [];
-		foreach ($input->getOptions() as $optionKey => $optionValue) {
-			if (!in_array($optionKey, self::DEFAULT_CLI_OPTIONS) && !empty($input->getOption($optionKey))) {
-				if ($optionKey == self::HTTPD_CONF_OPTION_NAME || $optionKey == self::PHP_INI_OPTION_NAME) {
-					$attributes[$optionKey] = $this->parseConfigFilesOptions($optionKey, $input);
+		foreach ($input->getOptions() as $key => $option) {
+			if (!in_array($key, self::DEFAULT_CLI_OPTIONS) && !empty($option)) {
+				if ($key == self::HTTPD_CONF_OPTION_NAME || $key == self::PHP_INI_OPTION_NAME) {
+					$this->validateConfigFilesOptions($key, $input);
+					$attributes[$key] = file_get_contents($option);
 				} else {
-					$attributes[$optionKey] = $optionValue;
+					$attributes[$key] = $option;
 				}
 			}
 		}
-
-		$attributes = array_merge($attributes,
-			!empty($input->getArgument('organization_id')) ? ['organization_id' => (string)$input->getArgument('organization_id')] : []
-		);
+		if (empty($attributes)) {
+			$commandOptions = array_filter($input->getOptions(), function ($key) {
+				if (!in_array($key, self::DEFAULT_CLI_OPTIONS)) {
+					return '--' . $key;
+				}
+			}, ARRAY_FILTER_USE_KEY);
+			$output->writeln('<comment>Command requires at least one option to be executed. List of allowed options:' . PHP_EOL . implode(PHP_EOL, array_keys($commandOptions)) . '</comment>');
+			exit(1);
+		}
 
 		return json_encode([
 			'data' => [
@@ -118,15 +163,11 @@ class AppsUpdateCommand extends Command
 	/**
 	 * @param string $optionName
 	 * @param InputInterface $input
-	 * @return string
 	 */
-	protected function parseConfigFilesOptions(string $optionName, InputInterface $input): string
+	protected function validateConfigFilesOptions(string $optionName, InputInterface $input)
 	{
 		if (!file_exists($input->getOption($optionName))) {
 			throw new InvalidArgumentException('File ' . $optionName . ' not exist, path: ' . $input->getOption($optionName));
 		}
-		$config = file_get_contents($input->getOption($optionName));
-
-		return $config;
 	}
 }

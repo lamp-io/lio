@@ -94,7 +94,7 @@ Commands
     
 4. #### apps:update <app_id> <organization_id>  [-d][--description] [--httpd_conf] [--max_replicas] [-m][--memory] [--min_replicas] [--php_ini] [-r][--replicas] [--vcpu]
     
-    Will allow you to update selected app
+    Will allow you to update selected app. Command should be executed with at least one option
     
     Arguments:
     
@@ -193,7 +193,7 @@ Commands
     
 ### Databases 
 
-1. ### databases:new  [-d][--description] [-m][--memory] [--organization_id] [--my_cnf] [--mysql_root_password] [--ssd] [--vcpu]
+1. ### databases:new  [-d][--description] [-m][--memory] [--organization_id] [--mysql_root_password] [--my_cnf] [--ssd] [--vcpu]
 
    Create a new database
     
@@ -202,8 +202,8 @@ Commands
    * `[-d][--description](string)` Description of your database
    * `[-m][--memory](string){512Mi}` Amount of virtual memory on your database
    * `[--organization_id](string)` Name of your organization
+   * `[--mysql_root_password](string/bool)` Your root password for mysql 
    * `[--my_cnf](string)` Path to your database config file
-   * `[--mysql_root_password](string)` Root password
    * `[--ssd](string){1Gi}` Size of ssd storage
    * `[--vcpu](float){0.25}` The number of virtual cpu cores available, default 0.25
    
@@ -217,7 +217,7 @@ Commands
     
 3. ### databases:update <database_id> [-d][--description] [-m][--memory] [--organization_id] [--my_cnf] [--mysql_root_password] [--ssd] [--vcpu]
     
-    Update a database
+    Update a database. Command should be executed with at least one option
     
     Arguments:
         
@@ -229,10 +229,9 @@ Commands
    * `[-m][--memory](string)` Amount of virtual memory on your database
    * `[--organization_id](string)` Name of your organization
    * `[--my_cnf](string)` Path to your database config file
-   * `[--mysql_root_password](string)` Root password
+   * `[--mysql_root_password](bool)` If you need to update root password, set it as true
    * `[--ssd](string)` Size of ssd storage
    * `[--vcpu](float)` The number of virtual cpu cores available, default 0.25
-    
     
 4. ### databases:list [--organization_id]
 
@@ -249,6 +248,75 @@ Commands
     Arguments:
     
     *`<database_id>(string)` The id of database
+
+### Database backups
+
+1. ### db_backups:new <database_id>
+
+    Back up files in database
+    
+    Arguments:
+    
+    *`<database_id>(string)` The id of database
+    
+2. ### db_backups:delete <db_backup_id>
+
+    Delete a db backup
+    
+    Arguments:
+        
+    *`<db_backup_id>(string)` The ID of the db backup
+    
+3. ###db_backups:list [--organization_id][-o]
+
+    Return db backups
+    
+    Options:
+    
+    * `organization_id` Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
+    
+4. ### db_backups:describe <db_backup_id>
+
+    Return a db backup
+    
+    Arguments:
+    
+    *`<db_backup_id>(string)` The ID of the db backup
+    
+### Database restore jobs
+
+1. ### db_restores:new 
+
+    Create db restore job (restore a db backup to a database)
+    
+    Arguments:
+    
+    *`<database_id>(string)` The id of database
+    *`<db_backup_id>(string)` The ID of the db backup
+    
+2. ### db_restores:delete <db_restore_id>
+
+    Delete a db restore job
+    
+    Arguments:
+    
+    *`<db_restore_id>(string)` The ID of the db restore
+      
+3. ### db_restores:list [--organization_id][-o]
+
+    Return db restore jobs
+    
+    Options:
+    
+    * `organization_id` Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
+    
+4. ### db_restores:describe <db_restore_id>
+
+    Return a db restore job
+    
+    Arguments:
+    
+    *`<db_restore_id>(string)` The ID of the db restore
 
 ### Files
 
@@ -316,9 +384,22 @@ Commands
     * `<app_id>(string)` The ID of the app
     * `<remote_path>(string)` File path on app, that should be unarchived
 
+### Logs
+
+1. ### logs:list [--organization_id][-o] [--pod_name][-p] [--start_time] [--end_time]
+
+    Return logs
+    
+    Options
+    
+    * `[--organization_id][-o](string)` One organization_id. If omitted defaults to user's default organization
+    * `[--pod_name][-p](string)` One pod_name. Uses wildcard prefix match
+    * `[--start_time](string){date - 10min}` Start time conforming to RFC3339. Defaults to 10 minutes in the past
+    * `[--end_time](string){date}` End time conforming to RFC3339. Defaults to now
+
 ### Users
 
-1. #### files:update:unarchive [--organization_id][-o] [--email][-e]
+1. #### users:list [--organization_id][-o] [--email][-e]
 
     Get all users from your account
     
