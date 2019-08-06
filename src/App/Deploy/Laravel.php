@@ -45,7 +45,7 @@ class Laravel extends DeployAbstract
 		$args = [
 			'command' => AppRunsNewCommand::getDefaultName(),
 			'app_id'  => $appId,
-			'exec'    => 'ln ' . $symLinkOptions .' ' . $this->releaseFolder . 'public public',
+			'exec'    => 'ln ' . $symLinkOptions . ' ' . $this->releaseFolder . 'public public',
 			'--json'  => true,
 		];
 		$bufferOutput = new BufferedOutput();

@@ -105,6 +105,13 @@ class DeployCommand extends Command
 			'command' => AppsNewCommand::getDefaultName(),
 			'--json'  => true,
 		];
+		if (!empty($this->configHelper->get('app.attributes'))) {
+			$attributes = [];
+			foreach ($this->configHelper->get('app.attributes') as $key => $appAttribute) {
+				$attributes['--' . $key] = $appAttribute;
+			}
+			$args = array_merge($args, $attributes);
+		}
 		$bufferOutput = new BufferedOutput();
 		$appsNewCommand->run(new ArrayInput($args), $bufferOutput);
 		/** @var Document $document */
@@ -126,6 +133,7 @@ class DeployCommand extends Command
 	{
 		foreach ($options as $optionKey => $option) {
 			if ($option && array_key_exists($optionKey, self::DEPLOYS)) {
+				$this->configHelper->set('type', $optionKey);
 				$deployClass = (self::DEPLOYS[$optionKey]);
 				return new $deployClass($appDir, $this->getApplication(), $releaseId);
 			}

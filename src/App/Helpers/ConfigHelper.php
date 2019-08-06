@@ -2,7 +2,6 @@
 
 namespace Console\App\Helpers;
 
-use InvalidArgumentException;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
 
@@ -17,14 +16,13 @@ class ConfigHelper
 
 	protected $appPath;
 
-	public function __construct(string $pwd)
+	public function __construct(string $appPath)
 	{
 		try {
-			$this->appPath = $pwd . DIRECTORY_SEPARATOR;
+			$this->appPath = $appPath;
 			$this->config = Yaml::parseFile($this->appPath . self::LAMP_IO_CONFIG);
 		} catch (ParseException $parseException) {
-			echo $parseException->getMessage();
-			file_put_contents($pwd . DIRECTORY_SEPARATOR . self::LAMP_IO_CONFIG, '');
+			file_put_contents($appPath . DIRECTORY_SEPARATOR . self::LAMP_IO_CONFIG, '');
 		}
 	}
 
@@ -36,7 +34,7 @@ class ConfigHelper
 			if (isset($config[$arg])) {
 				$config = $config[$arg];
 			} else {
-				throw new InvalidArgumentException('Key not exists, ' . $arg);
+				return '';
 			}
 		}
 		return $config;
