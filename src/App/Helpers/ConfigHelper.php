@@ -26,8 +26,11 @@ class ConfigHelper
 		}
 	}
 
-	public function get(string $keys)
+	public function get(string $keys = '')
 	{
+		if (empty($keys)) {
+			return $this->config;
+		}
 		$config = $this->config;
 		$keys = explode('.', $keys);
 		foreach ($keys as $arg) {

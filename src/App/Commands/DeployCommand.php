@@ -18,6 +18,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
+use Console\App\Commands\Databases\DatabasesNewCommand;
 
 class DeployCommand extends Command
 {
@@ -39,6 +40,8 @@ class DeployCommand extends Command
 	 * @var bool
 	 */
 	protected $isNewApp = true;
+
+	protected $isNewDatabase = true;
 
 	public function __construct(ClientInterface $httpClient, $name = null)
 	{
@@ -72,13 +75,59 @@ class DeployCommand extends Command
 			$deployObject = $this->getDeployObject($input->getOptions(), $appPath, $releaseId);
 			$deployObject->isCorrectApp($appPath);
 			$appId = $this->getAppId($output, $input);
+			$this->getDatabaseId($output, $input);
 			$this->configHelper->save();
-			$deployObject->deployApp($appId, $this->isNewApp);
+			$deployObject->deployApp($appId, $this->isNewApp, $this->isNewDatabase, $this->configHelper->get());
 			$output->writeln('<info>Done, check it out at https://' . $appId . '.lamp.app/</info>');
 		} catch (Exception $exception) {
 			$output->writeln('<error>' . $exception->getMessage() . '</error>');
 			return 1;
 		}
+	}
+
+	/**
+	 * @param OutputInterface $output
+	 * @param InputInterface $input
+	 * @return string
+	 * @throws Exception
+	 */
+	protected function getDatabaseId(OutputInterface $output, InputInterface $input): string
+	{
+		if (!empty($this->configHelper->get('database.id'))) {
+			$this->isNewDatabase = false;
+			return $this->configHelper->get('database.id');
+		}
+
+		$questionHelper = $this->getHelper('question');
+		$question = new ConfirmationQuestion('<info>This looks like a new app, shall we create a lamp.io database for it? (Y/n):</info>');
+		if (!$questionHelper->ask($input, $output, $question)) {
+			$output->writeln('<info>You must to create new database or select to which database your project should use, in lamp.io.yaml file inside of your project</info>');
+			return 0;
+		}
+
+		$databasesNewCommand = $this->getApplication()->find(DatabasesNewCommand::getDefaultName());
+		$args = [
+			'command' => DatabasesNewCommand::getDefaultName(),
+			'--json'  => true,
+		];
+		if (!empty($this->configHelper->get('database.attributes'))) {
+			$attributes = [];
+			foreach ($this->configHelper->get('database.attributes') as $key => $appAttribute) {
+				$attributes['--' . $key] = $appAttribute;
+			}
+			$args = array_merge($args, $attributes);
+		}
+		$bufferOutput = new BufferedOutput();
+		$databasesNewCommand->run(new ArrayInput($args), $bufferOutput);
+		/** @var Document $document */
+		$document = Parser::parseResponseString($bufferOutput->fetch());
+		$databaseId = $document->get('data.id');
+		$output->writeln('<info>' . $databaseId . ' created!</info>');
+		$this->configHelper->set('database.id', $databaseId);
+		$this->configHelper->set('database.connection.host', $this->configHelper->get('database.id'));
+		$this->configHelper->set('database.connection.password', $document->get('data.attributes.mysql_root_password'));
+		$this->configHelper->set('database.connection.user', 'root');
+		return $databaseId;
 	}
 
 	/**
@@ -119,6 +168,7 @@ class DeployCommand extends Command
 		$appId = $document->get('data.id');
 		$output->writeln('<info>' . $appId . ' created!</info>');
 		$this->configHelper->set('app.id', $appId);
+		$this->configHelper->set('app.url', 'https://' . $appId . '.lamp.app');
 		return $appId;
 	}
 

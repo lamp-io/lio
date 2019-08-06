@@ -92,15 +92,17 @@ abstract class DeployAbstract implements DeployInterface
 
 	/**
 	 * @param string $appId
+	 * @param string $command
+	 * @param string $progressMessage
 	 * @throws Exception
 	 */
-	protected function clearApp(string $appId)
+	protected function appRunCommand(string $appId, string $command, string $progressMessage)
 	{
 		$appRunsNewCommand = $this->application->find(AppRunsNewCommand::getDefaultName());
 		$args = [
 			'command' => AppRunsNewCommand::getDefaultName(),
 			'app_id'  => $appId,
-			'exec'    => 'rm -rf *',
+			'exec'    => $command,
 			'--json'  => true,
 		];
 		$bufferOutput = new BufferedOutput();
@@ -108,14 +110,23 @@ abstract class DeployAbstract implements DeployInterface
 		/** @var Document $document */
 		$document = Parser::parseResponseString($bufferOutput->fetch());
 		$appRunId = $document->get('data.id');
-		$progressBarMessage = 'Removing default files';
-		$progressBar = Command::getProgressBar($progressBarMessage, $this->consoleOutput);
+		$progressBar = Command::getProgressBar($progressMessage, $this->consoleOutput);
 		$progressBar->start();
 		while (!AppRunsDescribeCommand::isExecutionCompleted($appRunId, $this->application)) {
 			$progressBar->advance();
 		}
 		$progressBar->finish();
 		$this->consoleOutput->write(PHP_EOL);
+	}
+
+	/**
+	 * @param string $appId
+	 * @throws Exception
+	 */
+	protected function clearApp(string $appId)
+	{
+		$command = 'rm -rf *';
+		$this->appRunCommand($appId, $command, 'Removing default files');
 	}
 
 	/**
