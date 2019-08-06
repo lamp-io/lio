@@ -67,12 +67,13 @@ class DeployCommand extends Command
 		try {
 			$appPath = rtrim($input->getArgument('dir'), '/') . DIRECTORY_SEPARATOR;
 			$this->configHelper = new ConfigHelper($appPath);
-			$deployObject = $this->getDeployObject($input->getOptions(), $appPath);
+			$releaseId = time();
+			$this->configHelper->set('release', $releaseId);
+			$deployObject = $this->getDeployObject($input->getOptions(), $appPath, $releaseId);
 			$deployObject->isCorrectApp($appPath);
 			$appId = $this->getAppId($output, $input);
-			$this->configHelper->set('release', time());
+			$this->configHelper->save();
 			$deployObject->deployApp($appId, $this->isNewApp);
-			$deployObject->deployDb();
 			$output->writeln('<info>Done, check it out at https://' . $appId . '.lamp.app/</info>');
 		} catch (Exception $exception) {
 			$output->writeln('<error>' . $exception->getMessage() . '</error>');
@@ -96,8 +97,8 @@ class DeployCommand extends Command
 		$questionHelper = $this->getHelper('question');
 		$question = new ConfirmationQuestion('<info>This looks like a new app, shall we create a lamp.io app for it? (Y/n):</info>');
 		if (!$questionHelper->ask($input, $output, $question)) {
-			$output->writeln('<info>You must to create new app or select to which app your project should be deployed, in .lamp.io file inside of your project</info>');
-			exit();
+			$output->writeln('<info>You must to create new app or select to which app your project should be deployed, in lamp.io.yaml file inside of your project</info>');
+			return 0;
 		}
 		$appsNewCommand = $this->getApplication()->find(AppsNewCommand::getDefaultName());
 		$args = [
@@ -118,20 +119,21 @@ class DeployCommand extends Command
 	/**
 	 * @param array $options
 	 * @param string $appDir
+	 * @param int $releaseId
 	 * @return DeployInterface
 	 */
-	protected function getDeployObject(array $options, string $appDir): DeployInterface
+	protected function getDeployObject(array $options, string $appDir, int $releaseId): DeployInterface
 	{
 		foreach ($options as $optionKey => $option) {
 			if ($option && array_key_exists($optionKey, self::DEPLOYS)) {
 				$deployClass = (self::DEPLOYS[$optionKey]);
-				return new $deployClass($appDir, $this->getApplication());
+				return new $deployClass($appDir, $this->getApplication(), $releaseId);
 			}
 		}
 
-		if (array_key_exists($this->configHelper->get('app_type'), self::DEPLOYS)) {
-			$deployClass = (self::DEPLOYS[$this->configHelper->get('app_type')]);
-			return new $deployClass($appDir, $this->getApplication());
+		if (array_key_exists($this->configHelper->get('type'), self::DEPLOYS)) {
+			$deployClass = (self::DEPLOYS[$this->configHelper->get('type')]);
+			return new $deployClass($appDir, $this->getApplication(), $releaseId);
 		}
 
 		throw new InvalidArgumentException('App type for deployment, not specified, apps allowed ' . implode(',', array_keys(self::DEPLOYS)));
