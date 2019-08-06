@@ -75,10 +75,10 @@ class FilesListCommand extends Command
 
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
-			exit(1);
+			return 1;
 		} catch (ValidationException $validationException) {
 			$output->writeln('<error>' . $validationException->getMessage() . '</error>');
-			exit(1);
+			return 1;
 		}
 
 	}

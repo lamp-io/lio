@@ -90,10 +90,10 @@ class DatabasesUpdateCommand extends Command
 			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
-			exit(1);
+			return 1;
 		} catch (InvalidArgumentException $invalidArgumentException) {
 			$output->writeln($invalidArgumentException->getMessage());
-			exit(1);
+			return 1;
 		}
 
 	}
@@ -128,7 +128,7 @@ class DatabasesUpdateCommand extends Command
 				}
 			}, ARRAY_FILTER_USE_KEY);
 			$output->writeln('<comment>Command requires at least one option to be executed. List of allowed options:' . PHP_EOL . implode(PHP_EOL, array_keys($commandOptions)) . '</comment>');
-			exit(1);
+			return 1;
 		}
 
 		return json_encode([

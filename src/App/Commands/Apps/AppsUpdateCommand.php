@@ -75,10 +75,10 @@ class AppsUpdateCommand extends Command
 			);
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
-			exit(1);
+			return 1;
 		} catch (\InvalidArgumentException $invalidArgumentException) {
 			$output->writeln($invalidArgumentException->getMessage());
-			exit(1);
+			return 1;
 		}
 
 		try {
@@ -92,7 +92,7 @@ class AppsUpdateCommand extends Command
 			}
 		} catch (ValidationException $e) {
 			$output->writeln($e->getMessage());
-			exit(1);
+			return 1;
 		}
 	}
 
@@ -142,13 +142,7 @@ class AppsUpdateCommand extends Command
 			}
 		}
 		if (empty($attributes)) {
-			$commandOptions = array_filter($input->getOptions(), function ($key) {
-				if (!in_array($key, self::DEFAULT_CLI_OPTIONS)) {
-					return '--' . $key;
-				}
-			}, ARRAY_FILTER_USE_KEY);
-			$output->writeln('<comment>Command requires at least one option to be executed. List of allowed options:' . PHP_EOL . implode(PHP_EOL, array_keys($commandOptions)) . '</comment>');
-			exit(1);
+			throw new InvalidArgumentException('Command requires at least one option to be executed');
 		}
 
 		return json_encode([

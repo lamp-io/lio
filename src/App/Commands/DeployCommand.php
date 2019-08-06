@@ -76,7 +76,7 @@ class DeployCommand extends Command
 			$output->writeln('<info>Done, check it out at https://' . $appId . '.lamp.app/</info>');
 		} catch (Exception $exception) {
 			$output->writeln('<error>' . $exception->getMessage() . '</error>');
-			exit(1);
+			return 1;
 		}
 	}
 

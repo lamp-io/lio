@@ -70,10 +70,10 @@ class AppBackupsListCommand extends Command
 			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
-			exit(1);
+			return 1;
 		} catch (ValidationException $e) {
 			$output->writeln($e->getMessage());
-			exit(1);
+			return 1;
 		}
 	}
 

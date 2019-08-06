@@ -89,10 +89,10 @@ class DatabasesNewCommand extends Command
 			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
-			exit(1);
+			return 1;
 		} catch (InvalidArgumentException $invalidArgumentException) {
 			$output->writeln($invalidArgumentException->getMessage());
-			exit(1);
+			return 1;
 		}
 	}
 
@@ -114,8 +114,7 @@ class DatabasesNewCommand extends Command
 	{
 		if (is_string($input->getOption('mysql_root_password'))) {
 			if (empty(trim($input->getOption('mysql_root_password')))) {
-				$output->writeln('<error>Error: Refusing to set empty password</error>');
-				exit(1);
+				throw new InvalidArgumentException('Error: Refusing to set empty password');
 			}
 			$password = $input->getOption('mysql_root_password');
 		} else {
