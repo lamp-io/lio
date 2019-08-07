@@ -6,6 +6,16 @@ if (file_exists(dirname(__DIR__, 3) . '/autoload.php')) {
 	require_once dirname(__DIR__) . '/vendor/autoload.php';
 }
 
+use Console\App\Commands\Apps\SubCommands\AppUpdatesStatusCommand;
+use Console\App\Commands\Organizations\OrganizationsListCommand;
+use Console\App\Commands\Organizations\OrganizationsUpdateCommand;
+use Console\App\Commands\OrganizationUsers\OrganizationUsersDescribeCommand;
+use Console\App\Commands\OrganizationUsers\OrganizationUsersListCommand;
+use Console\App\Commands\OrganizationUsers\OrganizationUsersUpdateCommand;
+use Console\App\Commands\Tokens\TokensDeleteCommand;
+use Console\App\Commands\Tokens\TokensDescribeCommand;
+use Console\App\Commands\Tokens\TokensListCommand;
+use Console\App\Commands\Tokens\TokensNewCommand;
 use Console\App\Commands\DbRestores\DbRestoresDeleteCommand;
 use Console\App\Commands\DbRestores\DbRestoresDescribeCommand;
 use Console\App\Commands\DbRestores\DbRestoresListCommand;
@@ -14,7 +24,10 @@ use Console\App\Commands\DbBackups\DbBackupsDeleteCommand;
 use Console\App\Commands\DbBackups\DbBackupsDescribeCommand;
 use Console\App\Commands\DbBackups\DbBackupsListCommand;
 use Console\App\Commands\DbBackups\DbBackupsNewCommand;
+use Console\App\Commands\Files\SubCommands\FilesUpdateFetchCommand;
+use Console\App\Commands\Files\SubCommands\FilesUpdateMoveCommand;
 use Console\App\Commands\Logs\LogsListCommand;
+use Console\App\Commands\Tokens\TokensUpdateCommand;
 use Symfony\Component\Console\Application;
 use Console\App\Commands\Apps\AppsDescribeCommand;
 use Console\App\Commands\Apps\AppsListCommand;
@@ -88,8 +101,24 @@ try {
 	$app->add(new DbRestoresDescribeCommand(new Client()));
 	$app->add(new DbRestoresDeleteCommand(new Client()));
 	$app->add(new LogsListCommand(new Client()));
+	$app->add(new FilesUpdateFetchCommand(new Client()));
+	$app->add(new FilesUpdateMoveCommand(new Client()));
+	$app->add(new AppUpdatesStatusCommand(new Client()));
+	$app->add(new OrganizationsListCommand(new Client()));
+	$app->add(new OrganizationsUpdateCommand(new Client()));
+	$app->add(new TokensNewCommand(new Client()));
+	$app->add(new OrganizationsListCommand(new Client()));
+	$app->add(new OrganizationsUpdateCommand(new Client()));
+	$app->add(new TokensNewCommand(new Client()));
+	$app->add(new TokensListCommand(new Client()));
+	$app->add(new TokensDescribeCommand(new Client()));
+	$app->add(new TokensDeleteCommand(new Client()));
+	$app->add(new TokensUpdateCommand(new Client()));
+	$app->add(new OrganizationUsersListCommand(new Client()));
+	$app->add(new OrganizationUsersDescribeCommand(new Client()));
+	$app->add(new OrganizationUsersUpdateCommand(new Client()));
 	$app->run();
 } catch (Exception $exception) {
-    echo $exception->getMessage() . PHP_EOL;
-    exit(1);
+	echo $exception->getMessage() . PHP_EOL;
+	exit(1);
 }

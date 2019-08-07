@@ -47,7 +47,7 @@ Commands
     
 
 
-### Token
+### Auth
 1.  #### auth [-u][--update_token]
 
     Will ask you to input your auth token
@@ -114,13 +114,32 @@ Commands
     * `[--github_webhook_secret](string){''}` Github web-hook secret token
     * `[--webhook_run_command](string){''}` Github web-hook command
     
-5. #### apps:delete <app_id>
+5. #### apps:delete <app_id> [--yes][-y]
 
     Delete an app
     
     Arguments:
     
-    * `<app_id>(string)` The ID of the app  
+    * `<app_id>(string)` The ID of the app
+    
+    Options:
+    
+    * `[--yes][-y](bool)` Skip confirm delete question
+
+### Files sub commands: 
+
+1. ### apps:update:status <app_id> [--enable] [--disable]
+
+    Enable/disable selected app
+    
+    Arguments:
+        
+    * `<app_id>(string)` The ID of the app
+    
+    Options:
+    
+    * `[--enable](bool)` Enable your stopped app
+    * `[--disable](bool)` Disable your running app
     
 ### App backups
 
@@ -158,13 +177,17 @@ Commands
     * `<app_backup_id>(string)` The ID of the app backup
     * `<dir>(string){$PWD}` Path to directory, where should be stored downloaded file. Default value current working directory
     
-5. #### app_backups:delete <app_backup_id> <dir>
+5. #### app_backups:delete <app_backup_id> [--yes][-y]
 
     Delete an app backup
     
     Arguments:
         
     * `<app_backup_id>(string)` The ID of the app backup
+    
+    Options:
+        
+    * `[--yes][-y](bool)` Skip confirm delete question
     
 6.  #### app_backups:list [-o][--organization_id]
 
@@ -184,7 +207,18 @@ Commands
     * `<app_id>(string)` The ID of the app
     * `<exec>(string)` Command that will be ran
     
-2. ###app_runs:describe
+2. ### app_runs:delete <app_run_id>
+    
+    Delete runned command
+    
+    Arguments:
+    * `<app_run_id>(string)` ID of runned command
+    
+3. ### app_runs:list
+
+    Get all runned commands on all apps associated to your token
+    
+4. ### app_runs:describe
 
     Run command on app
     
@@ -207,13 +241,17 @@ Commands
    * `[--ssd](string){1Gi}` Size of ssd storage
    * `[--vcpu](float){0.25}` The number of virtual cpu cores available, default 0.25
    
-2. ### databases:delete <database_id>
+2. ### databases:delete <database_id> [--yes][-y]
 
     Delete a database
     
     Arguments:
     
     *`<database_id>(string)` The id of database
+    
+    Options:
+        
+    * `[--yes][-y](bool)` Skip confirm delete question
     
 3. ### databases:update <database_id> [-d][--description] [-m][--memory] [--organization_id] [--my_cnf] [--mysql_root_password] [--ssd] [--vcpu]
     
@@ -259,13 +297,17 @@ Commands
     
     *`<database_id>(string)` The id of database
     
-2. ### db_backups:delete <db_backup_id>
+2. ### db_backups:delete <db_backup_id> [--yes][-y]
 
     Delete a db backup
     
     Arguments:
         
     *`<db_backup_id>(string)` The ID of the db backup
+    
+    Options:
+        
+    * `[--yes][-y](bool)` Skip confirm delete question
     
 3. ###db_backups:list [--organization_id][-o]
 
@@ -365,7 +407,7 @@ Commands
    * `<remote_path>(string)[optional]{}` File path on app, that should be updated
    * `<local_file>(string)[optional]{}` Path to a local file, which content will sent to remote. If not specified, will make your <remote_path> appache writable
 
-5. #### files:delete <app_id> <remote_path>
+5. #### files:delete <app_id> <remote_path> [--yes][-y]
 
     Delete file/directory on selected app
     
@@ -373,16 +415,41 @@ Commands
     
     * `<app_id>(string)` The ID of the app
     * `<remote_path>(string)` Remote path on app, what file/directory you need to delete
+    
+    Options:
+        
+    * `[--yes][-y](bool)` Skip confirm delete question
 
 ### Files sub commands: 
 
 1. #### files:update:unarchive <app_id> <remote_path>
+
     Extract your archived file, on your app
     
     Arguments:
     
     * `<app_id>(string)` The ID of the app
     * `<remote_path>(string)` File path on app, that should be unarchived
+    
+2. ### files:update:fetch <app_id> <remote_path> <source>
+
+    Fill file with fetched data
+    
+    Arguments:
+    
+    * `<app_id>(string)` The ID of the app
+    * `<remote_path>(string)` File path on app, that should be filled with fetched data
+    * `<source>(string)` A URL that should be fetched
+
+3. ### files:update:move <app_id> <remote_path> <move_path>
+
+    Move file on app to another directory
+    
+    Arguments:
+    
+    * `<app_id>(string)` The ID of the app
+    * `<remote_path>(string)` File path on app, that should be filled with fetched data
+    * `<move_path>(string)` File path on app, which should be moved. NOTE: * target directory MUST exists, * move path MUST have same name as a target file
 
 ### Logs
 
@@ -397,6 +464,104 @@ Commands
     * `[--start_time](string){date - 10min}` Start time conforming to RFC3339. Defaults to 10 minutes in the past
     * `[--end_time](string){date}` End time conforming to RFC3339. Defaults to now
 
+### Organizations
+
+1. ### organizations:update <organization_id> [--name] [--promo_code] [-p][--payment]
+
+    Update an organization
+    
+    Arguments:
+    
+    * `<organization_id>(string)` The ID of the organization
+    
+    Options:
+    
+    * `[--name](string)` New organization name
+    * `[--promo_code]`  Apply promo code
+    * `[-p][--payment]` New Stripe source id
+
+2. ### organizations:list
+
+    Returns this user's organizations
+    
+###Organization users
+
+1. ### organization_users:update <organization_user_id> [--admin]
+
+    Update an organization/user relationship (Allow to set/remove selected user role as an organization admin)
+    
+    Arguments:
+    
+    * `<organization_user_id>(string)` The ID of the organization_use
+    
+    Options:
+    
+    * `[--admin](bool)` Set selected user as admin of organization (if you need to remove admin role from selected user, just omit this option)
+    
+2. ### organizations_users:list [--organization_id]
+
+    Returns organization/user relationships
+    
+    Options:
+    
+    * `[--organization_id](string)` Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
+    
+3. ### organizations_users:describe <organization_user_id> 
+
+    Returns a organization/user relationship
+    
+    Arguments:
+    
+    * `<organization_user_id>(string)` The ID of the organization_use
+    
+### Tokens
+
+1. ### tokens:new [--description][-d] [--enable]
+
+    Creates a new token
+    
+    Options:
+    
+    * `[--description][-d](string)` Token description
+    * `[--enable](bool)` Enable new token (By default created token will be disabled)
+    
+2. ### tokens:delete <token_id> [-yes][-y]
+
+     Delete a token
+     
+     Arguments:
+         
+     * `<token_id>(string)` The ID of the token
+     
+     Options:
+     
+     * `[-yes][-y](bool)` Skip confirm delete question
+     
+3. ### tokens:update <token_id> [--enable] [--disable]
+ 
+    Update a token. If execute without options, it will disable token
+    
+    Arguments:
+             
+     * `<token_id>(string)` The ID of the token
+     
+     Options:
+     
+     * `[--enable](bool)` Enable new token
+     * `[--disable](bool)` Disable token
+    
+4. ### tokens:list 
+
+    Returns all tokens for this user
+    
+5. ### tokens:describe <token_id>
+    
+    Returns a token
+    
+    Arguments:
+             
+     * `<token_id>(string)` The ID of the token
+    
 ### Users
 
 1. #### users:list [--organization_id][-o] [--email][-e]
