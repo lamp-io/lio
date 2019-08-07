@@ -120,7 +120,22 @@ Commands
     
     Arguments:
     
-    * `<app_id>(string)` The ID of the app  
+    * `<app_id>(string)` The ID of the app
+    
+### Files sub commands: 
+
+1. ### apps:update:status <app_id> [--enable] [--disable]
+
+    Enable/disable selected app
+    
+    Arguments:
+        
+    * `<app_id>(string)` The ID of the app
+    
+    Options:
+    
+    * `[--enable](bool)` Enable your stopped app
+    * `[--disable](bool)` Disable your running app
     
 ### App backups
 

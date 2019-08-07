@@ -6,6 +6,7 @@ if (file_exists(dirname(__DIR__, 3) . '/autoload.php')) {
 	require_once dirname(__DIR__) . '/vendor/autoload.php';
 }
 
+use Console\App\Commands\Apps\SubCommands\AppUpdatesStatusCommand;
 use Console\App\Commands\Organizations\OrganizationsListCommand;
 use Console\App\Commands\Organizations\OrganizationsUpdateCommand;
 use Console\App\Commands\OrganizationUsers\OrganizationUsersDescribeCommand;
@@ -98,6 +99,7 @@ try {
 	$app->add(new DbRestoresDescribeCommand(new Client()));
 	$app->add(new DbRestoresDeleteCommand(new Client()));
 	$app->add(new LogsListCommand(new Client()));
+	$app->add(new AppUpdatesStatusCommand(new Client()));
 	$app->add(new OrganizationsListCommand(new Client()));
 	$app->add(new OrganizationsUpdateCommand(new Client()));
 	$app->add(new TokensNewCommand(new Client()));
