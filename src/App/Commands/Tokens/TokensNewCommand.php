@@ -1,6 +1,6 @@
 <?php
 
-namespace Console\App\Commands\DbBackups;
+namespace Console\App\Commands\Tokens;
 
 use Art4\JsonApiClient\Exception\ValidationException;
 use Art4\JsonApiClient\Helper\Parser;
@@ -10,22 +10,15 @@ use Console\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Helper\Table;
-use Symfony\Component\Console\Helper\TableSeparator;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class DbBackupsListCommand extends Command
+class TokensNewCommand extends Command
 {
-	const API_ENDPOINT = 'https://api.lamp.io/db_backups%s';
+	const API_ENDPOINT = 'https://api.lamp.io/tokens';
 
-	const OPTIONS_TO_QUERY_KEYS = [
-		'organization_id' => 'filter[organization_id]',
-	];
-	/**
-	 * @var string
-	 */
-	protected static $defaultName = 'db_backups:list';
+	protected static $defaultName = 'tokens:new';
 
 	/**
 	 *
@@ -33,15 +26,16 @@ class DbBackupsListCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('Return db backups')
-			->setHelp('https://www.lamp.io/api#/db_backups/dbBackupsList')
-			->addOption('organization_id', 'o', InputOption::VALUE_REQUIRED, 'Comma-separated list of requested organization_ids. If omitted defaults to user\'s default organization');
+		$this->setDescription('Creates a new token')
+			->setHelp('https://www.lamp.io/api#/tokens/tokensCreate')
+			->addOption('description', 'd', InputOption::VALUE_REQUIRED, 'Token description', '')
+			->addOption('enable', null, InputOption::VALUE_NONE, 'Enable token');
 	}
 
 	/**
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
-	 * @return int|null|void
+	 * @return int|void|null
 	 * @throws Exception
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
@@ -50,13 +44,14 @@ class DbBackupsListCommand extends Command
 
 		try {
 			$response = $this->httpHelper->getClient()->request(
-				'GET',
-				sprintf(
-					self::API_ENDPOINT,
-					$this->httpHelper->optionsToQuery($input->getOptions(), self::OPTIONS_TO_QUERY_KEYS)
-				),
+				'POST',
+				self::API_ENDPOINT,
 				[
 					'headers' => $this->httpHelper->getHeaders(),
+					'body'    => $this->getRequestBody(
+						$input->getOption('description'),
+						$input->getOption('enable')
+					),
 				]
 			);
 			if (!empty($input->getOption('json'))) {
@@ -67,11 +62,11 @@ class DbBackupsListCommand extends Command
 				$table = $this->getOutputAsTable($document, new Table($output));
 				$table->render();
 			}
+		} catch (ValidationException $validationException) {
+			$output->writeln($validationException->getMessage());
+			return 1;
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
-			return 1;
-		} catch (ValidationException $e) {
-			$output->writeln($e->getMessage());
 			return 1;
 		}
 	}
@@ -83,30 +78,39 @@ class DbBackupsListCommand extends Command
 	 */
 	protected function getOutputAsTable(Document $document, Table $table): Table
 	{
-		$table->setHeaderTitle('Databases Backups');
+		$table->setHeaderTitle('Token Created');
 		$table->setStyle('box');
-		$table->setHeaders([
-			'Id', 'Db Id', 'Complete', 'Created at', 'Organization Id', 'Status', 'Updated at',
-		]);
+		$table->setHeaders(['Id', 'Attributes']);
 		$serializer = new ArraySerializer(['recursive' => true]);
 		$serializedDocument = $serializer->serialize($document);
-		$sortedData = $this->sortData($serializedDocument['data'], 'updated_at');
-		$lastElement = end($sortedData);
-		foreach ($sortedData as $key => $value) {
-			$table->addRow([
-				$value['id'],
-				$value['attributes']['database_id'],
-				$value['attributes']['complete'],
-				$value['attributes']['created_at'],
-				$value['attributes']['organization_id'],
-				$value['attributes']['status'],
-				$value['attributes']['updated_at'],
-			]);
-			if ($value != $lastElement) {
-				$table->addRow(new TableSeparator());
-			}
-
+		$attributes = [];
+		foreach ($serializedDocument['data']['attributes'] as $attributeKey => $attribute) {
+			array_push($attributes, $attributeKey . ' : ' . $attribute);
 		}
+		$table->addRow([
+			$serializedDocument['data']['id'],
+			implode(PHP_EOL, $attributes),
+		]);
+
+
 		return $table;
+	}
+
+	/**
+	 * @param string $description
+	 * @param bool $enable
+	 * @return string
+	 */
+	protected function getRequestBody(string $description, bool $enable): string
+	{
+		return json_encode([
+			'data' => [
+				'attributes' => [
+					'description' => $description,
+					'enabled'     => $enable,
+				],
+				'type'       => 'tokens',
+			],
+		]);
 	}
 }

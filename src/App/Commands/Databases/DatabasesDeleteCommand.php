@@ -10,6 +10,7 @@ use InvalidArgumentException;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 
@@ -27,7 +28,8 @@ class DatabasesDeleteCommand extends Command
 		parent::configure();
 		$this->setDescription('Delete a database')
 			->setHelp('https://www.lamp.io/api#/databases/databasesDelete')
-			->addArgument('database_id', InputArgument::REQUIRED, 'The id of database');
+			->addArgument('database_id', InputArgument::REQUIRED, 'The id of database')
+			->addOption('yes', 'y', InputOption::VALUE_NONE, 'Skip confirm delete question');
 	}
 
 	/**
@@ -39,11 +41,8 @@ class DatabasesDeleteCommand extends Command
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
-		/** @var QuestionHelper $helper */
-		$helper = $this->getHelper('question');
-		$question = new ConfirmationQuestion('<info>Are you sure you want to delete database? (y/N)</info>', false);
-		if (!$helper->ask($input, $output, $question)) {
-			exit(0);
+		if (!$this->askConfirm('<info>Are you sure you want to delete database? (y/N)</info>', $output, $input)) {
+			return 0;
 		}
 		try {
 			$this->httpHelper->getClient()->request(
@@ -61,10 +60,10 @@ class DatabasesDeleteCommand extends Command
 			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
-			exit(1);
+			return 1;
 		} catch (InvalidArgumentException $invalidArgumentException) {
 			$output->writeln($invalidArgumentException->getMessage());
-			exit(1);
+			return 1;
 		}
 
 	}

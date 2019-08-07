@@ -6,6 +6,7 @@ use Console\App\Commands\Command;
 use Art4\JsonApiClient\Exception\ValidationException;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
+use Exception;
 use Symfony\Component\Console\Helper\Table;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
@@ -25,6 +26,10 @@ class AppsUpdateCommand extends Command
 
 	const EXCLUDE_FROM_OUTPUT = [
 		'ssh_pub_key',
+	];
+
+	const ALLOW_ZERO_VALUE = [
+		'replicas',
 	];
 
 	protected static $defaultName = 'apps:update';
@@ -70,18 +75,9 @@ class AppsUpdateCommand extends Command
 				),
 				[
 					'headers' => $this->httpHelper->getHeaders(),
-					'body'    => $this->getRequestBody($input, $output),
+					'body'    => $this->getRequestBody($input),
 				]
 			);
-		} catch (GuzzleException $guzzleException) {
-			$output->writeln($guzzleException->getMessage());
-			exit(1);
-		} catch (\InvalidArgumentException $invalidArgumentException) {
-			$output->writeln($invalidArgumentException->getMessage());
-			exit(1);
-		}
-
-		try {
 			if (!empty($input->getOption('json'))) {
 				$output->writeln($response->getBody()->getContents());
 			} else {
@@ -90,9 +86,12 @@ class AppsUpdateCommand extends Command
 				$table = $this->getOutputAsTable($document, new Table($output));
 				$table->render();
 			}
+		} catch (GuzzleException $guzzleException) {
+			$output->writeln($guzzleException->getMessage());
+			return 1;
 		} catch (ValidationException $e) {
 			$output->writeln($e->getMessage());
-			exit(1);
+			return 1;
 		}
 	}
 
@@ -110,7 +109,7 @@ class AppsUpdateCommand extends Command
 		$row = [$serializedDocument['data']['id']];
 		$attributes = [];
 		foreach ($serializedDocument['data']['attributes'] as $key => $attribute) {
-			if (!empty($attribute) && !in_array($key, self::EXCLUDE_FROM_OUTPUT)) {
+			if ((!empty($attribute)) && !in_array($key, self::EXCLUDE_FROM_OUTPUT)) {
 				$attributes[] = $key . ' : ' . trim(preg_replace(
 						'/\s\s+|\t/', ' ', wordwrap($attribute, 40)
 					));
@@ -125,30 +124,32 @@ class AppsUpdateCommand extends Command
 
 	/**
 	 * @param InputInterface $input
-	 * @param OutputInterface $output
 	 * @return string
+	 * @throws Exception
 	 */
-	protected function getRequestBody(InputInterface $input, OutputInterface $output): string
+	protected function getRequestBody(InputInterface $input): string
 	{
-		$attributes = [];
-		foreach ($input->getOptions() as $key => $option) {
-			if (!in_array($key, self::DEFAULT_CLI_OPTIONS) && !empty($option)) {
-				if ($key == self::HTTPD_CONF_OPTION_NAME || $key == self::PHP_INI_OPTION_NAME) {
-					$this->validateConfigFilesOptions($key, $input);
-					$attributes[$key] = file_get_contents($option);
-				} else {
-					$attributes[$key] = $option;
-				}
+		$attributes = [
+			'description'           => (string)$input->getOption('description'),
+			'httpd_conf'            => $this->validateConfigFilesOptions(self::HTTPD_CONF_OPTION_NAME, $input),
+			'max_replicas'          => (int)$input->getOption('max_replicas'),
+			'memory'                => (string)$input->getOption('memory'),
+			'min_replicas'          => (int)$input->getOption('min_replicas'),
+			'php_ini'               => $this->validateConfigFilesOptions(self::PHP_INI_OPTION_NAME, $input),
+			'replicas'              => (int)$input->getOption('replicas'),
+			'vcpu'                  => (float)$input->getOption('vcpu'),
+			'github_webhook_secret' => (string)$input->getOption('github_webhook_secret'),
+			'webhook_run_command'   => (string)$input->getOption('webhook_run_command'),
+		];
+
+		$attributes = array_filter($attributes, function ($value, $key) {
+			if (((int)$value === 0 && in_array($key, self::ALLOW_ZERO_VALUE)) || !empty($value)) {
+				return true;
 			}
-		}
+		}, ARRAY_FILTER_USE_BOTH);
+
 		if (empty($attributes)) {
-			$commandOptions = array_filter($input->getOptions(), function ($key) {
-				if (!in_array($key, self::DEFAULT_CLI_OPTIONS)) {
-					return '--' . $key;
-				}
-			}, ARRAY_FILTER_USE_KEY);
-			$output->writeln('<comment>Command requires at least one option to be executed. List of allowed options:' . PHP_EOL . implode(PHP_EOL, array_keys($commandOptions)) . '</comment>');
-			exit(1);
+			throw new InvalidArgumentException('Command requires at least one option to be executed.');
 		}
 
 		return json_encode([
@@ -166,7 +167,7 @@ class AppsUpdateCommand extends Command
 	 */
 	protected function validateConfigFilesOptions(string $optionName, InputInterface $input)
 	{
-		if (!file_exists($input->getOption($optionName))) {
+		if (!empty($input->getOption($optionName)) && !file_exists($input->getOption($optionName))) {
 			throw new InvalidArgumentException('File ' . $optionName . ' not exist, path: ' . $input->getOption($optionName));
 		}
 	}

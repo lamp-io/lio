@@ -63,10 +63,10 @@ class DatabasesDescribeCommand extends Command
 			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
-			exit(1);
+			return 1;
 		} catch (InvalidArgumentException $invalidArgumentException) {
 			$output->writeln($invalidArgumentException->getMessage());
-			exit(1);
+			return 1;
 		}
 
 	}

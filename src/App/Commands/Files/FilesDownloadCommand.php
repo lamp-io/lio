@@ -69,7 +69,7 @@ class FilesDownloadCommand extends Command
 					);
 					$fileExtension = '.zip';
 				} else {
-					exit(0);
+					return 0;
 				}
 			} else {
 				$output->writeln('<info>Downloading started</info>');
@@ -83,10 +83,10 @@ class FilesDownloadCommand extends Command
 			);
 		} catch (GuzzleException $exception) {
 			$output->writeln($exception->getMessage());
-			exit(1);
+			return 1;
 		} catch (ValidationException $validationException) {
 			$output->writeln($validationException->getMessage());
-			exit(1);
+			return 1;
 		}
 	}
 
