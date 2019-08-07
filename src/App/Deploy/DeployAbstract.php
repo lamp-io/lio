@@ -179,6 +179,7 @@ abstract class DeployAbstract implements DeployInterface
 			'remote_path' => $remotePath,
 			'app_id'      => $appId,
 			'--json'      => true,
+			'--yes'       => true,
 		];
 		$appRunsDescribeCommand->run(new ArrayInput($args), $this->consoleOutput);
 	}
