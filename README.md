@@ -114,7 +114,7 @@ Commands
     * `[--github_webhook_secret](string){''}` Github web-hook secret token
     * `[--webhook_run_command](string){''}` Github web-hook command
     
-5. #### apps:delete <app_id>
+5. #### apps:delete <app_id> [--yes][-y]
 
     Delete an app
     
@@ -122,6 +122,10 @@ Commands
     
     * `<app_id>(string)` The ID of the app
     
+    Options:
+    
+    * `[--yes][-y](bool)` Skip confirm delete question
+
 ### Files sub commands: 
 
 1. ### apps:update:status <app_id> [--enable] [--disable]
@@ -173,13 +177,17 @@ Commands
     * `<app_backup_id>(string)` The ID of the app backup
     * `<dir>(string){$PWD}` Path to directory, where should be stored downloaded file. Default value current working directory
     
-5. #### app_backups:delete <app_backup_id> <dir>
+5. #### app_backups:delete <app_backup_id> [--yes][-y]
 
     Delete an app backup
     
     Arguments:
         
     * `<app_backup_id>(string)` The ID of the app backup
+    
+    Options:
+        
+    * `[--yes][-y](bool)` Skip confirm delete question
     
 6.  #### app_backups:list [-o][--organization_id]
 
@@ -199,7 +207,18 @@ Commands
     * `<app_id>(string)` The ID of the app
     * `<exec>(string)` Command that will be ran
     
-2. ###app_runs:describe
+2. ### app_runs:delete <app_run_id>
+    
+    Delete runned command
+    
+    Arguments:
+    * `<app_run_id>(string)` ID of runned command
+    
+3. ### app_runs:list
+
+    Get all runned commands on all apps associated to your token
+    
+4. ### app_runs:describe
 
     Run command on app
     
@@ -222,13 +241,17 @@ Commands
    * `[--ssd](string){1Gi}` Size of ssd storage
    * `[--vcpu](float){0.25}` The number of virtual cpu cores available, default 0.25
    
-2. ### databases:delete <database_id>
+2. ### databases:delete <database_id> [--yes][-y]
 
     Delete a database
     
     Arguments:
     
     *`<database_id>(string)` The id of database
+    
+    Options:
+        
+    * `[--yes][-y](bool)` Skip confirm delete question
     
 3. ### databases:update <database_id> [-d][--description] [-m][--memory] [--organization_id] [--my_cnf] [--mysql_root_password] [--ssd] [--vcpu]
     
@@ -274,13 +297,17 @@ Commands
     
     *`<database_id>(string)` The id of database
     
-2. ### db_backups:delete <db_backup_id>
+2. ### db_backups:delete <db_backup_id> [--yes][-y]
 
     Delete a db backup
     
     Arguments:
         
     *`<db_backup_id>(string)` The ID of the db backup
+    
+    Options:
+        
+    * `[--yes][-y](bool)` Skip confirm delete question
     
 3. ###db_backups:list [--organization_id][-o]
 
@@ -380,7 +407,7 @@ Commands
    * `<remote_path>(string)[optional]{}` File path on app, that should be updated
    * `<local_file>(string)[optional]{}` Path to a local file, which content will sent to remote. If not specified, will make your <remote_path> appache writable
 
-5. #### files:delete <app_id> <remote_path>
+5. #### files:delete <app_id> <remote_path> [--yes][-y]
 
     Delete file/directory on selected app
     
@@ -388,6 +415,10 @@ Commands
     
     * `<app_id>(string)` The ID of the app
     * `<remote_path>(string)` Remote path on app, what file/directory you need to delete
+    
+    Options:
+        
+    * `[--yes][-y](bool)` Skip confirm delete question
 
 ### Files sub commands: 
 
