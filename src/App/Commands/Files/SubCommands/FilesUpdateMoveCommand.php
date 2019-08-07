@@ -9,13 +9,15 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class FilesUpdateUnarchiveCommand extends Command
+class FilesUpdateMoveCommand extends Command
 {
 	const API_ENDPOINT = 'https://api.lamp.io/apps/%s/files/%s/?%s';
 
-	protected static $defaultName = 'files:update:unarchive';
+	protected static $defaultName = 'files:update:move';
 
-	protected $subCommand = ['command' => 'unarchive'];
+	protected $subCommand = [
+		'command' => 'move',
+	];
 
 	/**
 	 *
@@ -23,10 +25,11 @@ class FilesUpdateUnarchiveCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('Extract your archived file, on your app')
+		$this->setDescription('Move file on app to another directory')
 			->setHelp('https://www.lamp.io/api#/files/filesUpdateID')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addArgument('remote_path', InputArgument::REQUIRED, 'File path on app, that should be unarchived');
+			->addArgument('remote_path', InputArgument::REQUIRED, 'File path on app, that should be moved')
+			->addArgument('move_path', InputArgument::REQUIRED, 'File path on app, which should be moved. NOTE: * target directory MUST exists, * move path MUST have same name as a target file');
 	}
 
 	/**
@@ -39,8 +42,8 @@ class FilesUpdateUnarchiveCommand extends Command
 	{
 		parent::execute($input, $output);
 		try {
-			$progressBar = self::getProgressBar('Extracting it', $output);
-			$this->httpHelper->getClient()->request(
+			$progressBar = self::getProgressBar('Moving it', $output);
+			$response = $this->httpHelper->getClient()->request(
 				'PATCH',
 				sprintf(
 					self::API_ENDPOINT,
@@ -51,14 +54,17 @@ class FilesUpdateUnarchiveCommand extends Command
 				[
 					'headers'  => $this->httpHelper->getHeaders(),
 					'body'     => $this->getRequestBody(
-						$input->getArgument('remote_path')
+						$input->getArgument('remote_path'),
+						$input->getArgument('move_path')
 					),
 					'progress' => function () use ($progressBar) {
 						$progressBar->advance();
 					},
 				]);
-			if (empty($input->getOption('json'))) {
-				$output->writeln('<info>Success, file ' . $input->getArgument('remote_path') . ' has been updated</info>');
+			if (!empty($input->getOption('json'))) {
+				$output->writeln($response->getBody()->getContents());
+			} else {
+				$output->writeln('<info>Success, file ' . $input->getArgument('remote_path') . ' has been moved</info>');
 			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
@@ -68,17 +74,20 @@ class FilesUpdateUnarchiveCommand extends Command
 
 	/**
 	 * @param string $remoteFile
+	 * @param string $pathToMove
 	 * @return string
 	 */
-	protected function getRequestBody(string $remoteFile): string
+	protected function getRequestBody(string $remoteFile, string $pathToMove): string
 	{
 		return json_encode([
 			'data' => [
-				'id'   => ltrim($remoteFile, '/'),
-				'type' => 'files',
+				'attributes' => [
+					'target' => $pathToMove,
+				],
+				'id'         => ltrim($remoteFile, '/'),
+				'type'       => 'files',
 			],
 		], JSON_UNESCAPED_SLASHES);
 
 	}
-
 }

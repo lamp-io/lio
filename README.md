@@ -430,6 +430,26 @@ Commands
     
     * `<app_id>(string)` The ID of the app
     * `<remote_path>(string)` File path on app, that should be unarchived
+    
+2. ### files:update:fetch <app_id> <remote_path> <source>
+
+    Fill file with fetched data
+    
+    Arguments:
+    
+    * `<app_id>(string)` The ID of the app
+    * `<remote_path>(string)` File path on app, that should be filled with fetched data
+    * `<source>(string)` A URL that should be fetched
+
+3. ### files:update:move <app_id> <remote_path> <move_path>
+
+    Move file on app to another directory
+    
+    Arguments:
+    
+    * `<app_id>(string)` The ID of the app
+    * `<remote_path>(string)` File path on app, that should be filled with fetched data
+    * `<move_path>(string)` File path on app, which should be moved. NOTE: * target directory MUST exists, * move path MUST have same name as a target file
 
 ### Logs
 

@@ -9,13 +9,16 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class FilesUpdateUnarchiveCommand extends Command
+class FilesUpdateFetchCommand extends Command
 {
-	const API_ENDPOINT = 'https://api.lamp.io/apps/%s/files/%s/?%s';
+	const API_ENDPOINT = 'https://api.lamp.io/apps/%s/files/?%s';
 
-	protected static $defaultName = 'files:update:unarchive';
+	protected static $defaultName = 'files:update:fetch';
 
-	protected $subCommand = ['command' => 'unarchive'];
+	protected $subCommand = [
+		'command' => 'fetch',
+		'source'  => '',
+	];
 
 	/**
 	 *
@@ -23,10 +26,11 @@ class FilesUpdateUnarchiveCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('Extract your archived file, on your app')
+		$this->setDescription('Fill file with fetched data')
 			->setHelp('https://www.lamp.io/api#/files/filesUpdateID')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addArgument('remote_path', InputArgument::REQUIRED, 'File path on app, that should be unarchived');
+			->addArgument('remote_path', InputArgument::REQUIRED, 'File path on app, that should be filled with fetched data')
+			->addArgument('source', InputArgument::REQUIRED, 'A URL that should be fetched');
 	}
 
 	/**
@@ -39,13 +43,13 @@ class FilesUpdateUnarchiveCommand extends Command
 	{
 		parent::execute($input, $output);
 		try {
-			$progressBar = self::getProgressBar('Extracting it', $output);
-			$this->httpHelper->getClient()->request(
-				'PATCH',
+			$this->subCommand['source'] = $input->getArgument('source');
+			$progressBar = self::getProgressBar('Fetching it', $output);
+			$response = $this->httpHelper->getClient()->request(
+				'POST',
 				sprintf(
 					self::API_ENDPOINT,
 					$input->getArgument('app_id'),
-					ltrim($input->getArgument('remote_path'), '/'),
 					http_build_query($this->subCommand)
 				),
 				[
@@ -57,8 +61,10 @@ class FilesUpdateUnarchiveCommand extends Command
 						$progressBar->advance();
 					},
 				]);
-			if (empty($input->getOption('json'))) {
-				$output->writeln('<info>Success, file ' . $input->getArgument('remote_path') . ' has been updated</info>');
+			if (!empty($input->getOption('json'))) {
+				$output->writeln($response->getBody()->getContents());
+			} else {
+				$output->writeln(PHP_EOL . '<info>Success, file ' . $input->getArgument('remote_path') . ' has been filled, with fetched data</info>');
 			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
