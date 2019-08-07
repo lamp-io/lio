@@ -43,7 +43,7 @@ class DatabasesDeleteCommand extends Command
 		$helper = $this->getHelper('question');
 		$question = new ConfirmationQuestion('<info>Are you sure you want to delete database? (y/N)</info>', false);
 		if (!$helper->ask($input, $output, $question)) {
-			exit(0);
+			return 0;
 		}
 		try {
 			$this->httpHelper->getClient()->request(
@@ -61,10 +61,10 @@ class DatabasesDeleteCommand extends Command
 			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
-			exit(1);
+			return 1;
 		} catch (InvalidArgumentException $invalidArgumentException) {
 			$output->writeln($invalidArgumentException->getMessage());
-			exit(1);
+			return 1;
 		}
 
 	}

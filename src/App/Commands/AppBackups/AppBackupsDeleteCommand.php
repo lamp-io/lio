@@ -40,7 +40,7 @@ class AppBackupsDeleteCommand extends Command
 		$helper = $this->getHelper('question');
 		$question = new ConfirmationQuestion('<info>Are you sure you want to delete app backup? (y/N)</info>', false);
 		if (!$helper->ask($input, $output, $question)) {
-			exit(0);
+			return 0;
 		}
 		try {
 			$response = $this->httpHelper->getClient()->request(
@@ -63,7 +63,7 @@ class AppBackupsDeleteCommand extends Command
 			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln('<error>' . $guzzleException->getMessage() . '</error>');
-			die();
+			return 1;
 		}
 	}
 }

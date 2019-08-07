@@ -1,6 +1,6 @@
 <?php
 
-namespace Console\App\Commands\Logs;
+namespace Console\App\Commands\OrganizationUsers;
 
 use Art4\JsonApiClient\Exception\ValidationException;
 use Art4\JsonApiClient\Helper\Parser;
@@ -10,26 +10,19 @@ use Console\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Helper\Table;
-use Symfony\Component\Console\Helper\TableSeparator;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class LogsListCommand extends Command
+class OrganizationUsersUpdateCommand extends Command
 {
-	const API_ENDPOINT = 'https://api.lamp.io/logs%s';
-
-	const OPTIONS_TO_QUERY_KEYS = [
-		'organization_id' => 'filter[organization_id]',
-		'pod_name'        => 'filter[pod_name]',
-		'start_time'      => 'filter[start_time]',
-		'end_time'        => 'filter[end_time]',
-	];
+	const API_ENDPOINT = 'https://api.lamp.io/organization_users/%s';
 
 	/**
 	 * @var string
 	 */
-	protected static $defaultName = 'logs:list';
+	protected static $defaultName = 'organizations_users:update';
 
 	/**
 	 *
@@ -37,12 +30,10 @@ class LogsListCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('Return logs')
-			->setHelp('https://www.lamp.io/api#/logs/logsList')
-			->addOption('organization_id', 'o', InputOption::VALUE_REQUIRED, 'One organization_id. If omitted defaults to user\'s default organization')
-			->addOption('pod_name', 'p', InputOption::VALUE_REQUIRED, 'One pod_name. Uses wildcard prefix match')
-			->addOption('start_time', null, InputOption::VALUE_REQUIRED, 'Start time conforming to RFC3339. Defaults to 10 minutes in the past')
-			->addOption('end_time', null, InputOption::VALUE_REQUIRED, 'End time conforming to RFC3339. Defaults to now');
+		$this->setDescription('Update an organization/user relationship (Allow to set/remove selected user role as an organization admin)')
+			->setHelp('https://www.lamp.io/api#/organization_users/organizationUsersUpdate')
+			->addArgument('organization_user_id', InputArgument::REQUIRED, 'The ID of the organization_user')
+			->addOption('admin', null, InputOption::VALUE_NONE, 'Set selected user as admin of organization (if you need to remove admin role from selected user, just omit this option )');
 	}
 
 	/**
@@ -57,13 +48,14 @@ class LogsListCommand extends Command
 
 		try {
 			$response = $this->httpHelper->getClient()->request(
-				'GET',
+				'PATCH',
 				sprintf(
 					self::API_ENDPOINT,
-					$this->httpHelper->optionsToQuery($input->getOptions(), self::OPTIONS_TO_QUERY_KEYS)
+					$input->getArgument('organization_user_id')
 				),
 				[
 					'headers' => $this->httpHelper->getHeaders(),
+					'body'    => $this->getRequestBody($input),
 				]
 			);
 			if (!empty($input->getOption('json'))) {
@@ -83,6 +75,18 @@ class LogsListCommand extends Command
 		}
 	}
 
+	protected function getRequestBody(InputInterface $input): string
+	{
+		return json_encode([
+			'data' => [
+				'attributes' => [
+					'organization_admin' => $input->getOption('admin'),
+				],
+				'id'         => $input->getArgument('organization_user_id'),
+				'type'       => 'organization_users',
+			],
+		]);
+	}
 
 	/**
 	 * @param Document $document
@@ -91,23 +95,21 @@ class LogsListCommand extends Command
 	 */
 	protected function getOutputAsTable(Document $document, Table $table): Table
 	{
-		$table->setHeaderTitle('Logs');
+		$table->setHeaderTitle('Organization User');
 		$table->setStyle('box');
 		$table->setHeaders([
-			'timestamp', 'pod_name', 'payload',
+			'Id', 'Attributes',
 		]);
 		$serializer = new ArraySerializer(['recursive' => true]);
-		$sortedData = $this->sortData($serializer->serialize($document)['data'], 'timestamp');
-		$lastElement = end($sortedData);
-		foreach ($sortedData as $key => $data) {
-			$payload = wordwrap(trim(preg_replace(
-				'/\s\s+|\t/', ' ', $data['attributes']['payload']
-			)), 80);
-			$table->addRow([$data['attributes']['timestamp'], $data['attributes']['pod_name'], $payload]);
-			if ($lastElement != $data) {
-				$table->addRow(new TableSeparator());
-			}
+		$serializedDocument = $serializer->serialize($document);
+		$attributes = [];
+		foreach ($serializedDocument['data']['attributes'] as $attributeKey => $attribute) {
+			array_push($attributes, $attributeKey . ' : ' . $attribute);
 		}
+		$table->addRow([
+			$serializedDocument['data']['id'],
+			implode(PHP_EOL, $attributes),
+		]);
 		return $table;
 	}
 }

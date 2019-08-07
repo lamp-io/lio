@@ -47,7 +47,7 @@ Commands
     
 
 
-### Token
+### Auth
 1.  #### auth [-u][--update_token]
 
     Will ask you to input your auth token
@@ -377,6 +377,7 @@ Commands
 ### Files sub commands: 
 
 1. #### files:update:unarchive <app_id> <remote_path>
+
     Extract your archived file, on your app
     
     Arguments:
@@ -397,6 +398,104 @@ Commands
     * `[--start_time](string){date - 10min}` Start time conforming to RFC3339. Defaults to 10 minutes in the past
     * `[--end_time](string){date}` End time conforming to RFC3339. Defaults to now
 
+### Organizations
+
+1. ### organizations:update <organization_id> [--name] [--promo_code] [-p][--payment]
+
+    Update an organization
+    
+    Arguments:
+    
+    * `<organization_id>(string)` The ID of the organization
+    
+    Options:
+    
+    * `[--name](string)` New organization name
+    * `[--promo_code]`  Apply promo code
+    * `[-p][--payment]` New Stripe source id
+
+2. ### organizations:list
+
+    Returns this user's organizations
+    
+###Organization users
+
+1. ### organization_users:update <organization_user_id> [--admin]
+
+    Update an organization/user relationship (Allow to set/remove selected user role as an organization admin)
+    
+    Arguments:
+    
+    * `<organization_user_id>(string)` The ID of the organization_use
+    
+    Options:
+    
+    * `[--admin](bool)` Set selected user as admin of organization (if you need to remove admin role from selected user, just omit this option)
+    
+2. ### organizations_users:list [--organization_id]
+
+    Returns organization/user relationships
+    
+    Options:
+    
+    * `[--organization_id](string)` Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
+    
+3. ### organizations_users:describe <organization_user_id> 
+
+    Returns a organization/user relationship
+    
+    Arguments:
+    
+    * `<organization_user_id>(string)` The ID of the organization_use
+    
+### Tokens
+
+1. ### tokens:new [--description][-d] [--enable]
+
+    Creates a new token
+    
+    Options:
+    
+    * `[--description][-d](string)` Token description
+    * `[--enable](bool)` Enable new token (By default created token will be disabled)
+    
+2. ### tokens:delete <token_id> [-yes][-y]
+
+     Delete a token
+     
+     Arguments:
+         
+     * `<token_id>(string)` The ID of the token
+     
+     Options:
+     
+     * `[-yes][-y](bool)` Skip confirm delete question
+     
+3. ### tokens:update <token_id> [--enable] [--disable]
+ 
+    Update a token. If execute without options, it will disable token
+    
+    Arguments:
+             
+     * `<token_id>(string)` The ID of the token
+     
+     Options:
+     
+     * `[--enable](bool)` Enable new token
+     * `[--disable](bool)` Disable token
+    
+4. ### tokens:list 
+
+    Returns all tokens for this user
+    
+5. ### tokens:describe <token_id>
+    
+    Returns a token
+    
+    Arguments:
+             
+     * `<token_id>(string)` The ID of the token
+    
 ### Users
 
 1. #### users:list [--organization_id][-o] [--email][-e]

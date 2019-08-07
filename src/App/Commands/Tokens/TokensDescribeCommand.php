@@ -1,21 +1,29 @@
 <?php
 
-namespace Console\App\Commands\DbBackups;
 
+namespace Console\App\Commands\Tokens;
+
+
+use Art4\JsonApiClient\Exception\ValidationException;
 use Art4\JsonApiClient\Helper\Parser;
+use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\V1\Document;
 use Console\App\Commands\Command;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class DbBackupsDescribeCommand extends Command
+class TokensDescribeCommand extends Command
 {
-	protected static $defaultName = 'db_backups:describe';
+	const API_ENDPOINT = 'https://api.lamp.io/tokens/%s';
 
-	const API_ENDPOINT = 'https://api.lamp.io/db_backups/%s';
+	/**
+	 * @var string
+	 */
+	protected static $defaultName = 'tokens:describe';
 
 	/**
 	 *
@@ -23,16 +31,16 @@ class DbBackupsDescribeCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('Return a db backup')
-			->setHelp('https://www.lamp.io/api#/db_backups/dbBackupsShow')
-			->addArgument('db_backup_id', InputArgument::REQUIRED, 'The ID of the db backup');
+		$this->setDescription('Returns a token')
+			->setHelp('https://www.lamp.io/api#/tokens/tokensShow')
+			->addArgument('token_id', InputArgument::REQUIRED, 'The ID of the token.');
 	}
 
 	/**
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
-	 * @return int|void|null
-	 * @throws \Exception
+	 * @return int|null|void
+	 * @throws Exception
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -43,7 +51,7 @@ class DbBackupsDescribeCommand extends Command
 				'GET',
 				sprintf(
 					self::API_ENDPOINT,
-					$input->getArgument('db_backup_id')
+					$input->getArgument('token_id')
 				),
 				[
 					'headers' => $this->httpHelper->getHeaders(),
@@ -58,7 +66,10 @@ class DbBackupsDescribeCommand extends Command
 				$table->render();
 			}
 		} catch (GuzzleException $guzzleException) {
-			$output->writeln('<error>' . $guzzleException->getMessage() . '</error>');
+			$output->writeln($guzzleException->getMessage());
+			return 1;
+		} catch (ValidationException $e) {
+			$output->writeln($e->getMessage());
 			return 1;
 		}
 	}
@@ -70,15 +81,20 @@ class DbBackupsDescribeCommand extends Command
 	 */
 	protected function getOutputAsTable(Document $document, Table $table): Table
 	{
-		$table->setHeaderTitle('Db Backup ' . $document->get('data.id'));
-		$table->setHeaders(['Db id', 'Complete', 'Created at', 'Organization id', 'Status', 'Updated at']);
+		$table->setHeaderTitle('Token');
+		$table->setStyle('box');
+		$table->setHeaders([
+			'Id', 'Attributes',
+		]);
+		$serializer = new ArraySerializer(['recursive' => true]);
+		$serializedDocument = $serializer->serialize($document);
+		$attributes = [];
+		foreach ($serializedDocument['data']['attributes'] as $attributeKey => $attribute) {
+			array_push($attributes, $attributeKey . ' : ' . $attribute);
+		}
 		$table->addRow([
-			$document->get('data.attributes.database_id'),
-			$document->get('data.attributes.complete'),
-			$document->get('data.attributes.created_at'),
-			$document->get('data.attributes.organization_id'),
-			$document->get('data.attributes.status'),
-			$document->get('data.attributes.updated_at'),
+			$serializedDocument['data']['id'],
+			implode(PHP_EOL, $attributes),
 		]);
 		return $table;
 	}

@@ -1,24 +1,29 @@
 <?php
 
 
-namespace Console\App\Commands\AppRuns;
+namespace Console\App\Commands\Organizations;
+
 
 use Art4\JsonApiClient\Exception\ValidationException;
+use Art4\JsonApiClient\Helper\Parser;
+use Art4\JsonApiClient\Serializer\ArraySerializer;
+use Art4\JsonApiClient\V1\Document;
+use Console\App\Commands\Command;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Helper\TableSeparator;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Console\App\Commands\Command;
-use Art4\JsonApiClient\Helper\Parser;
-use Art4\JsonApiClient\V1\Document;
-use Symfony\Component\Console\Helper\Table;
-use Art4\JsonApiClient\Serializer\ArraySerializer;
 
-class AppRunsListCommand extends Command
+class OrganizationsListCommand extends Command
 {
-	const API_ENDPOINT = 'https://api.lamp.io/app_runs/';
+	const API_ENDPOINT = 'https://api.lamp.io/organizations';
 
-	protected static $defaultName = 'app_runs:list';
+	/**
+	 * @var string
+	 */
+	protected static $defaultName = 'organizations:list';
 
 	/**
 	 *
@@ -26,15 +31,15 @@ class AppRunsListCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('Get all runned commands on all apps associated to your token ')
-			->setHelp('https://www.lamp.io/api#/app_runs/appRunsList');
+		$this->setDescription('Returns this user\'s organizations')
+			->setHelp('https://www.lamp.io/api#/organizations/organizationsList');
 	}
 
 	/**
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
-	 * @return int|void|null
-	 * @throws \Exception
+	 * @return int|null|void
+	 * @throws Exception
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -56,11 +61,11 @@ class AppRunsListCommand extends Command
 				$table = $this->getOutputAsTable($document, new Table($output));
 				$table->render();
 			}
-		} catch (ValidationException $validationException) {
-			$output->writeln($validationException->getMessage());
-			return 1;
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
+			return 1;
+		} catch (ValidationException $e) {
+			$output->writeln($e->getMessage());
 			return 1;
 		}
 	}
@@ -72,26 +77,29 @@ class AppRunsListCommand extends Command
 	 */
 	protected function getOutputAsTable(Document $document, Table $table): Table
 	{
-		$table->setHeaderTitle('App runs list');
+		$table->setHeaderTitle('Organizations');
+		$table->setStyle('box');
+		$table->setHeaders([
+			'Id', 'Attributes',
+		]);
 		$serializer = new ArraySerializer(['recursive' => true]);
-		$appRuns = $serializer->serialize($document->get('data'));
-		$table->setHeaders(['Id', 'App ID', 'Complete', 'Command', 'Execution date', 'Complete date']);
-		$sortedData = $this->sortData($appRuns, 'updated_at');
+		$serializedDocument = $serializer->serialize($document);
+		$sortedData = $this->sortData($serializedDocument['data'], 'updated_at');
 		$lastElement = end($sortedData);
 		foreach ($sortedData as $key => $data) {
+			$attributes = [];
+			foreach ($data['attributes'] as $attributeKey => $attribute) {
+				array_push($attributes, $attributeKey . ' : ' . $attribute);
+			}
 			$table->addRow([
 				$data['id'],
-				$data['attributes']['app_id'],
-				$data['attributes']['complete'],
-				wordwrap($data['attributes']['command'], 20, PHP_EOL),
-				$data['attributes']['created_at'],
-				$data['attributes']['updated_at'],
+				implode(PHP_EOL, $attributes),
 			]);
-			if ($data != $lastElement) {
+
+			if ($lastElement != $data) {
 				$table->addRow(new TableSeparator());
 			}
 		}
-
 		return $table;
 	}
 }

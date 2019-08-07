@@ -55,7 +55,7 @@ class DbRestoresDeleteCommand extends Command
 			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln('<error>' . $guzzleException->getMessage() . '</error>');
-			die();
+			return 1;
 		}
 	}
 }
