@@ -10,8 +10,6 @@ use Console\App\Commands\Files\FilesUploadCommand;
 use Console\App\Commands\Files\SubCommands\FilesUpdateUnarchiveCommand;
 use Exception;
 use Symfony\Component\Console\Application;
-use Symfony\Component\Console\Helper\QuestionHelper;
-use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Console\Output\BufferedOutput;
@@ -19,7 +17,6 @@ use Symfony\Component\Console\Input\ArrayInput;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 use ZipArchive;
-use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 abstract class DeployAbstract implements DeployInterface
 {
@@ -40,16 +37,20 @@ abstract class DeployAbstract implements DeployInterface
 	 */
 	protected $consoleOutput;
 
+	protected $releaseFolder;
+
 	/**
 	 * DeployAbstract constructor.
 	 * @param string $appPath
 	 * @param Application $application
+	 * @param int $releaseId
 	 */
-	public function __construct(string $appPath, Application $application)
+	public function __construct(string $appPath, Application $application, int $releaseId)
 	{
 		$this->appPath = $appPath;
 		$this->application = $application;
 		$this->consoleOutput = new ConsoleOutput();
+		$this->releaseFolder = 'releases/release_' . $releaseId . '/';
 	}
 
 	/**
@@ -58,7 +59,7 @@ abstract class DeployAbstract implements DeployInterface
 	 */
 	protected function getZipApp()
 	{
-		$zipName = $this->appPath . DIRECTORY_SEPARATOR . self::ARCHIVE_NAME;
+		$zipName = $this->appPath . self::ARCHIVE_NAME;
 		if (file_exists($zipName)) {
 			unlink($zipName);
 		}
@@ -82,7 +83,6 @@ abstract class DeployAbstract implements DeployInterface
 			}
 			$progressBar->advance();
 		}
-
 		$zip->close();
 		$progressBar->finish();
 		$this->consoleOutput->write(PHP_EOL);
@@ -92,25 +92,17 @@ abstract class DeployAbstract implements DeployInterface
 
 	/**
 	 * @param string $appId
-	 * @param bool $isNewApp
+	 * @param string $command
+	 * @param string $progressMessage
 	 * @throws Exception
 	 */
-	protected function clearApp(string $appId, bool $isNewApp)
+	protected function appRunCommand(string $appId, string $command, string $progressMessage)
 	{
-		if (!$isNewApp) {
-			/** @var QuestionHelper $questionHelper */
-			$questionHelper = $this->application->getHelperSet()->get('question');
-			$question = new ConfirmationQuestion('<info>All app files should be removed before deployment. Do you confirm it? (Y/n)</info>');
-			if (!$questionHelper->ask(new ArgvInput(), $this->consoleOutput, $question)) {
-				$this->consoleOutput->writeln('<info>Cant execute deploy command on a non empty app file system </info>');
-				exit();
-			}
-		}
 		$appRunsNewCommand = $this->application->find(AppRunsNewCommand::getDefaultName());
 		$args = [
 			'command' => AppRunsNewCommand::getDefaultName(),
 			'app_id'  => $appId,
-			'exec'    => 'rm -rf *',
+			'exec'    => $command,
 			'--json'  => true,
 		];
 		$bufferOutput = new BufferedOutput();
@@ -118,10 +110,9 @@ abstract class DeployAbstract implements DeployInterface
 		/** @var Document $document */
 		$document = Parser::parseResponseString($bufferOutput->fetch());
 		$appRunId = $document->get('data.id');
-		$progressBarMessage = $isNewApp ? 'Removing default files' : 'Removing files';
-		$progressBar = Command::getProgressBar($progressBarMessage, $this->consoleOutput);
+		$progressBar = Command::getProgressBar($progressMessage, $this->consoleOutput);
 		$progressBar->start();
-		while (!$this->isAppCleared($appRunId)) {
+		while (!AppRunsDescribeCommand::isExecutionCompleted($appRunId, $this->application)) {
 			$progressBar->advance();
 		}
 		$progressBar->finish();
@@ -129,24 +120,13 @@ abstract class DeployAbstract implements DeployInterface
 	}
 
 	/**
-	 * @param string $appRunId
-	 * @return bool
+	 * @param string $appId
 	 * @throws Exception
 	 */
-	protected function isAppCleared(string $appRunId): bool
+	protected function clearApp(string $appId)
 	{
-		$appRunsDescribeCommand = $this->application->find(AppRunsDescribeCommand::getDefaultName());
-		$args = [
-			'command'    => AppRunsDescribeCommand::getDefaultName(),
-			'app_run_id' => $appRunId,
-			'--json'     => true,
-		];
-		$bufferOutput = new BufferedOutput();
-		$appRunsDescribeCommand->run(new ArrayInput($args), $bufferOutput);
-		/** @var Document $document */
-		$document = Parser::parseResponseString($bufferOutput->fetch());
-		return $document->get('data.attributes.complete');
-
+		$command = 'rm -rf *';
+		$this->appRunCommand($appId, $command, 'Removing default files');
 	}
 
 	/**
@@ -161,7 +141,7 @@ abstract class DeployAbstract implements DeployInterface
 			'command'     => FilesUploadCommand::getDefaultName(),
 			'file'        => $zipPath,
 			'app_id'      => $appId,
-			'remote_path' => '/',
+			'remote_path' => $this->releaseFolder . self::ARCHIVE_NAME,
 			'--json'      => true,
 		];
 		$appRunsDescribeCommand->run(new ArrayInput($args), $this->consoleOutput);
@@ -199,6 +179,7 @@ abstract class DeployAbstract implements DeployInterface
 			'remote_path' => $remotePath,
 			'app_id'      => $appId,
 			'--json'      => true,
+			'--yes'       => true,
 		];
 		$appRunsDescribeCommand->run(new ArrayInput($args), $this->consoleOutput);
 	}
