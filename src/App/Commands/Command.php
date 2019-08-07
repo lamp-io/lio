@@ -7,12 +7,14 @@ use Console\App\Helpers\HttpHelper;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\Console\Command\Command as BaseCommand;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
+use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 class Command extends BaseCommand
 {
@@ -78,6 +80,23 @@ class Command extends BaseCommand
 		];
 		$input = new ArrayInput($args);
 		$authCommand->run($input, new ConsoleOutput());
+	}
+
+	/**
+	 * @param string $questionText
+	 * @param OutputInterface $output
+	 * @param InputInterface $input
+	 * @return bool
+	 */
+	protected function askConfirm(string $questionText, OutputInterface $output, InputInterface $input): bool
+	{
+		if (!empty($input->getOption('yes'))) {
+			return true;
+		}
+		/** @var QuestionHelper $helper */
+		$helper = $this->getHelper('question');
+		$question = new ConfirmationQuestion($questionText, false);
+		return $helper->ask($input, $output, $question);
 	}
 
 	/**
