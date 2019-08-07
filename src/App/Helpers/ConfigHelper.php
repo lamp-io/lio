@@ -20,7 +20,8 @@ class ConfigHelper
 	{
 		try {
 			$this->appPath = $appPath;
-			$this->config = Yaml::parseFile($this->appPath . self::LAMP_IO_CONFIG);
+			$parsedYaml = Yaml::parseFile($this->appPath . self::LAMP_IO_CONFIG);
+			$this->config = !empty($parsedYaml) ? $parsedYaml : [];
 		} catch (ParseException $parseException) {
 			file_put_contents($appPath . DIRECTORY_SEPARATOR . self::LAMP_IO_CONFIG, '');
 		}
