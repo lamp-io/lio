@@ -25,6 +25,8 @@ abstract class DeployAbstract implements DeployInterface
 {
 	const ARCHIVE_NAME = 'lamp-io.zip';
 
+	const SQL_DUMP_NAME = 'dump.sql';
+
 	/**
 	 * @var string
 	 */
@@ -146,17 +148,18 @@ abstract class DeployAbstract implements DeployInterface
 
 	/**
 	 * @param string $appId
-	 * @param string $zipPath
+	 * @param string $localFile
+	 * @param string $remotePath
 	 * @throws Exception
 	 */
-	protected function uploadApp(string $appId, string $zipPath)
+	protected function uploadToApp(string $appId, string $localFile, string $remotePath)
 	{
 		$appRunsDescribeCommand = $this->application->find(FilesUploadCommand::getDefaultName());
 		$args = [
 			'command'     => FilesUploadCommand::getDefaultName(),
-			'file'        => $zipPath,
+			'file'        => $localFile,
 			'app_id'      => $appId,
-			'remote_path' => $this->releaseFolder . self::ARCHIVE_NAME,
+			'remote_path' => $remotePath,
 			'--json'      => true,
 		];
 		$appRunsDescribeCommand->run(new ArrayInput($args), $this->consoleOutput);

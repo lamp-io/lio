@@ -17,6 +17,8 @@ class Laravel extends DeployAbstract
 {
 	private $localEnv = [];
 
+	private $config = [];
+
 	public function __construct(string $appPath, Application $application, int $releaseId)
 	{
 		parent::__construct($appPath, $application, $releaseId);
@@ -33,29 +35,30 @@ class Laravel extends DeployAbstract
 	 */
 	public function deployApp(string $appId, bool $isNewApp, bool $isNewDatabase, array $config)
 	{
-		$this->updateEnvFile($this->prepareEnvFile($config));
+		$this->config = $config;
+		$this->updateEnvFile($this->prepareEnvFile());
 		$zip = $this->getZipApp();
 		if ($isNewApp) {
 			$this->clearApp($appId);
 		}
 		$this->updateEnvFile($this->localEnv);
-		$this->uploadApp($appId, $zip);
+		$this->uploadToApp($appId, $zip, $this->releaseFolder . self::ARCHIVE_NAME);
 		$this->unarchiveApp($appId, $this->releaseFolder . self::ARCHIVE_NAME);
 		$this->setUpPermissions($appId);
 		$this->deleteArchive($appId, $this->releaseFolder . self::ARCHIVE_NAME);
-		$this->setUpDatabase($appId, $config, $isNewDatabase);
+		$this->setUpDatabase($appId, $isNewDatabase);
 		$this->createSymlink($appId, $isNewApp);
 		unlink($this->appPath . self::ARCHIVE_NAME);
 	}
 
-	private function prepareEnvFile(array $config): array
+	private function prepareEnvFile(): array
 	{
-		$envFromConfig = !empty($config['environment']) ? $config['environment'] : [];
+		$envFromConfig = !empty($this->config['environment']) ? $this->config['environment'] : [];
 		$newEnv = array_merge($envFromConfig, [
-			'APP_URL'     => $config['app']['url'],
-			'DB_HOST'     => $config['database']['connection']['host'],
-			'DB_USERNAME' => $config['database']['connection']['user'],
-			'DB_PASSWORD' => $config['database']['connection']['password'],
+			'APP_URL'     => $this->config['app']['url'],
+			'DB_HOST'     => $this->config['database']['connection']['host'],
+			'DB_USERNAME' => $this->config['database']['connection']['user'],
+			'DB_PASSWORD' => $this->config['database']['connection']['password'],
 			'APP_ENV'     => 'production',
 			'APP_DEBUG'   => false,
 		]);
@@ -75,48 +78,85 @@ class Laravel extends DeployAbstract
 
 	/**
 	 * @param string $appId
-	 * @param array $config
 	 * @param bool $isNewDatabase
 	 * @throws Exception
 	 */
-	private function setUpDatabase(string $appId, array $config, bool $isNewDatabase)
+	private function setUpDatabase(string $appId, bool $isNewDatabase)
 	{
 		if ($isNewDatabase) {
-			$progressBar = Command::getProgressBar('Initializing database', $this->consoleOutput);
-			$progressBar->start();
-			$dbIsRunning = false;
-			while (!$dbIsRunning) {
-				$dbIsRunning = $this->isDbAlreadyRunning($config['database']['id']);
-				$progressBar->advance();
-			}
-			$counter = 0;
-			/** We need this hack with sleep, because status of database is running,
-			 * but it still not ready for connections so ~30-40 secs need to wait
-			 */
-			while ($counter != 50) {
-				$progressBar->advance();
-				$counter++;
-				sleep(1);
-			}
-			$progressBar->finish();
+			$this->setUpNewDatabase($appId);
+		} else {
+			$this->appRunCommand(
+				$appId,
+				'php ' . $this->releaseFolder . 'artisan migrate',
+				'Migrating schema'
+			);
+		}
+	}
+
+	/**
+	 * @param string $appId
+	 * @throws Exception
+	 */
+	private function setUpNewDatabase(string $appId)
+	{
+		$progressBar = Command::getProgressBar('Initializing database', $this->consoleOutput);
+		$progressBar->start();
+		$dbIsRunning = false;
+		while (!$dbIsRunning) {
+			$dbIsRunning = $this->isDbAlreadyRunning($this->config['database']['id']);
+			$progressBar->advance();
+		}
+		$counter = 0;
+		/** We need this hack with sleep, because status of database is running,
+		 * but it still not ready for connections so ~30-40 secs need to wait
+		 */
+		while ($counter != 50) {
+			$progressBar->advance();
+			$counter++;
+			sleep(1);
+		}
+		$progressBar->finish();
+		$command = sprintf(
+			'mysql --user=%s --host=%s --password=%s --execute "create database %s;"',
+			$this->config['database']['connection']['user'],
+			$this->config['database']['connection']['host'],
+			$this->config['database']['connection']['password'],
+			getenv('DB_DATABASE')
+		);
+		$this->appRunCommand(
+			$appId,
+			$command,
+			'Creating database `' . getenv('DB_DATABASE') . '`'
+		);
+		if (!empty($this->config['database']['sql_dump'])) {
+			$this->consoleOutput->writeln('Uploading sql dump to app');
+			$this->uploadToApp(
+				$appId,
+				$this->config['database']['sql_dump'],
+				$this->releaseFolder . self::SQL_DUMP_NAME
+			);
+
 			$command = sprintf(
-				'mysql --user=root --host=%s --password=%s --execute "create database %s;"',
-				$config['database']['connection']['host'],
-				$config['database']['connection']['password'],
-				getenv('DB_DATABASE')
+				'mysql -u %s --host=%s --password=%s  %s < %s',
+				$this->config['database']['connection']['user'],
+				$this->config['database']['connection']['host'],
+				$this->config['database']['connection']['password'],
+				getenv('DB_DATABASE'),
+				$this->releaseFolder . self::SQL_DUMP_NAME
 			);
 			$this->appRunCommand(
 				$appId,
 				$command,
-				'Creating database `' . getenv('DB_DATABASE') . '`'
+				'Importing sql dump'
+			);
+		} else {
+			$this->appRunCommand(
+				$appId,
+				'php ' . $this->releaseFolder . 'artisan migrate',
+				'Migrating schema'
 			);
 		}
-		$command = 'php ' . $this->releaseFolder . 'artisan migrate';
-		$this->appRunCommand(
-			$appId,
-			$command,
-			'Migrating schema'
-		);
 	}
 
 	/**
