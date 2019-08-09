@@ -15,11 +15,13 @@ use Symfony\Component\Console\Output\BufferedOutput;
 
 class Laravel extends DeployAbstract
 {
+	private $localEnv = [];
 
 	public function __construct(string $appPath, Application $application, int $releaseId)
 	{
 		parent::__construct($appPath, $application, $releaseId);
 		(Dotenv::create($this->appPath))->load();
+		$this->localEnv = $_ENV;
 	}
 
 	/**
@@ -31,20 +33,12 @@ class Laravel extends DeployAbstract
 	 */
 	public function deployApp(string $appId, bool $isNewApp, bool $isNewDatabase, array $config)
 	{
-		$this->updateEnvFile(
-			[
-				'APP_URL'     => $config['app']['url'],
-				'DB_HOST'     => $config['database']['connection']['host'],
-				'DB_USERNAME' => $config['database']['connection']['user'],
-				'DB_PASSWORD' => $config['database']['connection']['password'],
-			]
-		);
-
+		$this->updateEnvFile($this->prepareEnvFile($config));
 		$zip = $this->getZipApp();
 		if ($isNewApp) {
 			$this->clearApp($appId);
 		}
-
+		$this->updateEnvFile($this->localEnv);
 		$this->uploadApp($appId, $zip);
 		$this->unarchiveApp($appId, $this->releaseFolder . self::ARCHIVE_NAME);
 		$this->setUpPermissions($appId);
@@ -54,11 +48,26 @@ class Laravel extends DeployAbstract
 		unlink($this->appPath . self::ARCHIVE_NAME);
 	}
 
+	private function prepareEnvFile(array $config): array
+	{
+		$envFromConfig = !empty($config['environment']) ? $config['environment'] : [];
+		$newEnv = array_merge($envFromConfig, [
+			'APP_URL'     => $config['app']['url'],
+			'DB_HOST'     => $config['database']['connection']['host'],
+			'DB_USERNAME' => $config['database']['connection']['user'],
+			'DB_PASSWORD' => $config['database']['connection']['password'],
+			'APP_ENV'     => 'production',
+			'APP_DEBUG'   => false,
+		]);
+		return array_merge($this->localEnv, $newEnv);
+	}
+
 	/**
 	 * @param array $newEnvVars
 	 */
 	private function updateEnvFile(array $newEnvVars)
 	{
+		file_put_contents($this->appPath . '.env', '');
 		foreach ($newEnvVars as $key => $val) {
 			file_put_contents($this->appPath . '.env', $key . '=' . $val . PHP_EOL, FILE_APPEND);
 		}
