@@ -4,7 +4,9 @@ namespace Console\App\Commands;
 
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
+use Console\App\Commands\Apps\AppsDescribeCommand;
 use Console\App\Commands\Apps\AppsNewCommand;
+use Console\App\Commands\Databases\DatabasesDescribeCommand;
 use Console\App\Deploy\DeployInterface;
 use Console\App\Deploy\Laravel;
 use Console\App\Helpers\ConfigHelper;
@@ -16,6 +18,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\BufferedOutput;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Console\App\Commands\Databases\DatabasesNewCommand;
@@ -86,6 +89,38 @@ class DeployCommand extends Command
 	}
 
 	/**
+	 * @param string $dbId
+	 * @return bool
+	 * @throws Exception
+	 */
+	protected function isDatabaseExists(string $dbId)
+	{
+		$databasesDescribe = $this->getApplication()->find(DatabasesDescribeCommand::getDefaultName());
+		$args = [
+			'command'     => DatabasesDescribeCommand::getDefaultName(),
+			'database_id' => $dbId,
+			'--json'      => true,
+		];
+		return $databasesDescribe->run(new ArrayInput($args), new NullOutput()) === 0;
+	}
+
+	/**
+	 * @param string $appId
+	 * @return bool
+	 * @throws Exception
+	 */
+	protected function isAppExists(string $appId)
+	{
+		$appsDescribe = $this->getApplication()->find(AppsDescribeCommand::getDefaultName());
+		$args = [
+			'command' => AppsDescribeCommand::getDefaultName(),
+			'app_id'  => $appId,
+			'--json'  => true,
+		];
+		return $appsDescribe->run(new ArrayInput($args), new NullOutput()) === 0;
+	}
+
+	/**
 	 * @param OutputInterface $output
 	 * @param InputInterface $input
 	 * @return string
@@ -94,6 +129,10 @@ class DeployCommand extends Command
 	protected function getDatabaseId(OutputInterface $output, InputInterface $input): string
 	{
 		if (!empty($this->configHelper->get('database.id'))) {
+			if (!$this->isDatabaseExists($this->configHelper->get('database.id'))) {
+				$output->writeln('<error>Database id, specified on lamp_io.yaml not exists</error>');
+				exit(1);
+			}
 			$this->isNewDatabase = false;
 			return $this->configHelper->get('database.id');
 		}
@@ -139,6 +178,10 @@ class DeployCommand extends Command
 	protected function getAppId(OutputInterface $output, InputInterface $input): string
 	{
 		if (!empty($this->configHelper->get('app.id'))) {
+			if (!$this->isAppExists($this->configHelper->get('app.id'))) {
+				$output->writeln('<error>App id, specified on lamp_io.yaml not exists</error>');
+				exit(1);
+			}
 			$this->isNewApp = false;
 			return $this->configHelper->get('app.id');
 		}
