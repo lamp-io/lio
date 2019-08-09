@@ -10,7 +10,10 @@ use Console\App\Commands\Files\FilesUploadCommand;
 use Console\App\Commands\Files\SubCommands\FilesUpdateUnarchiveCommand;
 use Exception;
 use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Helper\QuestionHelper;
+use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -112,8 +115,20 @@ abstract class DeployAbstract implements DeployInterface
 		$appRunId = $document->get('data.id');
 		$progressBar = Command::getProgressBar($progressMessage, $this->consoleOutput);
 		$progressBar->start();
-		while (!AppRunsDescribeCommand::isExecutionCompleted($appRunId, $this->application)) {
-			$progressBar->advance();
+		try {
+			while (!AppRunsDescribeCommand::isExecutionCompleted($appRunId, $this->application)) {
+				$progressBar->advance();
+			}
+		} catch (Exception $exception) {
+			$progressBar->finish();
+			$this->consoleOutput->writeln(PHP_EOL . '<error>Command ' . $command . ' was failed, output: ' . trim($exception->getMessage()) . '</error>');
+			$question = new ConfirmationQuestion('Do you want to re-run command? (y/N)', false);
+			$helper = new QuestionHelper();
+			if ($helper->ask(new ArgvInput(), $this->consoleOutput, $question)) {
+				$this->appRunCommand($appId, $command, $progressMessage);
+			} else {
+				exit(1);
+			}
 		}
 		$progressBar->finish();
 		$this->consoleOutput->write(PHP_EOL);
