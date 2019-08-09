@@ -73,7 +73,7 @@ class DeployCommand extends Command
 		try {
 			$appPath = rtrim($input->getArgument('dir'), '/') . DIRECTORY_SEPARATOR;
 			$this->configHelper = new ConfigHelper($appPath);
-			$releaseId = time();
+			$releaseId = date('YmdHis',time());
 			$this->configHelper->set('release', $releaseId);
 			$deployObject = $this->getDeployObject($input->getOptions(), $appPath, $releaseId);
 			$deployObject->isCorrectApp($appPath);
