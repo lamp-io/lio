@@ -76,7 +76,9 @@ class DeployCommand extends Command
 			$releaseId = date('YmdHis',time());
 			$this->configHelper->set('release', $releaseId);
 			$deployObject = $this->getDeployObject($input->getOptions(), $appPath, $releaseId);
-			$deployObject->isCorrectApp($appPath);
+			if (!$deployObject->isCorrectApp($appPath)) {
+				throw new Exception(ucfirst($this->configHelper->get('type')) . ' has not been found found on your directory');
+			}
 			$appId = $this->getAppId($output, $input);
 			$this->getDatabaseId($output, $input);
 			$this->configHelper->save();
