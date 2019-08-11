@@ -2,9 +2,14 @@
 
 namespace Console\App\Deploy;
 
+use Closure;
 use Console\App\Commands\AppRuns\AppRunsDescribeCommand;
 use Console\App\Commands\AppRuns\AppRunsNewCommand;
 use Console\App\Commands\Command;
+use Console\App\Commands\DbBackups\DbBackupsDescribeCommand;
+use Console\App\Commands\DbBackups\DbBackupsNewCommand;
+use Console\App\Commands\DbRestores\DbRestoresDescribeCommand;
+use Console\App\Commands\DbRestores\DbRestoresNewCommand;
 use Console\App\Commands\Files\FilesDeleteCommand;
 use Console\App\Commands\Files\FilesUploadCommand;
 use Console\App\Commands\Files\SubCommands\FilesUpdateUnarchiveCommand;
@@ -13,6 +18,7 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Console\Output\BufferedOutput;
@@ -42,20 +48,32 @@ abstract class DeployAbstract implements DeployInterface
 	 */
 	protected $consoleOutput;
 
+	/**
+	 * @var string
+	 */
 	protected $releaseFolder;
+
+	protected $config;
+
+	protected $isFirstDeploy;
+
+	protected $steps = [];
 
 	/**
 	 * DeployAbstract constructor.
 	 * @param string $appPath
 	 * @param Application $application
-	 * @param int $releaseId
+	 * @param array $config
+	 * @param bool $isFirstDeploy
 	 */
-	public function __construct(string $appPath, Application $application, int $releaseId)
+	public function __construct(string $appPath, Application $application, array $config, bool $isFirstDeploy)
 	{
 		$this->appPath = $appPath;
 		$this->application = $application;
 		$this->consoleOutput = new ConsoleOutput();
-		$this->releaseFolder = 'releases/release_' . $releaseId . '/';
+		$this->releaseFolder = 'releases/release_' . $config['release'] . '/';
+		$this->config = $config;
+		$this->isFirstDeploy = $isFirstDeploy;
 	}
 
 	/**
@@ -64,6 +82,10 @@ abstract class DeployAbstract implements DeployInterface
 	 */
 	protected function getZipApp()
 	{
+		$stepName = 'zip';
+		$this->setStep($stepName, function () {
+			unlink($this->appPath . self::ARCHIVE_NAME);
+		});
 		$zipName = $this->appPath . self::ARCHIVE_NAME;
 		if (file_exists($zipName)) {
 			unlink($zipName);
@@ -91,8 +113,72 @@ abstract class DeployAbstract implements DeployInterface
 		$zip->close();
 		$progressBar->finish();
 		$this->consoleOutput->write(PHP_EOL);
-
+		$this->updateStepToSuccess($stepName);
 		return $zipName;
+	}
+
+	/**
+	 * @return string
+	 * @throws Exception
+	 */
+	protected function backupDatabase(): string
+	{
+		$step = 'backupDatabase';
+		$this->setStep($step, function () {
+			return;
+		});
+		$dbBackupNewCommand = $this->application->find(DbBackupsNewCommand::getDefaultName());
+		$args = [
+			'command'     => DbBackupsNewCommand::getDefaultName(),
+			'database_id' => $this->config['database']['id'],
+			'--json'      => true,
+		];
+		$bufferOutput = new BufferedOutput();
+		if ($dbBackupNewCommand->run(new ArrayInput($args), $bufferOutput) == '0') {
+			/** @var Document $document */
+			$document = Parser::parseResponseString($bufferOutput->fetch());
+			$dbBackupId = $document->get('data.id');
+			$progressBar = Command::getProgressBar('Backup current database state', $this->consoleOutput);
+			$progressBar->start();
+			while (!DbBackupsDescribeCommand::isDbBackupCreated($dbBackupId, $this->application)) {
+				$progressBar->advance();
+			}
+			$progressBar->finish();
+			$this->consoleOutput->write(PHP_EOL);
+			return $dbBackupId;
+		} else {
+			throw new Exception('Database backup creation failed');
+		}
+	}
+
+	/**
+	 * @param string $dbBackupId
+	 * @throws Exception
+	 */
+	protected function restoreDatabase(string $dbBackupId)
+	{
+		$dbRestoreNewCommand = $this->application->find(DbRestoresNewCommand::getDefaultName());
+		$args = [
+			'command'      => DbRestoresNewCommand::getDefaultName(),
+			'database_id'  => $this->config['database']['id'],
+			'db_backup_id' => $dbBackupId,
+			'--json'       => true,
+		];
+		$bufferOutput = new BufferedOutput();
+		if ($dbRestoreNewCommand->run(new ArrayInput($args), $bufferOutput) == '0') {
+			$document = Parser::parseResponseString($bufferOutput->fetch());
+			/** @var Document $document */
+			$dbRestoreId = $document->get('data.id');
+			$progressBar = Command::getProgressBar('Restoring db to previous state', $this->consoleOutput);
+			$progressBar->start();
+			while (!DbRestoresDescribeCommand::isDbRestoreCompleted($dbRestoreId, $this->application)) {
+				$progressBar->advance();
+			}
+			$progressBar->finish();
+			$this->consoleOutput->write(PHP_EOL);
+		} else {
+			throw new Exception('Database restore failed');
+		}
 	}
 
 	/**
@@ -111,95 +197,165 @@ abstract class DeployAbstract implements DeployInterface
 			'--json'  => true,
 		];
 		$bufferOutput = new BufferedOutput();
-		$appRunsNewCommand->run(new ArrayInput($args), $bufferOutput);
-		/** @var Document $document */
-		$document = Parser::parseResponseString($bufferOutput->fetch());
-		$appRunId = $document->get('data.id');
-		$progressBar = Command::getProgressBar($progressMessage, $this->consoleOutput);
-		$progressBar->start();
-		try {
-			while (!AppRunsDescribeCommand::isExecutionCompleted($appRunId, $this->application)) {
-				$progressBar->advance();
+		if ($appRunsNewCommand->run(new ArrayInput($args), $bufferOutput) == '0') {
+			/** @var Document $document */
+			$document = Parser::parseResponseString($bufferOutput->fetch());
+			$appRunId = $document->get('data.id');
+			$progressBar = Command::getProgressBar($progressMessage, $this->consoleOutput);
+			$progressBar->start();
+			try {
+				while (!AppRunsDescribeCommand::isExecutionCompleted($appRunId, $this->application)) {
+					$progressBar->advance();
+				}
+			} catch (Exception $exception) {
+				$progressBar->finish();
+				$this->consoleOutput->writeln(PHP_EOL . '<error>Command ' . $command . ' was failed, output: ' . trim($exception->getMessage()) . '</error>');
+				$question = new ConfirmationQuestion('Do you want to re-run command? (y/N)', false);
+				$helper = new QuestionHelper();
+				if ($helper->ask(new ArgvInput(), $this->consoleOutput, $question)) {
+					$this->appRunCommand($appId, $command, $progressMessage);
+				} else {
+					$this->revert();
+				}
 			}
-		} catch (Exception $exception) {
 			$progressBar->finish();
-			$this->consoleOutput->writeln(PHP_EOL . '<error>Command ' . $command . ' was failed, output: ' . trim($exception->getMessage()) . '</error>');
-			$question = new ConfirmationQuestion('Do you want to re-run command? (y/N)', false);
-			$helper = new QuestionHelper();
-			if ($helper->ask(new ArgvInput(), $this->consoleOutput, $question)) {
-				$this->appRunCommand($appId, $command, $progressMessage);
-			} else {
-				exit(1);
-			}
+			$this->consoleOutput->write(PHP_EOL);
+		} else {
+			throw new Exception('Command ' . $command . 'failed');
 		}
-		$progressBar->finish();
-		$this->consoleOutput->write(PHP_EOL);
 	}
 
 	/**
-	 * @param string $appId
 	 * @throws Exception
 	 */
-	protected function clearApp(string $appId)
+	protected function clearApp()
 	{
+		$step = 'clearApp';
+		$this->setStep($step, function () {
+			return;
+		});
 		$command = 'rm -rf *';
-		$this->appRunCommand($appId, $command, 'Removing default files');
+		$this->appRunCommand($this->config['app']['id'], $command, 'Removing default files');
+		$this->updateStepToSuccess($step);
 	}
 
 	/**
-	 * @param string $appId
 	 * @param string $localFile
 	 * @param string $remotePath
 	 * @throws Exception
 	 */
-	protected function uploadToApp(string $appId, string $localFile, string $remotePath)
+	protected function uploadToApp(string $localFile, string $remotePath)
 	{
-		$appRunsDescribeCommand = $this->application->find(FilesUploadCommand::getDefaultName());
+		$step = 'uploadToApp';
+		$this->setStep($step, function () use ($remotePath) {
+			$this->consoleOutput->writeln('Deleting failed release');
+			$filesDeleteCommand = $this->application->find(FilesDeleteCommand::getDefaultName());
+			$args = [
+				'command'     => FilesDeleteCommand::getDefaultName(),
+				'remote_path' => str_replace(self::ARCHIVE_NAME, '', $remotePath),
+				'app_id'      => $this->config['app']['id'],
+				'--json'      => true,
+				'--yes'       => true,
+			];
+			$filesDeleteCommand->run(new ArrayInput($args), $this->consoleOutput);
+		});
+		$filesUploadCommand = $this->application->find(FilesUploadCommand::getDefaultName());
 		$args = [
 			'command'     => FilesUploadCommand::getDefaultName(),
 			'file'        => $localFile,
-			'app_id'      => $appId,
+			'app_id'      => $this->config['app']['id'],
 			'remote_path' => $remotePath,
 			'--json'      => true,
 		];
-		$appRunsDescribeCommand->run(new ArrayInput($args), $this->consoleOutput);
-		$this->consoleOutput->write(PHP_EOL);
+		if ($filesUploadCommand->run(new ArrayInput($args), $this->consoleOutput) == '0') {
+			$this->consoleOutput->write(PHP_EOL);
+			$this->updateStepToSuccess($step);
+		} else {
+			throw new Exception('Uploading app failed');
+		}
 	}
 
 	/**
-	 * @param string $appId
 	 * @param string $remotePath
 	 * @throws Exception
 	 */
-	protected function unarchiveApp(string $appId, string $remotePath)
+	protected function unarchiveApp(string $remotePath)
 	{
+		$step = 'unarchiveApp';
+		$this->setStep($step, function () {
+			return;
+		});
 		$appRunsDescribeCommand = $this->application->find(FilesUpdateUnarchiveCommand::getDefaultName());
 		$args = [
 			'command'     => FilesUpdateUnarchiveCommand::getDefaultName(),
 			'remote_path' => $remotePath,
-			'app_id'      => $appId,
+			'app_id'      => $this->config['app']['id'],
 			'--json'      => true,
 		];
-		$appRunsDescribeCommand->run(new ArrayInput($args), $this->consoleOutput);
-		$this->consoleOutput->write(PHP_EOL);
+		if ($appRunsDescribeCommand->run(new ArrayInput($args), $this->consoleOutput) == '0') {
+			$this->consoleOutput->write(PHP_EOL);
+			$this->updateStepToSuccess($step);
+		} else {
+			throw new Exception('Extracting archive failed');
+		}
 	}
 
 	/**
-	 * @param string $appId
+	 *
+	 */
+	protected function deleteArchiveLocal()
+	{
+		$step = 'deleteArchiveLocal';
+		$this->setStep($step, function () {
+			return;
+		});
+		unlink($this->appPath . self::ARCHIVE_NAME);
+		$this->updateStepToSuccess($step);
+	}
+
+	/**
 	 * @param string $remotePath
 	 * @throws Exception
 	 */
-	protected function deleteArchive(string $appId, string $remotePath)
+	protected function deleteArchiveRemote(string $remotePath)
 	{
-		$appRunsDescribeCommand = $this->application->find(FilesDeleteCommand::getDefaultName());
+		$step = 'deleteArchiveRemote';
+		$this->setStep($step, function () {
+			return;
+		});
+		$deleteFileCommand = $this->application->find(FilesDeleteCommand::getDefaultName());
 		$args = [
 			'command'     => FilesDeleteCommand::getDefaultName(),
 			'remote_path' => $remotePath,
-			'app_id'      => $appId,
+			'app_id'      => $this->config['app']['id'],
 			'--json'      => true,
 			'--yes'       => true,
 		];
-		$appRunsDescribeCommand->run(new ArrayInput($args), $this->consoleOutput);
+		if ($deleteFileCommand->run(new ArrayInput($args), new NullOutput()) == '0') {
+			$this->updateStepToSuccess($step);
+		} else {
+			throw new Exception('Deleting archive failed');
+		}
+	}
+
+	/**
+	 * @param string $step
+	 * @param Closure $revertFunction
+	 */
+	protected function setStep(string $step, Closure $revertFunction)
+	{
+		$this->steps[$step] = [
+			'status'         => 'init',
+			'revertFunction' => $revertFunction,
+		];
+	}
+
+	/**
+	 * @param string $step
+	 */
+	protected function updateStepToSuccess(string $step)
+	{
+		$this->steps[$step]['status'] = 'success';
 	}
 
 

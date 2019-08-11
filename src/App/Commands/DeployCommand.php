@@ -10,6 +10,7 @@ use Console\App\Commands\Databases\DatabasesDescribeCommand;
 use Console\App\Deploy\DeployInterface;
 use Console\App\Deploy\Laravel;
 use Console\App\Helpers\ConfigHelper;
+use Console\App\Helpers\DeployHelper;
 use GuzzleHttp\ClientInterface;
 use InvalidArgumentException;
 use Exception;
@@ -42,9 +43,7 @@ class DeployCommand extends Command
 	/**
 	 * @var bool
 	 */
-	protected $isNewApp = true;
-
-	protected $isNewDatabase = true;
+	protected $isFirstDeploy = true;
 
 	public function __construct(ClientInterface $httpClient, $name = null)
 	{
@@ -73,19 +72,26 @@ class DeployCommand extends Command
 		try {
 			$appPath = rtrim($input->getArgument('dir'), '/') . DIRECTORY_SEPARATOR;
 			$this->configHelper = new ConfigHelper($appPath);
-			$releaseId = date('YmdHis',time());
+			if (empty($this->configHelper->get('type')) || !array_key_exists($this->configHelper->get('type'), self::DEPLOYS)) {
+				$this->setAppType($input->getOptions());
+			}
+			$releaseId = date('YmdHis', time());
 			$this->configHelper->set('release', $releaseId);
-			$deployObject = $this->getDeployObject($input->getOptions(), $appPath, $releaseId);
-			if (!$deployObject->isCorrectApp($appPath)) {
+			if (!DeployHelper::isCorrectApp($this->configHelper->get('type'), $appPath)) {
 				throw new Exception(ucfirst($this->configHelper->get('type')) . ' has not been found found on your directory');
 			}
 			$appId = $this->getAppId($output, $input);
 			$this->getDatabaseId($output, $input);
 			$this->configHelper->save();
-			$deployObject->deployApp($appId, $this->isNewApp, $this->isNewDatabase, $this->configHelper->get());
+			$deployObject = $this->getDeployObject($appPath);
+			$deployObject->deployApp();
 			$output->writeln('<info>Done, check it out at https://' . $appId . '.lamp.app/</info>');
 		} catch (Exception $exception) {
-			$output->writeln('<error>' . $exception->getMessage() . '</error>');
+			$output->writeln('<error>' . trim($exception->getMessage()) . '</error>');
+			if (!empty($deployObject)) {
+				$deployObject->revert();
+				$output->writeln('<comment>Revert completed</comment>');
+			}
 			return 1;
 		}
 	}
@@ -135,7 +141,6 @@ class DeployCommand extends Command
 				$output->writeln('<error>Database id, specified on lamp_io.yaml not exists</error>');
 				exit(1);
 			}
-			$this->isNewDatabase = false;
 			return $this->configHelper->get('database.id');
 		}
 
@@ -159,16 +164,19 @@ class DeployCommand extends Command
 			$args = array_merge($args, $attributes);
 		}
 		$bufferOutput = new BufferedOutput();
-		$databasesNewCommand->run(new ArrayInput($args), $bufferOutput);
-		/** @var Document $document */
-		$document = Parser::parseResponseString($bufferOutput->fetch());
-		$databaseId = $document->get('data.id');
-		$output->writeln('<info>' . $databaseId . ' created!</info>');
-		$this->configHelper->set('database.id', $databaseId);
-		$this->configHelper->set('database.connection.host', $this->configHelper->get('database.id'));
-		$this->configHelper->set('database.connection.password', $document->get('data.attributes.mysql_root_password'));
-		$this->configHelper->set('database.connection.user', 'root');
-		return $databaseId;
+		if ($databasesNewCommand->run(new ArrayInput($args), $bufferOutput) == '0') {
+			/** @var Document $document */
+			$document = Parser::parseResponseString($bufferOutput->fetch());
+			$databaseId = $document->get('data.id');
+			$output->writeln('<info>' . $databaseId . ' created!</info>');
+			$this->configHelper->set('database.id', $databaseId);
+			$this->configHelper->set('database.connection.host', $this->configHelper->get('database.id'));
+			$this->configHelper->set('database.connection.password', $document->get('data.attributes.mysql_root_password'));
+			$this->configHelper->set('database.connection.user', 'root');
+			return $databaseId;
+		} else {
+			throw new Exception($bufferOutput->fetch());
+		}
 	}
 
 	/**
@@ -184,7 +192,7 @@ class DeployCommand extends Command
 				$output->writeln('<error>App id, specified on lamp_io.yaml not exists</error>');
 				exit(1);
 			}
-			$this->isNewApp = false;
+			$this->isFirstDeploy = false;
 			return $this->configHelper->get('app.id');
 		}
 
@@ -207,39 +215,38 @@ class DeployCommand extends Command
 			$args = array_merge($args, $attributes);
 		}
 		$bufferOutput = new BufferedOutput();
-		$appsNewCommand->run(new ArrayInput($args), $bufferOutput);
-		/** @var Document $document */
-		$document = Parser::parseResponseString($bufferOutput->fetch());
-		$appId = $document->get('data.id');
-		$output->writeln('<info>' . $appId . ' created!</info>');
-		$this->configHelper->set('app.id', $appId);
-		$this->configHelper->set('app.url', 'https://' . $appId . '.lamp.app');
-		return $appId;
+		if ($appsNewCommand->run(new ArrayInput($args), $bufferOutput) == '0') {
+			/** @var Document $document */
+			$document = Parser::parseResponseString($bufferOutput->fetch());
+			$appId = $document->get('data.id');
+			$output->writeln('<info>' . $appId . ' created!</info>');
+			$this->configHelper->set('app.id', $appId);
+			$this->configHelper->set('app.url', 'https://' . $appId . '.lamp.app');
+			return $appId;
+		} else {
+			throw new Exception($bufferOutput->fetch());
+		}
 	}
 
-
-	/**
-	 * @param array $options
-	 * @param string $appDir
-	 * @param int $releaseId
-	 * @return DeployInterface
-	 */
-	protected function getDeployObject(array $options, string $appDir, int $releaseId): DeployInterface
+	protected function setAppType(array $options)
 	{
 		foreach ($options as $optionKey => $option) {
 			if ($option && array_key_exists($optionKey, self::DEPLOYS)) {
 				$this->configHelper->set('type', $optionKey);
-				$deployClass = (self::DEPLOYS[$optionKey]);
-				return new $deployClass($appDir, $this->getApplication(), $releaseId);
 			}
 		}
-
-		if (array_key_exists($this->configHelper->get('type'), self::DEPLOYS)) {
-			$deployClass = (self::DEPLOYS[$this->configHelper->get('type')]);
-			return new $deployClass($appDir, $this->getApplication(), $releaseId);
-		}
-
 		throw new InvalidArgumentException('App type for deployment, not specified, apps allowed ' . implode(',', array_keys(self::DEPLOYS)));
+	}
+
+
+	/**
+	 * @param string $appDir
+	 * @return DeployInterface
+	 */
+	protected function getDeployObject(string $appDir): DeployInterface
+	{
+		$deployClass = (self::DEPLOYS[$this->configHelper->get('type')]);
+		return new $deployClass($appDir, $this->getApplication(), $this->configHelper->get(), $this->isFirstDeploy);
 	}
 
 }

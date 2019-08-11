@@ -5,17 +5,9 @@ namespace Console\App\Deploy;
 interface DeployInterface
 {
 	/**
-	 * @param string $appId
-	 * @param bool $isNewApp
-	 * @param bool $isNewDatabase
-	 * @param array $config
-	 * @return mixed
+	 * @return void
 	 */
-	public function deployApp(string $appId, bool $isNewApp, bool $isNewDatabase, array $config);
+	public function deployApp();
 
-	/**
-	 * @param string $appPath
-	 * @return bool
-	 */
-	public function isCorrectApp(string $appPath): bool;
+	public function revert();
 }

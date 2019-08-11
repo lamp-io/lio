@@ -15,42 +15,97 @@ use Symfony\Component\Console\Output\BufferedOutput;
 
 class Laravel extends DeployAbstract
 {
+	/**
+	 * @var array
+	 */
 	private $localEnv = [];
 
-	private $config = [];
-
-	public function __construct(string $appPath, Application $application, int $releaseId)
+	/**
+	 * Laravel constructor.
+	 * @param string $appPath
+	 * @param Application $application
+	 * @param array $config
+	 * @param bool $isFirstDeploy
+	 */
+	public function __construct(string $appPath, Application $application, array $config, bool $isFirstDeploy)
 	{
-		parent::__construct($appPath, $application, $releaseId);
+		parent::__construct($appPath, $application, $config, $isFirstDeploy);
 		(Dotenv::create($this->appPath))->load();
 		$this->localEnv = $_ENV;
 	}
 
 	/**
-	 * @param string $appId
-	 * @param bool $isNewApp
-	 * @param bool $isNewDatabase
-	 * @param array $config
+	 * @return void
 	 * @throws Exception
 	 */
-	public function deployApp(string $appId, bool $isNewApp, bool $isNewDatabase, array $config)
+	public function deployApp()
 	{
-		$this->config = $config;
-		$this->updateEnvFile($this->prepareEnvFile());
+		$this->updateEnvFileToUpload();
 		$zip = $this->getZipApp();
-		if ($isNewApp) {
-			$this->clearApp($appId);
+		if ($this->isFirstDeploy) {
+			$this->clearApp();
 		}
-		$this->updateEnvFile($this->localEnv);
-		$this->uploadToApp($appId, $zip, $this->releaseFolder . self::ARCHIVE_NAME);
-		$this->unarchiveApp($appId, $this->releaseFolder . self::ARCHIVE_NAME);
-		$this->setUpPermissions($appId);
-		$this->deleteArchive($appId, $this->releaseFolder . self::ARCHIVE_NAME);
-		$this->setUpDatabase($appId, $isNewDatabase);
-		$this->createSymlink($appId, $isNewApp);
-		unlink($this->appPath . self::ARCHIVE_NAME);
+		$this->restoreLocalEnvFile();
+		$this->uploadToApp($zip, $this->releaseFolder . self::ARCHIVE_NAME);
+		$this->unarchiveApp($this->releaseFolder . self::ARCHIVE_NAME);
+		$this->setUpPermissions();
+		$this->deleteArchiveRemote($this->releaseFolder . self::ARCHIVE_NAME);
+		if ($this->isFirstDeploy) {
+			$this->createDatabase();
+			if (!empty($this->config['database']['sql_dump'])) {
+				$this->importSqlDump();
+			}
+			$dbBackupId = '';
+		} else {
+			$dbBackupId = $this->backupDatabase();
+		}
+		$this->artisanMigrate($dbBackupId);
+		$this->createSymlink();
+		$this->deleteArchiveLocal();
 	}
 
+	/**
+	 *
+	 */
+	private function restoreLocalEnvFile()
+	{
+		$step = 'restoreLocalEnvFile';
+		$this->setStep($step, function () {
+			return;
+		});
+		$this->updateEnvFile($this->localEnv);
+		$this->updateStepToSuccess($step);
+	}
+
+	/**
+	 *
+	 */
+	private function updateEnvFileToUpload()
+	{
+		$step = 'updateEnvFileToUpload';
+		$this->setStep($step, function () {
+			$this->updateEnvFile($this->localEnv);
+		});
+		$this->updateEnvFile($this->prepareEnvFile());
+		$this->updateStepToSuccess($step);
+	}
+
+	/**
+	 *
+	 */
+	public function revert()
+	{
+		$this->consoleOutput->writeln('<comment>Starting revert</comment>');
+		foreach (array_reverse($this->steps) as $step) {
+			if ($step['status'] == 'success') {
+				$step['revertFunction']();
+			}
+		}
+	}
+
+	/**
+	 * @return array
+	 */
 	private function prepareEnvFile(): array
 	{
 		$envFromConfig = !empty($this->config['environment']) ? $this->config['environment'] : [];
@@ -77,29 +132,45 @@ class Laravel extends DeployAbstract
 	}
 
 	/**
-	 * @param string $appId
-	 * @param bool $isNewDatabase
+	 * @param string $dbBackupId
 	 * @throws Exception
 	 */
-	private function setUpDatabase(string $appId, bool $isNewDatabase)
+	private function artisanMigrate(string $dbBackupId = '')
 	{
-		if ($isNewDatabase) {
-			$this->setUpNewDatabase($appId);
-		} else {
-			$this->appRunCommand(
-				$appId,
-				'php ' . $this->releaseFolder . 'artisan migrate',
-				'Migrating schema'
-			);
-		}
+		$step = 'artisanMigrate';
+		$this->setStep($step, function () use ($dbBackupId) {
+			if (!empty($dbBackupId)) {
+				$this->restoreDatabase($dbBackupId);
+			}
+		});
+		$this->appRunCommand(
+			$this->config['app']['id'],
+			'php ' . $this->releaseFolder . 'artisan migrate',
+			'Migrating schema'
+		);
+		$this->updateStepToSuccess($step);
 	}
 
 	/**
-	 * @param string $appId
 	 * @throws Exception
 	 */
-	private function setUpNewDatabase(string $appId)
+	private function createDatabase()
 	{
+		$step = 'CreateDatabase';
+		$this->setStep($step, function () {
+			$command = sprintf(
+				'mysql --user=%s --host=%s --password=%s --execute "drop database %s;"',
+				$this->config['database']['connection']['user'],
+				$this->config['database']['connection']['host'],
+				$this->config['database']['connection']['password'],
+				getenv('DB_DATABASE')
+			);
+			$this->appRunCommand(
+				$this->config['app']['id'],
+				$command,
+				'Drop database'
+			);
+		});
 		$progressBar = Command::getProgressBar('Initializing database', $this->consoleOutput);
 		$progressBar->start();
 		$dbIsRunning = false;
@@ -125,64 +196,63 @@ class Laravel extends DeployAbstract
 			getenv('DB_DATABASE')
 		);
 		$this->appRunCommand(
-			$appId,
+			$this->config['app']['id'],
 			$command,
 			'Creating database `' . getenv('DB_DATABASE') . '`'
 		);
-		if (!empty($this->config['database']['sql_dump'])) {
-			$this->consoleOutput->writeln('Uploading sql dump to app');
-			$this->uploadToApp(
-				$appId,
-				$this->config['database']['sql_dump'],
-				$this->releaseFolder . self::SQL_DUMP_NAME
-			);
-
-			$command = sprintf(
-				'mysql -u %s --host=%s --password=%s  %s < %s',
-				$this->config['database']['connection']['user'],
-				$this->config['database']['connection']['host'],
-				$this->config['database']['connection']['password'],
-				getenv('DB_DATABASE'),
-				$this->releaseFolder . self::SQL_DUMP_NAME
-			);
-			$this->appRunCommand(
-				$appId,
-				$command,
-				'Importing sql dump'
-			);
-		} else {
-			$this->appRunCommand(
-				$appId,
-				'php ' . $this->releaseFolder . 'artisan migrate',
-				'Migrating schema'
-			);
-		}
+		$this->consoleOutput->write(PHP_EOL);
+		$this->updateStepToSuccess($step);
 	}
 
 	/**
-	 * @param string $appId
-	 * @param bool $isNewApp
 	 * @throws Exception
 	 */
-	private function createSymlink(string $appId, bool $isNewApp)
+	private function importSqlDump()
 	{
-		$symLinkOptions = ($isNewApp) ? '-s' : '-sfn';
+		$step = 'ImportSqlDump';
+		$this->setStep($step, function () {
+			return;
+		});
+		$this->consoleOutput->writeln('Uploading sql dump to app');
+		$this->uploadToApp(
+			$this->config['database']['sql_dump'],
+			$this->releaseFolder . self::SQL_DUMP_NAME
+		);
+
+		$command = sprintf(
+			'mysql -u %s --host=%s --password=%s  %s < %s',
+			$this->config['database']['connection']['user'],
+			$this->config['database']['connection']['host'],
+			$this->config['database']['connection']['password'],
+			getenv('DB_DATABASE'),
+			$this->releaseFolder . self::SQL_DUMP_NAME
+		);
+		$this->appRunCommand(
+			$this->config['app']['id'],
+			$command,
+			'Importing sql dump'
+		);
+		$this->updateStepToSuccess($step);
+
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	private function createSymlink()
+	{
+		$step = 'createSymlink';
+		$this->setStep($step, function () {
+			return;
+		});
+		$symLinkOptions = ($this->isFirstDeploy) ? '-s' : '-sfn';
 		$command = 'ln ' . $symLinkOptions . ' ' . $this->releaseFolder . 'public public';
 		$this->appRunCommand(
-			$appId,
+			$this->config['app']['id'],
 			$command,
 			'Linking your current release'
 		);
-	}
-
-	/**
-	 * @param string $appPath
-	 * @return bool
-	 */
-	public function isCorrectApp(string $appPath): bool
-	{
-		$composerJson = json_decode(file_get_contents($appPath . 'composer.json'), true);
-		return array_key_exists('laravel/framework', $composerJson['require']);
+		$this->updateStepToSuccess($step);
 	}
 
 	/**
@@ -199,19 +269,24 @@ class Laravel extends DeployAbstract
 			'--json'      => true,
 		];
 		$bufferOutput = new BufferedOutput();
-		$appRunsNewCommand->run(new ArrayInput($args), $bufferOutput);
-		/** @var Document $document */
-		$document = Parser::parseResponseString($bufferOutput->fetch());
-
-		return $document->get('data.attributes.status') === 'running';
+		if ($appRunsNewCommand->run(new ArrayInput($args), $bufferOutput) == '0') {
+			/** @var Document $document */
+			$document = Parser::parseResponseString($bufferOutput->fetch());
+			return $document->get('data.attributes.status') === 'running';
+		} else {
+			throw new Exception('Checking db status failed');
+		}
 	}
 
 	/**
-	 * @param string $appId
 	 * @throws Exception
 	 */
-	private function setUpPermissions(string $appId)
+	private function setUpPermissions()
 	{
+		$step = 'setDirectoryPermissions';
+		$this->setStep($step, function () {
+			return;
+		});
 		$directories = [
 			$this->releaseFolder . 'storage/logs',
 			$this->releaseFolder . 'storage/framework/sessions',
@@ -221,12 +296,15 @@ class Laravel extends DeployAbstract
 			$appRunsDescribeCommand = $this->application->find(FilesUpdateCommand::getDefaultName());
 			$args = [
 				'command'     => FilesUpdateCommand::getDefaultName(),
-				'app_id'      => $appId,
+				'app_id'      => $this->config['app']['id'],
 				'remote_path' => $directory,
 				'--json'      => true,
 			];
-			$appRunsDescribeCommand->run(new ArrayInput($args), $this->consoleOutput);
+			if ($appRunsDescribeCommand->run(new ArrayInput($args), $this->consoleOutput) != '0') {
+				throw new Exception('Cant set appache writable for ' . $directory);
+			}
 		}
+		$this->updateStepToSuccess($step);
 	}
 
 }

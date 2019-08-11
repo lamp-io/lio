@@ -5,10 +5,14 @@ namespace Console\App\Commands\DbBackups;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 use Console\App\Commands\Command;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Helper\Table;
+use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class DbBackupsDescribeCommand extends Command
@@ -61,6 +65,30 @@ class DbBackupsDescribeCommand extends Command
 			$output->writeln('<error>' . $guzzleException->getMessage() . '</error>');
 			return 1;
 		}
+	}
+
+	/**
+	 * @param string $dbBackupId
+	 * @param Application $application
+	 * @return bool
+	 * @throws Exception
+	 */
+	public static function isDbBackupCreated(string $dbBackupId, Application $application): bool
+	{
+		$dbBackupDescribeCommand = $application->find(self::getDefaultName());
+		$args = [
+			'command'     => self::getDefaultName(),
+			'db_backup_id' => $dbBackupId,
+			'--json'      => true,
+		];
+		$bufferOutput = new BufferedOutput();
+		$dbBackupDescribeCommand->run(new ArrayInput($args), $bufferOutput);
+		/** @var Document $document */
+		$document = Parser::parseResponseString($bufferOutput->fetch());
+		if ($document->get('data.attributes.status') === 'failed') {
+			throw new Exception('Database backup creation failed');
+		}
+		return $document->get('data.attributes.complete');
 	}
 
 	/**
