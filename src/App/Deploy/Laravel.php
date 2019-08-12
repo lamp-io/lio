@@ -48,8 +48,9 @@ class Laravel extends DeployAbstract
 		$this->restoreLocalEnvFile();
 		$this->uploadToApp($zip, $this->releaseFolder . self::ARCHIVE_NAME);
 		$this->unarchiveApp($this->releaseFolder . self::ARCHIVE_NAME);
-		$this->setUpPermissions();
 		$this->deleteArchiveRemote($this->releaseFolder . self::ARCHIVE_NAME);
+		$this->createSymlinkStorage();
+		$this->setUpPermissions();
 		if ($this->isFirstDeploy) {
 			$this->createDatabase();
 			if (!empty($this->config['database']['sql_dump'])) {
@@ -63,6 +64,52 @@ class Laravel extends DeployAbstract
 		$this->createSymlink();
 		$this->deleteArchiveLocal();
 	}
+
+	/**
+	 * @throws Exception
+	 */
+	private function createSymlinkStorage()
+	{
+		$step = 'createSymlinkStorage';
+		$this->setStep($step, function () {
+			return;
+		});
+		$commands = [
+			[
+				'command' => 'if [ -d $(echo ' . $this->releaseFolder . '/public/storage) ]; then rm -rf ' . $this->releaseFolder . 'public/storage; fi',
+				'message' => 'Removing release/public/storage',
+			],
+			[
+				'command' => 'mkdir -p shared/',
+				'message' => 'Creating shared storage folder if not exists',
+			],
+			[
+				'command' => 'cp -rv ' . $this->releaseFolder . 'storage/ shared/',
+				'message' => 'Copying release storage to shared folder',
+			],
+			[
+				'command' => 'rm -rf ' . $this->releaseFolder . 'storage/',
+				'message' => 'Removing storage folder from release',
+			],
+			[
+				'command' => 'ln -s /var/www/shared/storage ' . $this->releaseFolder . 'storage',
+				'message' => 'Symlink shared storage to release',
+			],
+			[
+				'command' => 'ln -s /var/www/' . $this->releaseFolder . 'storage/app/public ' . $this->releaseFolder . 'public/storage',
+				'message' => 'Symlink storage to public dir',
+			],
+		];
+		foreach ($commands as $command) {
+			$this->appRunCommand(
+				$this->config['app']['id'],
+				$command['command'],
+				$command['message']
+			);
+		}
+		$this->updateStepToSuccess($step);
+	}
+
 
 	/**
 	 *
@@ -288,9 +335,14 @@ class Laravel extends DeployAbstract
 			return;
 		});
 		$directories = [
-			$this->releaseFolder . 'storage/logs',
-			$this->releaseFolder . 'storage/framework/sessions',
-			$this->releaseFolder . 'storage/framework/views',
+			'shared/storage',
+			'shared/storage/app',
+			'shared/storage/app/public',
+			'shared/storage/framework',
+			'shared/storage/framework/cache',
+			'shared/storage/framework/sessions',
+			'shared/storage/framework/views',
+			'shared/storage/logs',
 		];
 		foreach ($directories as $directory) {
 			$appRunsDescribeCommand = $this->application->find(FilesUpdateCommand::getDefaultName());
