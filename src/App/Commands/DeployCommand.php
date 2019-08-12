@@ -90,7 +90,7 @@ class DeployCommand extends Command
 			$output->writeln('<error>' . trim($exception->getMessage()) . '</error>');
 			if (!empty($deployObject)) {
 				$deployObject->revert();
-				$output->writeln('<comment>Revert completed</comment>');
+				$output->writeln(PHP_EOL . '<comment>Revert completed</comment>');
 			}
 			return 1;
 		}
