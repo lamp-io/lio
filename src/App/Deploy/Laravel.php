@@ -52,6 +52,8 @@ class Laravel extends DeployAbstract
 		$this->createSymlinkStorage();
 		$this->setUpPermissions();
 		if ($this->isFirstDeploy) {
+			$this->initDatabase();
+			$this->createDatabaseUser();
 			$this->createDatabase();
 			if (!empty($this->config['database']['sql_dump'])) {
 				$this->importSqlDump();
@@ -201,23 +203,43 @@ class Laravel extends DeployAbstract
 	/**
 	 * @throws Exception
 	 */
-	private function createDatabase()
+	private function createDatabaseUser()
 	{
-		$step = 'CreateDatabase';
+		$step = 'createDatabaseUser';
 		$this->setStep($step, function () {
 			$command = sprintf(
-				'mysql --user=%s --host=%s --password=%s --execute "drop database %s;"',
-				$this->config['database']['connection']['user'],
+				'mysql --user=root --host=%s --password=%s --execute "DROP USER \'%s\'"',
 				$this->config['database']['connection']['host'],
-				$this->config['database']['connection']['password'],
-				getenv('DB_DATABASE')
+				$this->config['database']['root_password'],
+				$this->config['database']['connection']['user']
 			);
 			$this->appRunCommand(
 				$this->config['app']['id'],
 				$command,
-				'Drop database'
+				'Drop database user ' . $this->config['database']['connection']['user']
 			);
 		});
+		$command = sprintf(
+			'mysql --user=root --host=%s --password=%s --execute "CREATE USER \'%s\'@\'%%\' IDENTIFIED WITH mysql_native_password BY \'%s\';GRANT ALL PRIVILEGES ON * . * TO \'%s\'@\'%%\';FLUSH PRIVILEGES;"',
+			$this->config['database']['connection']['host'],
+			$this->config['database']['root_password'],
+			$this->config['database']['connection']['user'],
+			$this->config['database']['connection']['password'],
+			$this->config['database']['connection']['user']
+		);
+		$this->appRunCommand(
+			$this->config['app']['id'],
+			$command,
+			'Creating database user ' . $this->config['database']['connection']['user']
+		);
+		$this->updateStepToSuccess($step);
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	private function initDatabase()
+	{
 		$progressBar = Command::getProgressBar('Initializing database', $this->consoleOutput);
 		$progressBar->start();
 		$dbIsRunning = false;
@@ -235,6 +257,30 @@ class Laravel extends DeployAbstract
 			sleep(1);
 		}
 		$progressBar->finish();
+		$this->consoleOutput->write(PHP_EOL);
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	private function createDatabase()
+	{
+		$step = 'CreateDatabase';
+		$this->setStep($step, function () {
+			$command = sprintf(
+				'mysql --user=%s --host=%s --password=%s --execute "drop database %s;"',
+				$this->config['database']['connection']['user'],
+				$this->config['database']['connection']['host'],
+				$this->config['database']['connection']['password'],
+				getenv('DB_DATABASE')
+			);
+			$this->appRunCommand(
+				$this->config['app']['id'],
+				$command,
+				'Drop database'
+			);
+		});
+
 		$command = sprintf(
 			'mysql --user=%s --host=%s --password=%s --execute "create database %s;"',
 			$this->config['database']['connection']['user'],
@@ -247,7 +293,6 @@ class Laravel extends DeployAbstract
 			$command,
 			'Creating database `' . getenv('DB_DATABASE') . '`'
 		);
-		$this->consoleOutput->write(PHP_EOL);
 		$this->updateStepToSuccess($step);
 	}
 

@@ -11,9 +11,11 @@ use Console\App\Deploy\DeployInterface;
 use Console\App\Deploy\Laravel;
 use Console\App\Helpers\ConfigHelper;
 use Console\App\Helpers\DeployHelper;
+use Console\App\Helpers\PasswordHelper;
 use GuzzleHttp\ClientInterface;
 use InvalidArgumentException;
 use Exception;
+use RuntimeException;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -23,6 +25,7 @@ use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Console\App\Commands\Databases\DatabasesNewCommand;
+use Symfony\Component\Console\Question\Question;
 
 class DeployCommand extends Command
 {
@@ -80,8 +83,8 @@ class DeployCommand extends Command
 			if (!DeployHelper::isCorrectApp($this->configHelper->get('type'), $appPath)) {
 				throw new Exception(ucfirst($this->configHelper->get('type')) . ' has not been found found on your directory');
 			}
-			$appId = $this->getAppId($output, $input);
-			$this->getDatabaseId($output, $input);
+			$appId = $this->createApp($output, $input);
+			$this->createDatabase($output, $input);
 			$this->configHelper->save();
 			$deployObject = $this->getDeployObject($appPath);
 			$deployObject->deployApp();
@@ -134,7 +137,7 @@ class DeployCommand extends Command
 	 * @return string
 	 * @throws Exception
 	 */
-	protected function getDatabaseId(OutputInterface $output, InputInterface $input): string
+	protected function createDatabase(OutputInterface $output, InputInterface $input): string
 	{
 		if (!empty($this->configHelper->get('database.id'))) {
 			if (!$this->isDatabaseExists($this->configHelper->get('database.id'))) {
@@ -171,13 +174,42 @@ class DeployCommand extends Command
 			$output->writeln('<info>' . $databaseId . ' created!</info>');
 			$this->configHelper->set('database.id', $databaseId);
 			$this->configHelper->set('database.connection.host', $this->configHelper->get('database.id'));
-			$this->configHelper->set('database.connection.password', $document->get('data.attributes.mysql_root_password'));
-			$this->configHelper->set('database.connection.user', 'root');
+			$this->configHelper->set('database.root_password', $document->get('data.attributes.mysql_root_password'));
+			$this->setDatabaseCredentials($input, $output);
 			return $databaseId;
 		} else {
 			throw new Exception($bufferOutput->fetch());
 		}
 	}
+
+	protected function setDatabaseCredentials(InputInterface $input, OutputInterface $output)
+	{
+		if (empty($this->configHelper->get('database.connection.user'))) {
+			$question = new Question('<info>Please write database user name that will be created for your application </info>');
+			$question->setValidator(function ($value) {
+				if (empty($value)) {
+					throw new RuntimeException('User name can not be empty');
+				}
+				return $value;
+			});
+			$user = $this->getHelper('question')->ask($input, $output, $question);
+			$this->configHelper->set('database.connection.user', $user);
+			$question = PasswordHelper::getPasswordQuestion(
+				'<info>Please write database password  </info>',
+				'',
+				$output
+			);
+			$question->setValidator(function ($value) {
+				if (empty($value)) {
+					throw new RuntimeException('Password can not be empty');
+				}
+				return $value;
+			});
+			$password = $this->getHelper('question')->ask($input, $output, $question);
+			$this->configHelper->set('database.connection.password', $password);
+		}
+	}
+
 
 	/**
 	 * @param OutputInterface $output
@@ -185,7 +217,7 @@ class DeployCommand extends Command
 	 * @return string
 	 * @throws Exception
 	 */
-	protected function getAppId(OutputInterface $output, InputInterface $input): string
+	protected function createApp(OutputInterface $output, InputInterface $input): string
 	{
 		if (!empty($this->configHelper->get('app.id'))) {
 			if (!$this->isAppExists($this->configHelper->get('app.id'))) {
