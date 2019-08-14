@@ -7,6 +7,7 @@ use Art4\JsonApiClient\V1\Document;
 use Console\App\Commands\Command;
 use Console\App\Commands\Databases\DatabasesDescribeCommand;
 use Console\App\Commands\Files\FilesUpdateCommand;
+use Console\App\Commands\Files\FilesUploadCommand;
 use Dotenv\Dotenv;
 use Exception;
 use Symfony\Component\Console\Application;
@@ -332,26 +333,32 @@ class Laravel extends DeployAbstract
 			return;
 		});
 		$this->consoleOutput->writeln('Uploading sql dump to app');
-		$this->uploadToApp(
-			$this->config['database']['sql_dump'],
-			$this->releaseFolder . self::SQL_DUMP_NAME
-		);
-
-		$command = sprintf(
-			'mysql -u %s --host=%s --password=%s  %s < %s',
-			$this->config['database']['connection']['user'],
-			$this->config['database']['connection']['host'],
-			$this->config['database']['connection']['password'],
-			getenv('DB_DATABASE'),
-			$this->releaseFolder . self::SQL_DUMP_NAME
-		);
-		$this->appRunCommand(
-			$this->config['app']['id'],
-			$command,
-			'Importing sql dump'
-		);
-		$this->updateStepToSuccess($step);
-
+		$filesUploadCommand = $this->application->find(FilesUploadCommand::getDefaultName());
+		$args = [
+			'command'     => FilesUploadCommand::getDefaultName(),
+			'file'        => $this->config['database']['sql_dump'],
+			'app_id'      => $this->config['app']['id'],
+			'remote_path' => $this->releaseFolder . self::SQL_DUMP_NAME,
+			'--json'      => true,
+		];
+		if ($filesUploadCommand->run(new ArrayInput($args), $this->consoleOutput) == '0') {
+			$command = sprintf(
+				'mysql -u %s --host=%s --password=%s  %s < %s',
+				$this->config['database']['connection']['user'],
+				$this->config['database']['connection']['host'],
+				$this->config['database']['connection']['password'],
+				getenv('DB_DATABASE'),
+				$this->releaseFolder . self::SQL_DUMP_NAME
+			);
+			$this->appRunCommand(
+				$this->config['app']['id'],
+				$command,
+				'Importing sql dump'
+			);
+			$this->updateStepToSuccess($step);
+		} else {
+			throw new Exception('Uploading sql dump to app failed');
+		}
 	}
 
 	/**
