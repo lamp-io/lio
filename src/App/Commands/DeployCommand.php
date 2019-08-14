@@ -278,6 +278,7 @@ class DeployCommand extends Command
 		foreach ($options as $optionKey => $option) {
 			if ($option && array_key_exists($optionKey, self::DEPLOYS)) {
 				$this->configHelper->set('type', $optionKey);
+				return;
 			}
 		}
 		throw new InvalidArgumentException('App type for deployment, not specified, apps allowed ' . implode(',', array_keys(self::DEPLOYS)));
