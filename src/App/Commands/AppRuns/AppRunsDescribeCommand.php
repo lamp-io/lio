@@ -52,7 +52,10 @@ class AppRunsDescribeCommand extends Command
 		$appRunsDescribeCommand->run(new ArrayInput($args), $bufferOutput);
 		/** @var Document $document */
 		$document = Parser::parseResponseString($bufferOutput->fetch());
-		return $document->get('data.attributes.complete') || $document->get('data.attributes.status') == 'failed';
+		if ($document->get('data.attributes.status') === 'failed') {
+			throw new Exception($document->get('data.attributes.output'));
+		}
+		return $document->get('data.attributes.complete');
 	}
 
 	/**

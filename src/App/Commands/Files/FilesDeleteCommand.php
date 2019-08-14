@@ -41,7 +41,7 @@ class FilesDeleteCommand extends Command
 		if (!$this->askConfirm('<info>Are you sure you want to file? (y/N)</info>', $output, $input)) {
 			return 0;
 		}
-
+		$progressBar = self::getProgressBar('Deleting it', $output);
 		try {
 			$this->httpHelper->getClient()->request(
 				'DELETE',
@@ -56,6 +56,9 @@ class FilesDeleteCommand extends Command
 						'Accept'        => 'application/json',
 						'Authorization' => $this->httpHelper->getHeader('Authorization'),
 					],
+					'progress'  => function () use ($progressBar) {
+						$progressBar->advance();
+					},
 				]);
 			if (empty($input->getOption('json'))) {
 				$output->writeln('<info>Success, ' . $input->getArgument('remote_path') . ' has been deleted</info>');
