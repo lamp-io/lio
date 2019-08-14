@@ -62,9 +62,35 @@ class Laravel extends DeployAbstract
 		} else {
 			$dbBackupId = $this->backupDatabase();
 		}
+
+		$this->runCommands();
 		$this->artisanMigrate($dbBackupId);
 		$this->createSymlink();
 		$this->deleteArchiveLocal();
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	private function runCommands()
+	{
+		$step = 'runCommands';
+		$this->setStep($step, function (){
+			return;
+		});
+		if (!empty($this->config['commands'])) {
+			foreach ($this->config['commands'] as $command) {
+				if (preg_match('/artisan migrate/', $command)) {
+					continue;
+				}
+				$this->appRunCommand(
+					$this->config['app']['id'],
+					'cd ' . $this->releaseFolder . ' && ' . $command,
+					$command
+				);
+			}
+		}
+		$this->updateStepToSuccess($step);
 	}
 
 	/**
