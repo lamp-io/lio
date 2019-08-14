@@ -73,6 +73,9 @@ class DeployCommand extends Command
 	{
 		parent::execute($input, $output);
 		try {
+			if ($input->getArgument('dir') == '.') {
+				$input->setArgument('dir', getcwd());
+			}
 			$appPath = rtrim($input->getArgument('dir'), '/') . DIRECTORY_SEPARATOR;
 			$this->configHelper = new ConfigHelper($appPath);
 			if (empty($this->configHelper->get('type')) || !array_key_exists($this->configHelper->get('type'), self::DEPLOYS)) {
@@ -236,8 +239,9 @@ class DeployCommand extends Command
 		}
 		$appsNewCommand = $this->getApplication()->find(AppsNewCommand::getDefaultName());
 		$args = [
-			'command' => AppsNewCommand::getDefaultName(),
-			'--json'  => true,
+			'command'       => AppsNewCommand::getDefaultName(),
+			'--json'        => true,
+			'--description' => basename($input->getArgument('dir')),
 		];
 		if (!empty($this->configHelper->get('app.attributes'))) {
 			$attributes = [];
