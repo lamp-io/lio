@@ -204,6 +204,7 @@ abstract class DeployAbstract implements DeployInterface
 				$progressBar->advance();
 			}
 			$progressBar->finish();
+			$this->consoleOutput->write(PHP_EOL);
 		} else {
 			throw new Exception('Command ' . $command . 'failed');
 		}
