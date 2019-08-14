@@ -2,6 +2,12 @@
 
 namespace Console\App\Helpers;
 
+use Console\App\Commands\Files\FilesListCommand;
+use Exception;
+use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Output\BufferedOutput;
+
 class DeployHelper
 {
 	/**
@@ -18,5 +24,24 @@ class DeployHelper
 			default:
 				return false;
 		}
+	}
+
+	/**
+	 * @param string $appId
+	 * @param Application $application
+	 * @return bool
+	 * @throws Exception
+	 */
+	static public function isReleasesFolderExists(string $appId, Application $application): bool
+	{
+		$appRunsNewCommand = $application->find(FilesListCommand::getDefaultName());
+		$args = [
+			'command' => FilesListCommand::getDefaultName(),
+			'app_id'  => $appId,
+			'file_id' => 'releases',
+			'--json'  => true,
+		];
+		$bufferOutput = new BufferedOutput();
+		return $appRunsNewCommand->run(new ArrayInput($args), $bufferOutput) == '0';
 	}
 }

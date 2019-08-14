@@ -46,7 +46,7 @@ class DeployCommand extends Command
 	/**
 	 * @var bool
 	 */
-	protected $isFirstDeploy = true;
+	protected $isAppAlreadyExists = true;
 
 	public function __construct(ClientInterface $httpClient, $name = null)
 	{
@@ -154,7 +154,7 @@ class DeployCommand extends Command
 		$question = new ConfirmationQuestion('<info>This looks like a new app, shall we create a lamp.io database for it? (Y/n):</info>');
 		if (!$questionHelper->ask($input, $output, $question)) {
 			$output->writeln('<info>You must to create new database or select to which database your project should use, in lamp.io.yaml file inside of your project</info>');
-			return 0;
+			exit(1);
 		}
 
 		$databasesNewCommand = $this->getApplication()->find(DatabasesNewCommand::getDefaultName());
@@ -183,6 +183,15 @@ class DeployCommand extends Command
 		} else {
 			throw new Exception($bufferOutput->fetch());
 		}
+	}
+
+	/**
+	 * @throws Exception
+	 * @return bool
+	 */
+	protected function isFirstDeploy(): bool
+	{
+		return !($this->isAppAlreadyExists && DeployHelper::isReleasesFolderExists($this->configHelper->get('app.id'), $this->getApplication()));
 	}
 
 	protected function setDatabaseCredentials(InputInterface $input, OutputInterface $output)
@@ -227,7 +236,7 @@ class DeployCommand extends Command
 				$output->writeln('<error>App id, specified on lamp_io.yaml not exists</error>');
 				exit(1);
 			}
-			$this->isFirstDeploy = false;
+			$this->isAppAlreadyExists = true;
 			return $this->configHelper->get('app.id');
 		}
 
@@ -235,7 +244,7 @@ class DeployCommand extends Command
 		$question = new ConfirmationQuestion('<info>This looks like a new app, shall we create a lamp.io app for it? (Y/n):</info>');
 		if (!$questionHelper->ask($input, $output, $question)) {
 			$output->writeln('<info>You must to create new app or select to which app your project should be deployed, in lamp.io.yaml file inside of your project</info>');
-			return 0;
+			exit(1);
 		}
 		$appsNewCommand = $this->getApplication()->find(AppsNewCommand::getDefaultName());
 		$args = [
@@ -278,11 +287,12 @@ class DeployCommand extends Command
 	/**
 	 * @param string $appDir
 	 * @return DeployInterface
+	 * @throws Exception
 	 */
 	protected function getDeployObject(string $appDir): DeployInterface
 	{
 		$deployClass = (self::DEPLOYS[$this->configHelper->get('type')]);
-		return new $deployClass($appDir, $this->getApplication(), $this->configHelper->get(), $this->isFirstDeploy);
+		return new $deployClass($appDir, $this->getApplication(), $this->configHelper->get(), $this->isFirstDeploy());
 	}
 
 }
