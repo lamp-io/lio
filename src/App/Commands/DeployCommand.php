@@ -197,7 +197,7 @@ class DeployCommand extends Command
 	protected function setDatabaseCredentials(InputInterface $input, OutputInterface $output)
 	{
 		if (empty($this->configHelper->get('database.connection.user'))) {
-			$question = new Question('<info>Please write database user name that will be created for your application </info>');
+			$question = new Question('<info>Please enter database user name that will be created for your application:</info>');
 			$question->setValidator(function ($value) {
 				if (empty($value)) {
 					throw new RuntimeException('User name can not be empty');
@@ -207,7 +207,7 @@ class DeployCommand extends Command
 			$user = $this->getHelper('question')->ask($input, $output, $question);
 			$this->configHelper->set('database.connection.user', $user);
 			$question = PasswordHelper::getPasswordQuestion(
-				'<info>Please write database password  </info>',
+				'<info>Please enter database password for <above_user>:</info>',
 				'',
 				$output
 			);
