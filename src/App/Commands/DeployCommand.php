@@ -233,7 +233,7 @@ class DeployCommand extends Command
 	{
 		if (!empty($this->configHelper->get('app.id'))) {
 			if (!$this->isAppExists($this->configHelper->get('app.id'))) {
-				$output->writeln('<error>App id, specified on lamp_io.yaml not exists</error>');
+				$output->writeln('<error>db-id(<db_id>) specified in lamp.io.yaml does not exist</error>');
 				exit(1);
 			}
 			$this->isAppAlreadyExists = true;
