@@ -60,7 +60,7 @@ class DeployCommand extends Command
 	{
 		$this->setDescription('Deploy your app.')
 			->addArgument('dir', InputArgument::OPTIONAL, 'Path to a directory of your application, default value current working directory', getcwd())
-			->addOption('laravel', null, InputOption::VALUE_NONE, 'The ID of the app');
+			->addOption('laravel', null, InputOption::VALUE_NONE, 'Deploy laravel app');
 	}
 
 	/**
