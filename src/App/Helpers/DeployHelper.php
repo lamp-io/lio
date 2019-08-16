@@ -36,7 +36,7 @@ class DeployHelper
 	 */
 	static public function isReleasesFolderExists(string $appId, Application $application): bool
 	{
-		$appRunsNewCommand = $application->find(FilesListCommand::getDefaultName());
+		$filesListCommand = $application->find(FilesListCommand::getDefaultName());
 		$args = [
 			'command' => FilesListCommand::getDefaultName(),
 			'app_id'  => $appId,
@@ -44,6 +44,6 @@ class DeployHelper
 			'--json'  => true,
 		];
 		$bufferOutput = new BufferedOutput();
-		return $appRunsNewCommand->run(new ArrayInput($args), $bufferOutput) == '0';
+		return $filesListCommand->run(new ArrayInput($args), $bufferOutput) == '0';
 	}
 }
