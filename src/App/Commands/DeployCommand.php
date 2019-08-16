@@ -144,7 +144,7 @@ class DeployCommand extends Command
 	{
 		if (!empty($this->configHelper->get('database.id'))) {
 			if (!$this->isDatabaseExists($this->configHelper->get('database.id'))) {
-				$output->writeln('<error>Database id, specified on lamp_io.yaml not exists</error>');
+				$output->writeln('<error>db-id(<db_id>) specified in lamp.io.yaml does not exist</error>');
 				exit(1);
 			}
 			return $this->configHelper->get('database.id');
@@ -233,7 +233,7 @@ class DeployCommand extends Command
 	{
 		if (!empty($this->configHelper->get('app.id'))) {
 			if (!$this->isAppExists($this->configHelper->get('app.id'))) {
-				$output->writeln('<error>db-id(<db_id>) specified in lamp.io.yaml does not exist</error>');
+				$output->writeln('<error>app-id(<app_id>) specified in lamp.io.yaml does not exist</error>');
 				exit(1);
 			}
 			$this->isAppAlreadyExists = true;
@@ -258,6 +258,9 @@ class DeployCommand extends Command
 				$attributes['--' . $key] = $appAttribute;
 			}
 			$args = array_merge($args, $attributes);
+		}
+		if (empty($this->configHelper->get('app.attributes.description'))) {
+			$this->configHelper->set('app.attributes.description', basename($input->getArgument('dir')));
 		}
 		$bufferOutput = new BufferedOutput();
 		if ($appsNewCommand->run(new ArrayInput($args), $bufferOutput) == '0') {
