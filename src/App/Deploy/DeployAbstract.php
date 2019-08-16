@@ -13,6 +13,7 @@ use Console\App\Commands\DbRestores\DbRestoresNewCommand;
 use Console\App\Commands\Files\FilesDeleteCommand;
 use Console\App\Commands\Files\FilesUploadCommand;
 use Console\App\Commands\Files\SubCommands\FilesUpdateUnarchiveCommand;
+use Console\App\Helpers\DeployHelper;
 use Exception;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -68,7 +69,7 @@ abstract class DeployAbstract implements DeployInterface
 		$this->appPath = $appPath;
 		$this->application = $application;
 		$this->consoleOutput = new ConsoleOutput();
-		$this->releaseFolder = 'releases/release_' . $config['release'] . '/';
+		$this->releaseFolder = DeployHelper::RELEASE_FOLDER . '/release_' . $config['release'] . '/';
 		$this->config = $config;
 		$this->isFirstDeploy = $isFirstDeploy;
 	}

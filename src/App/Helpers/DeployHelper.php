@@ -10,6 +10,8 @@ use Symfony\Component\Console\Output\BufferedOutput;
 
 class DeployHelper
 {
+	const RELEASE_FOLDER = 'releases';
+
 	/**
 	 * @param string $appType
 	 * @param string $appPath
