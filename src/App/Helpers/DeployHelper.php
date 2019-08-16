@@ -40,7 +40,7 @@ class DeployHelper
 		$args = [
 			'command' => FilesListCommand::getDefaultName(),
 			'app_id'  => $appId,
-			'file_id' => 'releases',
+			'file_id' => self::RELEASE_FOLDER,
 			'--json'  => true,
 		];
 		$bufferOutput = new BufferedOutput();
