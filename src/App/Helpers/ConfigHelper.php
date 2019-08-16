@@ -9,6 +9,8 @@ class ConfigHelper
 {
 	const LAMP_IO_CONFIG = 'lamp.io.yaml';
 
+	const YAML_INLINE_LEVEL = 4;
+
 	/**
 	 * @var array
 	 */
@@ -69,7 +71,7 @@ class ConfigHelper
 
 	public function save()
 	{
-		$yaml = Yaml::dump($this->config);
+		$yaml = Yaml::dump($this->config, self::YAML_INLINE_LEVEL);
 		file_put_contents($this->appPath . self::LAMP_IO_CONFIG, $yaml);
 	}
 
