@@ -7,6 +7,7 @@ if (file_exists(dirname(__DIR__, 3) . '/autoload.php')) {
 }
 
 use Console\App\Commands\Apps\SubCommands\AppUpdatesStatusCommand;
+use Console\App\Commands\Deploy\DeployListCommand;
 use Console\App\Commands\Organizations\OrganizationsListCommand;
 use Console\App\Commands\Organizations\OrganizationsUpdateCommand;
 use Console\App\Commands\OrganizationUsers\OrganizationUsersDescribeCommand;
@@ -117,6 +118,7 @@ try {
 	$app->add(new OrganizationUsersListCommand(new Client()));
 	$app->add(new OrganizationUsersDescribeCommand(new Client()));
 	$app->add(new OrganizationUsersUpdateCommand(new Client()));
+	$app->add(new DeployListCommand(new Client()));
 	$app->run();
 } catch (Exception $exception) {
 	echo $exception->getMessage() . PHP_EOL;

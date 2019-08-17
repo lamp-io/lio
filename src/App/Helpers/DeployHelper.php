@@ -2,6 +2,8 @@
 
 namespace Console\App\Helpers;
 
+use Art4\JsonApiClient\Helper\Parser;
+use Art4\JsonApiClient\V1\Document;
 use Console\App\Commands\Files\FilesListCommand;
 use Exception;
 use Symfony\Component\Console\Application;
@@ -11,6 +13,8 @@ use Symfony\Component\Console\Output\BufferedOutput;
 class DeployHelper
 {
 	const RELEASE_FOLDER = 'releases';
+
+	const PUBLIC_FOLDER = 'public';
 
 	/**
 	 * @param string $appType
@@ -26,6 +30,32 @@ class DeployHelper
 			default:
 				return false;
 		}
+	}
+
+	/**
+	 * @param string $appId
+	 * @param Application $application
+	 * @return string
+	 * @throws Exception
+	 */
+	static public function getActiveRelease(string $appId, Application $application): string
+	{
+		$filesListCommand = $application->find(FilesListCommand::getDefaultName());
+		$args = [
+			'command' => FilesListCommand::getDefaultName(),
+			'app_id'  => $appId,
+			'file_id' => self::PUBLIC_FOLDER,
+			'--json'  => true,
+		];
+		$bufferOutput = new BufferedOutput();
+		if ($filesListCommand->run(new ArrayInput($args), $bufferOutput) != '0') {
+			throw new Exception($bufferOutput->fetch());
+		}
+		/** @var Document $document */
+		$document = Parser::parseResponseString(trim($bufferOutput->fetch()));
+		$releaseName = [];
+		preg_match('/release_[0-9]*/', $document->get('data.attributes.target'), $releaseName);
+		return !empty($releaseName[0]) ? $releaseName[0] : '';
 	}
 
 	/**
