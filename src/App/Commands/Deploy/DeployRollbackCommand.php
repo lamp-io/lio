@@ -29,6 +29,12 @@ class DeployRollbackCommand extends Command
 			->setHelp('try rebooting');
 	}
 
+	/**
+	 * @param InputInterface $input
+	 * @param OutputInterface $output
+	 * @return int|void|null
+	 * @throws Exception
+	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
