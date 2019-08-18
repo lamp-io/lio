@@ -57,12 +57,15 @@ class DeployRollbackCommand extends Command
 		if (!array_key_exists($type, DeployCommand::DEPLOYS)) {
 			throw new Exception('Invalid type inside of a lamp.io.yaml ' . $type . ', allowed types:' . implode(',', array_keys(DeployCommand::DEPLOYS)));
 		}
+		$currentRelease = DeployHelper::getActiveRelease($config['app']['id'], $this->getApplication());
 		$deployObject = $this->getDeployObject($type, $config);
 		try {
-			$deployObject->revert($previousRelease['id'] . '/');
+			$deployObject->revert($currentRelease . '/', $previousRelease['id'] . '/');
 			$output->writeln('<info>Done check it out at https://' . $config['app']['id'] . '.lamp.app/</info>');
 		} catch (Exception $exception) {
 			$output->writeln('<error>' . trim($exception->getMessage()) . '</error>');
+			$deployObject->revertProcess();
+			$output->writeln(PHP_EOL . '<comment>Revert completed</comment>');
 			return 1;
 		}
 	}

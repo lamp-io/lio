@@ -56,7 +56,7 @@ class DeployHelper
 		$document = Parser::parseResponseString(trim($bufferOutput->fetch()));
 		$releaseName = [];
 		preg_match('/release_[0-9]*/', $document->get('data.attributes.target'), $releaseName);
-		return !empty($releaseName[0]) ? $releaseName[0] : '';
+		return !empty($releaseName[0]) ? self::RELEASE_FOLDER . '/' . $releaseName[0] : '';
 	}
 
 	/**
@@ -128,5 +128,40 @@ class DeployHelper
 		/** @var Document $document */
 		$document = Parser::parseResponseString(trim($bufferOutput->fetch()));
 		return !empty($document->has('data.attributes.contents')) ? $document->get('data.attributes.contents') : '';
+	}
+
+	/**
+	 * @param string $appId
+	 * @param string $releaseMigrationFolder
+	 * @param Application $application
+	 * @return array
+	 * @throws Exception
+	 */
+	public static function getReleaseMigrations(string $appId, string $releaseMigrationFolder, Application $application): array
+	{
+		$filesListCommand = $application->find(FilesListCommand::getDefaultName());
+		$args = [
+			'command' => FilesListCommand::getDefaultName(),
+			'app_id'  => $appId,
+			'file_id' => $releaseMigrationFolder,
+			'--json'  => true,
+		];
+		$bufferOutput = new BufferedOutput();
+		if ($filesListCommand->run(new ArrayInput($args), $bufferOutput) != '0') {
+			throw new Exception($bufferOutput->fetch());
+		}
+		/** @var Document $document */
+		$document = Parser::parseResponseString(trim($bufferOutput->fetch()));
+		if (empty($document->has('data.relationships.children.data'))) {
+			return [];
+		} else {
+			$serializer = new ArraySerializer(['recursive' => true]);
+			$migrations = [];
+			foreach ($serializer->serialize($document->get('data.relationships.children.data')) as $value) {
+				preg_match('/((\/[0-9]*)_([a-zA-Z]*)).*$/', $value['id'], $matched);
+				$migrations[] = ltrim(rtrim($matched[0], '.php'), '/');
+			}
+			return $migrations;
+		}
 	}
 }
