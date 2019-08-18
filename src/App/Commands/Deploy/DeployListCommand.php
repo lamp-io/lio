@@ -41,23 +41,45 @@ class DeployListCommand extends Command
 		}
 		$releases = DeployHelper::getReleases($input->getArgument('app_id'), $this->getApplication());
 		$activeRelease = DeployHelper::getActiveRelease($input->getArgument('app_id'), $this->getApplication());
-		$table = $this->getOutputAsTable($releases, new Table($output), $activeRelease);
+		$table = $this->getOutputAsTable($releases, new Table($output), $activeRelease, $input->getArgument('app_id'));
 		$table->render();
 
 	}
 
-	protected function getOutputAsTable(array $releases, Table $table, string $activeRelease): Table
+	/**
+	 * @param array $releases
+	 * @param Table $table
+	 * @param string $activeRelease
+	 * @param string $appId
+	 * @return Table
+	 * @throws Exception
+	 */
+	protected function getOutputAsTable(array $releases, Table $table, string $activeRelease, string $appId): Table
 	{
 		$table->setHeaderTitle('Releases');
 		$table->setHeaders(['№', 'Date', 'Migrations', 'Is active']);
+		$migrations = [];
 		foreach ($releases as $key => $release) {
 			$releaseDate = [];
+			$migrationsFolder = 'database/migrations';
+			$releaseMigrations = DeployHelper::getReleaseMigrations(
+				$appId,
+				$release['id'] . '/' . $migrationsFolder,
+				$this->getApplication()
+			);
+			$uniqueMigrations = array_diff($releaseMigrations, array_unique($migrations));
+			foreach ($releaseMigrations as $releaseMigration) {
+				array_push($migrations, $releaseMigration);
+			}
 			preg_match('/[0-9]*$/', $release['id'], $releaseDate);
 			if (!empty($releaseDate[0])) {
 				$formattedDate = date('Y-m-d H:i:s', strtotime($releaseDate[0]));
 				$isActive = strpos($release['id'], $activeRelease) !== false;
 				$table->addRow([
-					$key + 1, $formattedDate, '', $isActive ? 'true' : '',
+					$key + 1,
+					$formattedDate,
+					implode(PHP_EOL, $uniqueMigrations),
+					$isActive ? 'true' : '',
 				]);
 				if ($key != count($releases) - 1) {
 					$table->addRow(new TableSeparator());
