@@ -59,19 +59,25 @@ abstract class DeployAbstract implements DeployInterface
 
 	/**
 	 * DeployAbstract constructor.
-	 * @param string $appPath
 	 * @param Application $application
 	 * @param array $config
-	 * @param bool $isFirstDeploy
 	 */
-	public function __construct(string $appPath, Application $application, array $config, bool $isFirstDeploy)
+	public function __construct(Application $application, array $config)
 	{
-		$this->appPath = $appPath;
 		$this->application = $application;
 		$this->consoleOutput = new ConsoleOutput();
-		$this->releaseFolder = DeployHelper::RELEASE_FOLDER . '/release_' . $config['release'] . '/';
 		$this->config = $config;
+	}
+
+	/**
+	 * @param string $appPath
+	 * @param bool $isFirstDeploy
+	 */
+	public function deployApp(string $appPath, bool $isFirstDeploy)
+	{
+		$this->appPath = $appPath;
 		$this->isFirstDeploy = $isFirstDeploy;
+		$this->releaseFolder = DeployHelper::RELEASE_FOLDER . '/release_' . $this->config['release'] . '/';
 	}
 
 	/**
@@ -207,7 +213,7 @@ abstract class DeployAbstract implements DeployInterface
 			$progressBar->finish();
 			$this->consoleOutput->write(PHP_EOL);
 		} else {
-			throw new Exception('Command ' . $command . 'failed');
+			throw new Exception('Command ' . $command . '. Failed');
 		}
 	}
 

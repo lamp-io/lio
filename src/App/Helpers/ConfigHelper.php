@@ -75,5 +75,9 @@ class ConfigHelper
 		file_put_contents($this->appPath . self::LAMP_IO_CONFIG, $yaml);
 	}
 
+	public static function yamlToArray(string $yamlString)
+	{
+		return Yaml::parse($yamlString);
+	}
 
 }
