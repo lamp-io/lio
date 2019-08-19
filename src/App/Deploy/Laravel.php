@@ -8,9 +8,9 @@ use Console\App\Commands\Command;
 use Console\App\Commands\Databases\DatabasesDescribeCommand;
 use Console\App\Commands\Files\FilesUpdateCommand;
 use Console\App\Commands\Files\FilesUploadCommand;
+use Console\App\Helpers\DeployHelper;
 use Dotenv\Dotenv;
 use Exception;
-use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
@@ -22,25 +22,16 @@ class Laravel extends DeployAbstract
 	private $localEnv = [];
 
 	/**
-	 * Laravel constructor.
 	 * @param string $appPath
-	 * @param Application $application
-	 * @param array $config
 	 * @param bool $isFirstDeploy
-	 */
-	public function __construct(string $appPath, Application $application, array $config, bool $isFirstDeploy)
-	{
-		parent::__construct($appPath, $application, $config, $isFirstDeploy);
-		(Dotenv::create($this->appPath))->load();
-		$this->localEnv = $_ENV;
-	}
-
-	/**
 	 * @return void
 	 * @throws Exception
 	 */
-	public function deployApp()
+	public function deployApp(string $appPath, bool $isFirstDeploy)
 	{
+		parent::deployApp($appPath, $isFirstDeploy);
+		(Dotenv::create($this->appPath))->load();
+		$this->localEnv = $_ENV;
 		$this->updateEnvFileToUpload();
 		$zip = $this->getZipApp();
 		if ($this->isFirstDeploy) {
@@ -66,8 +57,73 @@ class Laravel extends DeployAbstract
 
 		$this->runCommands();
 		$this->artisanMigrate($dbBackupId);
-		$this->createSymlink();
+		$this->symlinkRelease($this->releaseFolder, 'Linking your current release', $this->isFirstDeploy);
 		$this->deleteArchiveLocal();
+	}
+
+	/**
+	 * @param string $currentRelease
+	 * @param string $previousRelease
+	 * @throws Exception
+	 */
+	public function revert(string $currentRelease, string $previousRelease)
+	{
+		$migrationsDif = $this->getMigrationsDif($currentRelease, $previousRelease);
+		if ($migrationsDif >= 1) {
+			$dbBackupId = $this->backupDatabase();
+			$this->rollbackMigrations($currentRelease, $migrationsDif, $dbBackupId);
+		}
+		$this->symlinkRelease($previousRelease, 'Linking your previous release');
+	}
+
+	/**
+	 * @param string $currentRelease
+	 * @param string $previousRelease
+	 * @return int
+	 * @throws Exception
+	 */
+	private function getMigrationsDif(string $currentRelease, string $previousRelease)
+	{
+		$step = 'getMigrationsDif';
+		$this->setStep('getMigrationsDif', function () {
+			return;
+		});
+		$this->consoleOutput->writeln('Checking migrations diff...');
+		$migrationsFolder = 'database/migrations';
+		$migrations = [
+			'current'  => DeployHelper::getReleaseMigrations(
+				$this->config['app']['id'],
+				$currentRelease . '/' . $migrationsFolder,
+				$this->application
+			),
+			'previous' => DeployHelper::getReleaseMigrations(
+				$this->config['app']['id'],
+				$previousRelease . '/' . $migrationsFolder,
+				$this->application
+			),
+		];
+		$this->updateStepToSuccess($step);
+		return count($migrations['current']) - count($migrations['previous']);
+	}
+
+	/**
+	 * @param string $releaseFolder
+	 * @param int $steps
+	 * @param string $dbBackupId
+	 * @throws Exception
+	 */
+	private function rollbackMigrations(string $releaseFolder, int $steps, string $dbBackupId)
+	{
+		$step = 'rollbackMigrations';
+		$this->setStep($step, function () use ($dbBackupId) {
+			$this->restoreDatabase($dbBackupId);
+		});
+		$this->appRunCommand(
+			$this->config['app']['id'],
+			'php ' . $releaseFolder . 'artisan migrate:rollback --force --step=' . $steps,
+			'Rollback migrations to previous release'
+		);
+		$this->updateStepToSuccess($step);
 	}
 
 	/**
@@ -76,7 +132,7 @@ class Laravel extends DeployAbstract
 	private function runCommands()
 	{
 		$step = 'runCommands';
-		$this->setStep($step, function (){
+		$this->setStep($step, function () {
 			return;
 		});
 		if (!empty($this->config['commands'])) {
@@ -105,7 +161,7 @@ class Laravel extends DeployAbstract
 		});
 		$commands = [
 			[
-				'command' => 'if [ -d $(echo ' . $this->releaseFolder . '/public/storage) ]; then rm -rf ' . $this->releaseFolder . 'public/storage; fi',
+				'command' => 'if [ -d $(echo ' . $this->releaseFolder . 'public/storage) ]; then rm -rf ' . $this->releaseFolder . 'public/storage; fi',
 				'message' => 'Removing release/public/storage',
 			],
 			[
@@ -169,7 +225,7 @@ class Laravel extends DeployAbstract
 	/**
 	 *
 	 */
-	public function revert()
+	public function revertProcess()
 	{
 		$this->consoleOutput->writeln('<comment>Starting revert</comment>');
 		foreach (array_reverse($this->steps) as $step) {
@@ -221,7 +277,7 @@ class Laravel extends DeployAbstract
 		});
 		$this->appRunCommand(
 			$this->config['app']['id'],
-			'php ' . $this->releaseFolder . 'artisan migrate',
+			'php ' . $this->releaseFolder . 'artisan migrate --force',
 			'Migrating schema'
 		);
 		$this->updateStepToSuccess($step);
@@ -362,20 +418,23 @@ class Laravel extends DeployAbstract
 	}
 
 	/**
+	 * @param string $releaseFolder
+	 * @param string $message
+	 * @param bool $isFirstDeploy
 	 * @throws Exception
 	 */
-	private function createSymlink()
+	private function symlinkRelease(string $releaseFolder, string $message, bool $isFirstDeploy = false)
 	{
-		$step = 'createSymlink';
+		$step = 'symlinkRelease';
 		$this->setStep($step, function () {
 			return;
 		});
-		$symLinkOptions = ($this->isFirstDeploy) ? '-s' : '-sfn';
-		$command = 'ln ' . $symLinkOptions . ' ' . $this->releaseFolder . 'public public';
+		$symLinkOptions = ($isFirstDeploy) ? '-s' : '-sfn';
+		$command = 'ln ' . $symLinkOptions . ' ' . $releaseFolder . 'public public';
 		$this->appRunCommand(
 			$this->config['app']['id'],
 			$command,
-			'Linking your current release'
+			$message
 		);
 		$this->updateStepToSuccess($step);
 	}

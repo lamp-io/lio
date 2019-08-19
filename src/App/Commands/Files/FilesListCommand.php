@@ -33,11 +33,6 @@ class FilesListCommand extends Command
 	/**
 	 * @var array
 	 */
-	protected $rawJsonResponse = [];
-
-	/**
-	 * @var array
-	 */
 	protected $dataToOutput = [];
 
 	/**
@@ -65,10 +60,11 @@ class FilesListCommand extends Command
 	{
 		parent::execute($input, $output);
 		try {
-			$this->prepareOutput($input, $input->getArgument('file_id'));
 			if (!empty($input->getOption('json'))) {
-				$output->writeln(json_encode($this->rawJsonResponse));
+				$response = $this->sendRequest($input->getArgument('app_id'), $input->getArgument('file_id'));
+				$output->writeln($response->getBody()->getContents());
 			} else {
+				$this->prepareOutput($input, $input->getArgument('file_id'));
 				$table = $this->getOutputAsTable($this->dataToOutput, new Table($output));
 				$table->render();
 			}
@@ -139,7 +135,6 @@ class FilesListCommand extends Command
 		/** @var Document $document */
 		$document = Parser::parseResponseString($response->getBody()->getContents());
 		$serializer = new ArraySerializer(['recursive' => true]);
-		$this->rawJsonResponse[] = $serializer->serialize($document);
 		$siblings = [];
 		if ($document->has('data.relationships.siblings')) {
 			$siblingsData = $document->get('data.relationships.siblings.data');

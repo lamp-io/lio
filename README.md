@@ -35,7 +35,8 @@ Commands
     * [-v|vv|vvv][--verbose](bool) Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug
 
 ### Deploy
-1. ### deploy [--laravel] [\<dir>]
+1. #### deploy [--laravel] [\<dir>]
+
     Deploy your app.
     
     Arguments:
@@ -45,7 +46,21 @@ Commands
     Options:
     * `[--laravel](bool){false}` Specify your app as a laravel project 
     
+2. #### deploy:rollback <app_id>
 
+    Rollback deploy to previous one
+    
+    Arguments:
+        
+    * `<app_id>(string)` The ID of the app
+
+3. #### deploy:list <app_id>
+
+    Get list of available deploys
+    
+    Arguments:
+        
+    * `<app_id>(string)` The ID of the app
 
 ### Auth
 1.  #### auth [-u][--update_token]

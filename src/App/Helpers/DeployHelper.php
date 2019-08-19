@@ -2,6 +2,9 @@
 
 namespace Console\App\Helpers;
 
+use Art4\JsonApiClient\Helper\Parser;
+use Art4\JsonApiClient\Serializer\ArraySerializer;
+use Art4\JsonApiClient\V1\Document;
 use Console\App\Commands\Files\FilesListCommand;
 use Exception;
 use Symfony\Component\Console\Application;
@@ -10,6 +13,10 @@ use Symfony\Component\Console\Output\BufferedOutput;
 
 class DeployHelper
 {
+	const RELEASE_FOLDER = 'releases';
+
+	const PUBLIC_FOLDER = 'public';
+
 	/**
 	 * @param string $appType
 	 * @param string $appPath
@@ -29,19 +36,132 @@ class DeployHelper
 	/**
 	 * @param string $appId
 	 * @param Application $application
+	 * @return string
+	 * @throws Exception
+	 */
+	static public function getActiveRelease(string $appId, Application $application): string
+	{
+		$filesListCommand = $application->find(FilesListCommand::getDefaultName());
+		$args = [
+			'command' => FilesListCommand::getDefaultName(),
+			'app_id'  => $appId,
+			'file_id' => self::PUBLIC_FOLDER,
+			'--json'  => true,
+		];
+		$bufferOutput = new BufferedOutput();
+		if ($filesListCommand->run(new ArrayInput($args), $bufferOutput) != '0') {
+			throw new Exception($bufferOutput->fetch());
+		}
+		/** @var Document $document */
+		$document = Parser::parseResponseString(trim($bufferOutput->fetch()));
+		$releaseName = [];
+		preg_match('/release_[0-9]*/', $document->get('data.attributes.target'), $releaseName);
+		return !empty($releaseName[0]) ? self::RELEASE_FOLDER . '/' . $releaseName[0] : '';
+	}
+
+	/**
+	 * @param string $appId
+	 * @param Application $application
+	 * @return array
+	 * @throws Exception
+	 */
+	static public function getReleases(string $appId, Application $application): array
+	{
+		$filesListCommand = $application->find(FilesListCommand::getDefaultName());
+		$args = [
+			'command' => FilesListCommand::getDefaultName(),
+			'app_id'  => $appId,
+			'file_id' => DeployHelper::RELEASE_FOLDER,
+			'--json'  => true,
+		];
+		$bufferOutput = new BufferedOutput();
+		if ($filesListCommand->run(new ArrayInput($args), $bufferOutput) != '0') {
+			throw new Exception($bufferOutput->fetch());
+		}
+		/** @var Document $document */
+		$document = Parser::parseResponseString(trim($bufferOutput->fetch()));
+		$releaseKey = 'data.relationships.children.data';
+		$document->get($releaseKey);
+		$serializer = new ArraySerializer(['recursive' => true]);
+		return !empty($document->has($releaseKey)) ? $serializer->serialize($document->get($releaseKey)) : [];
+	}
+
+	/**
+	 * @param string $appId
+	 * @param Application $application
 	 * @return bool
 	 * @throws Exception
 	 */
 	static public function isReleasesFolderExists(string $appId, Application $application): bool
 	{
-		$appRunsNewCommand = $application->find(FilesListCommand::getDefaultName());
+		$filesListCommand = $application->find(FilesListCommand::getDefaultName());
 		$args = [
 			'command' => FilesListCommand::getDefaultName(),
 			'app_id'  => $appId,
-			'file_id' => 'releases',
+			'file_id' => self::RELEASE_FOLDER,
 			'--json'  => true,
 		];
 		$bufferOutput = new BufferedOutput();
-		return $appRunsNewCommand->run(new ArrayInput($args), $bufferOutput) == '0';
+		return $filesListCommand->run(new ArrayInput($args), $bufferOutput) == '0';
+	}
+
+	/**
+	 * @param string $appId
+	 * @param string $release
+	 * @param Application $application
+	 * @return string
+	 * @throws Exception
+	 */
+	public static function getReleaseConfigContent(string $appId, string $release, Application $application): string
+	{
+		$filesListCommand = $application->find(FilesListCommand::getDefaultName());
+		$args = [
+			'command' => FilesListCommand::getDefaultName(),
+			'app_id'  => $appId,
+			'file_id' => $release . '/' . ConfigHelper::LAMP_IO_CONFIG,
+			'--json'  => true,
+		];
+		$bufferOutput = new BufferedOutput();
+		if ($filesListCommand->run(new ArrayInput($args), $bufferOutput) != '0') {
+			throw new Exception($bufferOutput->fetch());
+		}
+		/** @var Document $document */
+		$document = Parser::parseResponseString(trim($bufferOutput->fetch()));
+		return !empty($document->has('data.attributes.contents')) ? $document->get('data.attributes.contents') : '';
+	}
+
+	/**
+	 * @param string $appId
+	 * @param string $releaseMigrationFolder
+	 * @param Application $application
+	 * @return array
+	 * @throws Exception
+	 */
+	public static function getReleaseMigrations(string $appId, string $releaseMigrationFolder, Application $application): array
+	{
+		$filesListCommand = $application->find(FilesListCommand::getDefaultName());
+		$args = [
+			'command' => FilesListCommand::getDefaultName(),
+			'app_id'  => $appId,
+			'file_id' => $releaseMigrationFolder,
+			'--json'  => true,
+		];
+		$bufferOutput = new BufferedOutput();
+		if ($filesListCommand->run(new ArrayInput($args), $bufferOutput) != '0') {
+			throw new Exception($bufferOutput->fetch());
+		}
+		/** @var Document $document */
+		$document = Parser::parseResponseString(trim($bufferOutput->fetch()));
+		if (empty($document->has('data.relationships.children.data'))) {
+			return [];
+		} else {
+			$serializer = new ArraySerializer(['recursive' => true]);
+			$migrations = [];
+			foreach ($serializer->serialize($document->get('data.relationships.children.data')) as $value) {
+				preg_match('/((\/[0-9]*)_([a-zA-Z]*)).*$/', $value['id'], $matched);
+				$migrations[] = ltrim(rtrim($matched[0], '.php'), '/');
+			}
+			return $migrations;
+		}
 	}
 }

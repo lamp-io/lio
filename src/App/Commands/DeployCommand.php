@@ -89,13 +89,13 @@ class DeployCommand extends Command
 			$appId = $this->createApp($output, $input);
 			$this->createDatabase($output, $input);
 			$this->configHelper->save();
-			$deployObject = $this->getDeployObject($appPath);
-			$deployObject->deployApp();
+			$deployObject = $this->getDeployObject();
+			$deployObject->deployApp($appPath, $this->isFirstDeploy());
 			$output->writeln('<info>Done, check it out at https://' . $appId . '.lamp.app/</info>');
 		} catch (Exception $exception) {
 			$output->writeln('<error>' . trim($exception->getMessage()) . '</error>');
 			if (!empty($deployObject)) {
-				$deployObject->revert();
+				$deployObject->revertProcess();
 				$output->writeln(PHP_EOL . '<comment>Revert completed</comment>');
 			}
 			return 1;
@@ -289,14 +289,13 @@ class DeployCommand extends Command
 
 
 	/**
-	 * @param string $appDir
 	 * @return DeployInterface
 	 * @throws Exception
 	 */
-	protected function getDeployObject(string $appDir): DeployInterface
+	protected function getDeployObject(): DeployInterface
 	{
 		$deployClass = (self::DEPLOYS[$this->configHelper->get('type')]);
-		return new $deployClass($appDir, $this->getApplication(), $this->configHelper->get(), $this->isFirstDeploy());
+		return new $deployClass($this->getApplication(), $this->configHelper->get());
 	}
 
 }
