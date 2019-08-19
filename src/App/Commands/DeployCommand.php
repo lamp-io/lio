@@ -60,7 +60,7 @@ class DeployCommand extends Command
 	{
 		$this->setDescription('Deploy your app.')
 			->addArgument('dir', InputArgument::OPTIONAL, 'Path to a directory of your application, default value current working directory', getcwd())
-			->addOption('laravel', null, InputOption::VALUE_NONE, 'The ID of the app');
+			->addOption('laravel', null, InputOption::VALUE_NONE, 'Deploy laravel app');
 	}
 
 	/**
@@ -144,7 +144,7 @@ class DeployCommand extends Command
 	{
 		if (!empty($this->configHelper->get('database.id'))) {
 			if (!$this->isDatabaseExists($this->configHelper->get('database.id'))) {
-				$output->writeln('<error>Database id, specified on lamp_io.yaml not exists</error>');
+				$output->writeln('<error>db-id(<db_id>) specified in lamp.io.yaml does not exist</error>');
 				exit(1);
 			}
 			return $this->configHelper->get('database.id');
@@ -197,7 +197,7 @@ class DeployCommand extends Command
 	protected function setDatabaseCredentials(InputInterface $input, OutputInterface $output)
 	{
 		if (empty($this->configHelper->get('database.connection.user'))) {
-			$question = new Question('<info>Please write database user name that will be created for your application </info>');
+			$question = new Question('<info>Please enter database user name that will be created for your application:</info>');
 			$question->setValidator(function ($value) {
 				if (empty($value)) {
 					throw new RuntimeException('User name can not be empty');
@@ -207,7 +207,7 @@ class DeployCommand extends Command
 			$user = $this->getHelper('question')->ask($input, $output, $question);
 			$this->configHelper->set('database.connection.user', $user);
 			$question = PasswordHelper::getPasswordQuestion(
-				'<info>Please write database password  </info>',
+				'<info>Please enter database password for <above_user>:</info>',
 				'',
 				$output
 			);
@@ -233,7 +233,7 @@ class DeployCommand extends Command
 	{
 		if (!empty($this->configHelper->get('app.id'))) {
 			if (!$this->isAppExists($this->configHelper->get('app.id'))) {
-				$output->writeln('<error>App id, specified on lamp_io.yaml not exists</error>');
+				$output->writeln('<error>app-id(<app_id>) specified in lamp.io.yaml does not exist</error>');
 				exit(1);
 			}
 			$this->isAppAlreadyExists = true;
@@ -259,6 +259,9 @@ class DeployCommand extends Command
 			}
 			$args = array_merge($args, $attributes);
 		}
+		if (empty($this->configHelper->get('app.attributes.description'))) {
+			$this->configHelper->set('app.attributes.description', basename($input->getArgument('dir')));
+		}
 		$bufferOutput = new BufferedOutput();
 		if ($appsNewCommand->run(new ArrayInput($args), $bufferOutput) == '0') {
 			/** @var Document $document */
@@ -278,6 +281,7 @@ class DeployCommand extends Command
 		foreach ($options as $optionKey => $option) {
 			if ($option && array_key_exists($optionKey, self::DEPLOYS)) {
 				$this->configHelper->set('type', $optionKey);
+				return;
 			}
 		}
 		throw new InvalidArgumentException('App type for deployment, not specified, apps allowed ' . implode(',', array_keys(self::DEPLOYS)));
