@@ -77,7 +77,7 @@ abstract class DeployAbstract implements DeployInterface
 	{
 		$this->appPath = $appPath;
 		$this->isFirstDeploy = $isFirstDeploy;
-		$this->releaseFolder = DeployHelper::RELEASE_FOLDER . '/release_' . $this->config['release'] . '/';
+		$this->releaseFolder = DeployHelper::RELEASE_FOLDER . '/' . $this->config['release'] . '/';
 	}
 
 	/**

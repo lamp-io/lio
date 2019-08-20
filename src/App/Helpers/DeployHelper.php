@@ -55,8 +55,8 @@ class DeployHelper
 		/** @var Document $document */
 		$document = Parser::parseResponseString(trim($bufferOutput->fetch()));
 		$releaseName = [];
-		preg_match('/release_[0-9]*/', $document->get('data.attributes.target'), $releaseName);
-		return !empty($releaseName[0]) ? self::RELEASE_FOLDER . '/' . $releaseName[0] : '';
+		preg_match('/\/[0-9]*\//', $document->get('data.attributes.target'), $releaseName);
+		return !empty($releaseName[0]) ? self::RELEASE_FOLDER . '/' . trim($releaseName[0], '/') : '';
 	}
 
 	/**
