@@ -3,14 +3,16 @@
 namespace Console\App\Commands\AppRuns;
 
 use Art4\JsonApiClient\Exception\ValidationException;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Console\App\Commands\Command;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
-
 
 class AppRunsNewCommand extends Command
 {
@@ -34,7 +36,7 @@ class AppRunsNewCommand extends Command
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
 	 * @return int|void|null
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -57,7 +59,15 @@ class AppRunsNewCommand extends Command
 			} else {
 				/** @var Document $document */
 				$document = Parser::parseResponseString($response->getBody()->getContents());
-				$output->writeln('Success, your command start run, command id: ' . $document->get('data.id'));
+				$appRunId = $document->get('data.id');
+				$progressBar = Command::getProgressBar($input->getArgument('exec'), $output);
+				$progressBar->start();
+				while (!AppRunsDescribeCommand::isExecutionCompleted($appRunId, $this->getApplication())) {
+					$progressBar->advance();
+				}
+				$progressBar->finish();
+				$output->write(PHP_EOL);
+				$output->write('<info>' . $this->getCommandOutput($appRunId) . '</info>');
 			}
 		} catch (ValidationException $validationException) {
 			$output->writeln($validationException->getMessage());
@@ -66,6 +76,29 @@ class AppRunsNewCommand extends Command
 			$output->writeln($guzzleException->getMessage());
 			return 1;
 		}
+	}
+
+	/**
+	 * @param string $appRunId
+	 * @return string
+	 * @throws Exception
+	 */
+	protected function getCommandOutput(string $appRunId): string
+	{
+		$appRunsNewCommand = $this->getApplication()->find(AppRunsDescribeCommand::getDefaultName());
+		$args = [
+			'command'    => AppRunsDescribeCommand::getDefaultName(),
+			'app_run_id' => $appRunId,
+			'--json'     => true,
+		];
+		$bufferOutput = new BufferedOutput();
+		if ($appRunsNewCommand->run(new ArrayInput($args), $bufferOutput) == '0') {
+			/** @var Document $document */
+			$document = Parser::parseResponseString($bufferOutput->fetch());
+			$output =  $document->get('data.attributes.output');
+		}
+
+		return !empty($output) ? $output : '';
 	}
 
 	/**
