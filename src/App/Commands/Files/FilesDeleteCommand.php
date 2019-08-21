@@ -3,6 +3,7 @@
 namespace Console\App\Commands\Files;
 
 use Console\App\Commands\Command;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -32,7 +33,7 @@ class FilesDeleteCommand extends Command
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
 	 * @return int|null|void
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -41,7 +42,7 @@ class FilesDeleteCommand extends Command
 		if (!$this->askConfirm('<info>Are you sure you want to file? (y/N)</info>', $output, $input)) {
 			return 0;
 		}
-		$progressBar = self::getProgressBar('Deleting it', $output);
+		$progressBar = self::getProgressBar('Deleting ' . $input->getArgument('remote_path'), $output);
 		try {
 			$this->httpHelper->getClient()->request(
 				'DELETE',
@@ -60,6 +61,8 @@ class FilesDeleteCommand extends Command
 						$progressBar->advance();
 					},
 				]);
+			$progressBar->finish();
+			$output->write(PHP_EOL);
 			if (empty($input->getOption('json'))) {
 				$output->writeln('<info>Success, ' . $input->getArgument('remote_path') . ' has been deleted</info>');
 			}

@@ -5,17 +5,21 @@ namespace Console\App\Helpers;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\V1\Document;
+use Console\App\Commands\Files\FilesDeleteCommand;
 use Console\App\Commands\Files\FilesListCommand;
 use Exception;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
+use Symfony\Component\Console\Output\OutputInterface;
 
 class DeployHelper
 {
 	const RELEASE_FOLDER = 'releases';
 
 	const PUBLIC_FOLDER = 'public';
+
+	const KEEP_OLD_RELEASES = 10;
 
 	/**
 	 * @param string $appType
@@ -55,8 +59,28 @@ class DeployHelper
 		/** @var Document $document */
 		$document = Parser::parseResponseString(trim($bufferOutput->fetch()));
 		$releaseName = [];
-		preg_match('/release_[0-9]*/', $document->get('data.attributes.target'), $releaseName);
-		return !empty($releaseName[0]) ? self::RELEASE_FOLDER . '/' . $releaseName[0] : '';
+		preg_match('/\/[0-9]*\//', $document->get('data.attributes.target'), $releaseName);
+		return !empty($releaseName[0]) ? self::RELEASE_FOLDER . '/' . trim($releaseName[0], '/') : '';
+	}
+
+	/**
+	 * @param string $appId
+	 * @param string $releasePath
+	 * @param Application $application
+	 * @param OutputInterface $output
+	 * @throws Exception
+	 */
+	public static function deleteRelease(string $appId, string $releasePath, Application $application, OutputInterface $output)
+	{
+		$filesDeleteCommand = $application->find(FilesDeleteCommand::getDefaultName());
+		$args = [
+			'command'     => FilesDeleteCommand::getDefaultName(),
+			'app_id'      => $appId,
+			'remote_path' => $releasePath,
+			'--yes'       => true,
+			'--json'      => true,
+		];
+		$filesDeleteCommand->run(new ArrayInput($args), $output);
 	}
 
 	/**
@@ -81,7 +105,6 @@ class DeployHelper
 		/** @var Document $document */
 		$document = Parser::parseResponseString(trim($bufferOutput->fetch()));
 		$releaseKey = 'data.relationships.children.data';
-		$document->get($releaseKey);
 		$serializer = new ArraySerializer(['recursive' => true]);
 		return !empty($document->has($releaseKey)) ? $serializer->serialize($document->get($releaseKey)) : [];
 	}

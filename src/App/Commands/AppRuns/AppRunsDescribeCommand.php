@@ -109,7 +109,7 @@ class AppRunsDescribeCommand extends Command
 		$tableHeader = ['id'];
 		$row = ['app_id' => $document->get('data.id')];
 		foreach ($appRuns['data']['attributes'] as $key => $attribute) {
-			if ($key == 'command') {
+			if ($key == 'command' || $key == 'output') {
 				$attribute = wordwrap(trim(preg_replace(
 					'/\s\s+|\t/', ' ', $attribute
 				)), 20);
