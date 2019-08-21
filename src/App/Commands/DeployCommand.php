@@ -89,6 +89,14 @@ class DeployCommand extends Command
 			$appId = $this->createApp($output, $input);
 			$this->createDatabase($output, $input);
 			$this->configHelper->save();
+			if (!$this->isFirstDeploy()) {
+				$this->deleteOldReleases(
+					DeployHelper::getReleases($appId, $this->getApplication()),
+					$this->configHelper->get(),
+					$input,
+					$output
+				);
+			}
 			$deployObject = $this->getDeployObject();
 			$deployObject->deployApp($appPath, $this->isFirstDeploy());
 			$output->writeln('<info>Done, check it out at https://' . $appId . '.lamp.app/</info>');
@@ -101,6 +109,34 @@ class DeployCommand extends Command
 			return 1;
 		}
 	}
+
+	/**
+	 * @param array $releases
+	 * @param array $config
+	 * @param InputInterface $input
+	 * @param OutputInterface $output
+	 * @throws Exception
+	 */
+	protected function deleteOldReleases(array $releases, array $config, InputInterface $input, OutputInterface $output)
+	{
+		$allowedPrevReleases = isset($config['removeOldReleases']) && is_int($config['removeOldReleases']) ? $config['removeOldReleases'] : DeployHelper::KEEP_OLD_RELEASES;
+		if ((count($releases) + 1 <= $allowedPrevReleases) || (isset($config['removeOldReleases']) && $config['removeOldReleases'] <= '0')) {
+			return;
+		}
+		$questionHelper = $this->getHelper('question');
+		$question = new ConfirmationQuestion('<info>Please confirm delete oldest releases (Y/n):</info>');
+		$answer = $questionHelper->ask($input, $output, $question);
+		$output->writeln('<comment>If you dont want to see that message, you need to increase `removeOldReleases` on lamp.io.yaml or set value of it <= 0 to not delete them at all</comment>');
+		if (!$answer) {
+			return;
+		}
+		foreach ($releases as $key => $release) {
+			if ($key <= (count($releases) - $allowedPrevReleases)) {
+				DeployHelper::deleteRelease($config['app']['id'], $release['id'], $this->getApplication(), $output);
+			}
+		}
+	}
+
 
 	/**
 	 * @param string $dbId
@@ -186,8 +222,8 @@ class DeployCommand extends Command
 	}
 
 	/**
-	 * @throws Exception
 	 * @return bool
+	 * @throws Exception
 	 */
 	protected function isFirstDeploy(): bool
 	{
