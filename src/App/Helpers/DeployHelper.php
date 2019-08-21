@@ -105,7 +105,6 @@ class DeployHelper
 		/** @var Document $document */
 		$document = Parser::parseResponseString(trim($bufferOutput->fetch()));
 		$releaseKey = 'data.relationships.children.data';
-		$document->get($releaseKey);
 		$serializer = new ArraySerializer(['recursive' => true]);
 		return !empty($document->has($releaseKey)) ? $serializer->serialize($document->get($releaseKey)) : [];
 	}

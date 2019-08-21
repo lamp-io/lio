@@ -240,16 +240,20 @@ abstract class DeployAbstract implements DeployInterface
 	{
 		$step = 'uploadToApp';
 		$this->setStep($step, function () use ($remotePath) {
-			$this->consoleOutput->writeln('Deleting failed release');
-			$filesDeleteCommand = $this->application->find(FilesDeleteCommand::getDefaultName());
-			$args = [
-				'command'     => FilesDeleteCommand::getDefaultName(),
-				'remote_path' => str_replace(self::ARCHIVE_NAME, '', $remotePath),
-				'app_id'      => $this->config['app']['id'],
-				'--json'      => true,
-				'--yes'       => true,
-			];
-			$filesDeleteCommand->run(new ArrayInput($args), $this->consoleOutput);
+			if ($this->isFirstDeploy) {
+				$command = 'rm -rf *';
+				$this->appRunCommand($this->config['app']['id'], $command, 'Clean up failed deploy');
+			} else {
+				$this->consoleOutput->writeln('Deleting failed release');
+				$filesDeleteCommand = $this->application->find(FilesDeleteCommand::getDefaultName());
+				$args = [
+					'command'     => FilesDeleteCommand::getDefaultName(),
+					'remote_path' => str_replace(self::ARCHIVE_NAME, '', $remotePath),
+					'app_id'      => $this->config['app']['id'],
+					'--json'      => true,
+					'--yes'       => true,
+				];
+				$filesDeleteCommand->run(new ArrayInput($args), $this->consoleOutput);}
 		});
 		$filesUploadCommand = $this->application->find(FilesUploadCommand::getDefaultName());
 		$args = [
