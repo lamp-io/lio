@@ -16,11 +16,4 @@ interface DeployInterface
 	 * @return void
 	 */
 	public function revertProcess();
-
-	/**
-	 * @param string $currentRelease
-	 * @param string $previousRelease
-	 * @return void
-	 */
-	public function revert(string $currentRelease, string $previousRelease);
 }

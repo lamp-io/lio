@@ -45,16 +45,8 @@ Commands
     
     Options:
     * `[--laravel](bool){false}` Specify your app as a laravel project 
-    
-2. #### deploy:rollback <app_id>
 
-    Rollback deploy to previous one
-    
-    Arguments:
-        
-    * `<app_id>(string)` The ID of the app
-
-3. #### deploy:list <app_id>
+2. #### deploy:list <app_id>
 
     Get list of available deploys
     
