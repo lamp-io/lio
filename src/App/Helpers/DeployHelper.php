@@ -19,8 +19,6 @@ class DeployHelper
 
 	const PUBLIC_FOLDER = 'public';
 
-	const KEEP_OLD_RELEASES = 10;
-
 	/**
 	 * @param string $appType
 	 * @param string $appPath
