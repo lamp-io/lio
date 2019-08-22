@@ -429,13 +429,32 @@ class Laravel extends DeployAbstract
 		$this->setStep($step, function () {
 			return;
 		});
-		$symLinkOptions = ($isFirstDeploy) ? '-s' : '-sfn';
-		$command = 'ln ' . $symLinkOptions . ' ' . $releaseFolder . 'public public';
-		$this->appRunCommand(
-			$this->config['app']['id'],
-			$command,
-			$message
-		);
+		if ($isFirstDeploy) {
+			$url = sprintf(
+				FilesUploadCommand::API_ENDPOINT,
+				$this->config['app']['id']
+			);
+			$httpType = 'POST';
+		} else {
+			$url = sprintf(
+				FilesUpdateCommand::API_ENDPOINT,
+				$this->config['app']['id'],
+				'public'
+			);
+			$httpType = 'PATCH';
+		}
+
+		$this->sendRequest($url, $httpType, $message, json_encode([
+			'data' => [
+				'attributes' => [
+					'target'     => $releaseFolder . 'public',
+					'is_dir'     => false,
+					'is_symlink' => true,
+				],
+				'id'         => 'public',
+				'type'       => 'files',
+			],
+		]));
 		$this->updateStepToSuccess($step);
 	}
 
