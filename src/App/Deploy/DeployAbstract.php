@@ -18,7 +18,6 @@ use Console\App\Helpers\DeployHelper;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Exception\ServerException;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\NullOutput;
@@ -230,7 +229,7 @@ abstract class DeployAbstract implements DeployInterface
 	}
 
 	/**
-	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function clearApp()
 	{
@@ -238,8 +237,12 @@ abstract class DeployAbstract implements DeployInterface
 		$this->setStep($step, function () {
 			return;
 		});
-		$command = 'rm -rf *';
-		$this->appRunCommand($this->config['app']['id'], $command, 'Removing default files');
+		$deleteFileUrl = sprintf(
+			FilesDeleteCommand::API_ENDPOINT,
+			$this->config['app']['id'],
+			'public'
+		);
+		$this->sendRequest($deleteFileUrl, 'DELETE', 'Removing default files');
 		$this->updateStepToSuccess($step);
 	}
 
@@ -253,8 +256,12 @@ abstract class DeployAbstract implements DeployInterface
 		$step = 'uploadToApp';
 		$this->setStep($step, function () use ($remotePath) {
 			if ($this->isFirstDeploy) {
-				$command = 'rm -rf *';
-				$this->appRunCommand($this->config['app']['id'], $command, 'Clean up failed deploy');
+				$deleteFileUrl = sprintf(
+					FilesDeleteCommand::API_ENDPOINT,
+					$this->config['app']['id'],
+					DeployHelper::RELEASE_FOLDER
+				);
+				$this->sendRequest($deleteFileUrl, 'DELETE', 'Clean up failed deploy');
 			} else {
 				$this->consoleOutput->writeln('Deleting failed release');
 				$filesDeleteCommand = $this->application->find(FilesDeleteCommand::getDefaultName());
@@ -359,38 +366,60 @@ abstract class DeployAbstract implements DeployInterface
 	 */
 	protected function sendRequest(string $url, string $httpType, string $progressBarMessage = '', string $body = '', array $headers = []): array
 	{
-		try {
-			$output = !empty($progressBarMessage) ? new ConsoleOutput() : new NullOutput();
-			if (empty($headers)) {
-				$headers = [
-					'Content-type'  => 'application/vnd.api+json',
-					'Accept'        => 'application/vnd.api+json',
-					'Authorization' => 'Bearer ' . AuthHelper::getToken(),
-				];
-			}
-			$progressBar = Command::getProgressBar($progressBarMessage, $output);
-			$response = $this->httpClient->request(
-				$httpType,
-				$url,
-				[
-					'headers'  => $headers,
-					'body'     => $body,
-					'progress' => function () use ($progressBar) {
-						$progressBar->advance();
-					},
-				]
-			);
-			$progressBar->finish();
-			$output->write(PHP_EOL);
-		} catch (ServerException $serverException) {
-			throw new Exception($serverException->getMessage());
-		} catch (ClientException $clientException) {
-			$response = $clientException->getResponse();
+		$output = !empty($progressBarMessage) ? new ConsoleOutput() : new NullOutput();
+		if (empty($headers)) {
+			$headers = [
+				'Content-type'  => 'application/vnd.api+json',
+				'Accept'        => 'application/vnd.api+json',
+				'Authorization' => 'Bearer ' . AuthHelper::getToken(),
+			];
 		}
+		$progressBar = Command::getProgressBar($progressBarMessage, $output);
+		$response = $this->httpClient->request(
+			$httpType,
+			$url,
+			[
+				'headers'  => $headers,
+				'body'     => $body,
+				'progress' => function () use ($progressBar) {
+					$progressBar->advance();
+				},
+			]
+		);
+		$progressBar->finish();
+		$output->write(PHP_EOL);
 		return [
 			'http' => $response->getStatusCode(),
 			'body' => trim($response->getBody()->getContents()),
 		];
+	}
+
+	/**
+	 * @param string $name
+	 * @param string $message
+	 * @throws GuzzleException
+	 */
+	protected function createRemoteIfFileNotExists(string $name, string $message)
+	{
+		$postFileUrl = sprintf(
+			FilesUploadCommand::API_ENDPOINT,
+			$this->config['app']['id']
+		);
+		$postFileBody = json_encode([
+			'data' => [
+				'attributes' => [
+					'is_dir' => true,
+				],
+				'id'         => $name,
+				'type'       => 'files',
+			],
+		]);
+		try {
+			$this->sendRequest($postFileUrl, 'POST', $message, $postFileBody);
+		} catch (ClientException $clientException) {
+			return;
+		}
+
 	}
 
 	/**
