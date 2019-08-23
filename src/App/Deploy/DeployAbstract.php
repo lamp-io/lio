@@ -17,6 +17,8 @@ use Console\App\Helpers\AuthHelper;
 use Console\App\Helpers\DeployHelper;
 use Exception;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\ServerException;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\NullOutput;
@@ -351,10 +353,11 @@ abstract class DeployAbstract implements DeployInterface
 	 * @param string $progressBarMessage
 	 * @param string $body
 	 * @param array $headers
-	 * @return string
+	 * @return array
+	 * @throws GuzzleException
 	 * @throws Exception
 	 */
-	protected function sendRequest(string $url, string $httpType, string $progressBarMessage = '', string $body = '', array $headers = []): string
+	protected function sendRequest(string $url, string $httpType, string $progressBarMessage = '', string $body = '', array $headers = []): array
 	{
 		try {
 			$output = !empty($progressBarMessage) ? new ConsoleOutput() : new NullOutput();
@@ -379,10 +382,15 @@ abstract class DeployAbstract implements DeployInterface
 			);
 			$progressBar->finish();
 			$output->write(PHP_EOL);
-			return $response->getBody()->getContents();
-		} catch (GuzzleException $guzzleException) {
-			throw new Exception($guzzleException->getMessage());
+		} catch (ServerException $serverException) {
+			throw new Exception($serverException->getMessage());
+		} catch (ClientException $clientException) {
+			$response = $clientException->getResponse();
 		}
+		return [
+			'http' => $response->getStatusCode(),
+			'body' => trim($response->getBody()->getContents()),
+		];
 	}
 
 	/**

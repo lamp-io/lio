@@ -6,6 +6,7 @@ use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 use Console\App\Commands\Command;
 use Console\App\Commands\Databases\DatabasesDescribeCommand;
+use Console\App\Commands\Files\FilesDeleteCommand;
 use Console\App\Commands\Files\FilesUpdateCommand;
 use Console\App\Commands\Files\FilesUploadCommand;
 use Console\App\Helpers\DeployHelper;
@@ -13,6 +14,7 @@ use Dotenv\Dotenv;
 use Exception;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
+use GuzzleHttp\Exception\GuzzleException;
 
 class Laravel extends DeployAbstract
 {
@@ -26,6 +28,7 @@ class Laravel extends DeployAbstract
 	 * @param bool $isFirstDeploy
 	 * @return void
 	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	public function deployApp(string $appPath, bool $isFirstDeploy)
 	{
@@ -65,6 +68,7 @@ class Laravel extends DeployAbstract
 	 * @param string $currentRelease
 	 * @param string $previousRelease
 	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	public function revert(string $currentRelease, string $previousRelease)
 	{
@@ -151,6 +155,7 @@ class Laravel extends DeployAbstract
 	}
 
 	/**
+	 * @throws GuzzleException
 	 * @throws Exception
 	 */
 	private function createSymlinkStorage()
@@ -159,15 +164,30 @@ class Laravel extends DeployAbstract
 		$this->setStep($step, function () {
 			return;
 		});
+
+		$deleteFileUrl = sprintf(
+			FilesDeleteCommand::API_ENDPOINT,
+			$this->config['app']['id'],
+			$this->releaseFolder . 'public/storage'
+		);
+		$this->sendRequest($deleteFileUrl, 'DELETE', 'Removing release/public/storage');
+
+		$postFileUrl = sprintf(
+			FilesUploadCommand::API_ENDPOINT,
+			$this->config['app']['id']
+		);
+		$postFileBody = json_encode([
+			'data' => [
+				'attributes' => [
+					'is_dir' => true,
+				],
+				'id' => 'shared',
+				'type' => 'files'
+			]
+		]);
+		$this->sendRequest($postFileUrl,'POST', 'Creating shared storage folder if not exists', $postFileBody);
+
 		$commands = [
-			[
-				'command' => 'if [ -d $(echo ' . $this->releaseFolder . 'public/storage) ]; then rm -rf ' . $this->releaseFolder . 'public/storage; fi',
-				'message' => 'Removing release/public/storage',
-			],
-			[
-				'command' => 'mkdir -p shared/',
-				'message' => 'Creating shared storage folder if not exists',
-			],
 			[
 				'command' => 'cp -rv ' . $this->releaseFolder . 'storage/ shared/',
 				'message' => 'Copying release storage to shared folder',
@@ -421,6 +441,7 @@ class Laravel extends DeployAbstract
 	 * @param string $releaseFolder
 	 * @param string $message
 	 * @param bool $isFirstDeploy
+	 * @throws GuzzleException
 	 * @throws Exception
 	 */
 	private function symlinkRelease(string $releaseFolder, string $message, bool $isFirstDeploy = false)
