@@ -50,9 +50,12 @@ class DeployCommand extends Command
 	 */
 	protected $isAppAlreadyExists = true;
 
+	protected $httpClient;
+
 	public function __construct(ClientInterface $httpClient, $name = null)
 	{
 		parent::__construct($httpClient, $name);
+		$this->httpClient = $httpClient;
 	}
 
 	/**
@@ -105,6 +108,7 @@ class DeployCommand extends Command
 			$output->writeln('<info>Done, check it out at https://' . $appId . '.lamp.app/</info>');
 		} catch (Exception $exception) {
 			$output->writeln('<error>' . trim($exception->getMessage()) . '</error>');
+			$this->configHelper->save();
 			if (!empty($deployObject)) {
 				$deployObject->revertProcess();
 				$output->writeln(PHP_EOL . '<comment>Revert completed</comment>');
@@ -172,8 +176,7 @@ class DeployCommand extends Command
 	{
 		if (!empty($this->configHelper->get('database.id'))) {
 			if (!$this->isDatabaseExists($this->configHelper->get('database.id'))) {
-				$output->writeln('<error>db-id(<db_id>) specified in lamp.io.yaml does not exist</error>');
-				exit(1);
+				throw new Exception('db-id(<db_id>) specified in lamp.io.yaml does not exist');
 			}
 			return $this->configHelper->get('database.id');
 		}
@@ -181,8 +184,7 @@ class DeployCommand extends Command
 		$questionHelper = $this->getHelper('question');
 		$question = new ConfirmationQuestion('<info>This looks like a new app, shall we create a lamp.io database for it? (Y/n):</info>');
 		if (!$questionHelper->ask($input, $output, $question)) {
-			$output->writeln('<info>You must to create new database or select to which database your project should use, in lamp.io.yaml file inside of your project</info>');
-			exit(1);
+			throw new Exception('You must to create new database or select to which database your project should use, in lamp.io.yaml file inside of your project');
 		}
 
 		$databasesNewCommand = $this->getApplication()->find(DatabasesNewCommand::getDefaultName());
@@ -222,6 +224,10 @@ class DeployCommand extends Command
 		return !($this->isAppAlreadyExists && DeployHelper::isReleasesFolderExists($this->configHelper->get('app.id'), $this->getApplication()));
 	}
 
+	/**
+	 * @param InputInterface $input
+	 * @param OutputInterface $output
+	 */
 	protected function setDatabaseCredentials(InputInterface $input, OutputInterface $output)
 	{
 		if (empty($this->configHelper->get('database.connection.user'))) {
@@ -261,8 +267,7 @@ class DeployCommand extends Command
 	{
 		if (!empty($this->configHelper->get('app.id'))) {
 			if (!$this->isAppExists($this->configHelper->get('app.id'))) {
-				$output->writeln('<error>app-id(<app_id>) specified in lamp.io.yaml does not exist</error>');
-				exit(1);
+				throw new Exception('app-id(<app_id>) specified in lamp.io.yaml does not exist');
 			}
 			$this->isAppAlreadyExists = true;
 			return $this->configHelper->get('app.id');
@@ -271,8 +276,7 @@ class DeployCommand extends Command
 		$questionHelper = $this->getHelper('question');
 		$question = new ConfirmationQuestion('<info>This looks like a new app, shall we create a lamp.io app for it? (Y/n):</info>');
 		if (!$questionHelper->ask($input, $output, $question)) {
-			$output->writeln('<info>You must to create new app or select to which app your project should be deployed, in lamp.io.yaml file inside of your project</info>');
-			exit(1);
+			throw new Exception('You must to create new app or select to which app your project should be deployed, in lamp.io.yaml file inside of your project');
 		}
 		$appsNewCommand = $this->getApplication()->find(AppsNewCommand::getDefaultName());
 		$args = [
@@ -323,7 +327,7 @@ class DeployCommand extends Command
 	protected function getDeployObject(): DeployInterface
 	{
 		$deployClass = (self::DEPLOYS[$this->configHelper->get('type')]);
-		return new $deployClass($this->getApplication(), $this->configHelper->get());
+		return new $deployClass($this->getApplication(), $this->configHelper->get(), $this->httpClient);
 	}
 
 }

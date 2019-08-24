@@ -6,12 +6,15 @@ use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 use Console\App\Commands\Command;
 use Console\App\Commands\Databases\DatabasesDescribeCommand;
+use Console\App\Commands\Files\FilesDeleteCommand;
 use Console\App\Commands\Files\FilesUpdateCommand;
 use Console\App\Commands\Files\FilesUploadCommand;
+use Console\App\Helpers\DeployHelper;
 use Dotenv\Dotenv;
 use Exception;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
+use GuzzleHttp\Exception\GuzzleException;
 
 class Laravel extends DeployAbstract
 {
@@ -25,6 +28,7 @@ class Laravel extends DeployAbstract
 	 * @param bool $isFirstDeploy
 	 * @return void
 	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	public function deployApp(string $appPath, bool $isFirstDeploy)
 	{
@@ -61,6 +65,72 @@ class Laravel extends DeployAbstract
 	}
 
 	/**
+	 * @param string $currentRelease
+	 * @param string $previousRelease
+	 * @throws Exception
+	 * @throws GuzzleException
+	 */
+	public function revert(string $currentRelease, string $previousRelease)
+	{
+		$migrationsDif = $this->getMigrationsDif($currentRelease, $previousRelease);
+		if ($migrationsDif >= 1) {
+			$dbBackupId = $this->backupDatabase();
+			$this->rollbackMigrations($currentRelease, $migrationsDif, $dbBackupId);
+		}
+		$this->symlinkRelease($previousRelease, 'Linking your previous release');
+	}
+
+	/**
+	 * @param string $currentRelease
+	 * @param string $previousRelease
+	 * @return int
+	 * @throws Exception
+	 */
+	private function getMigrationsDif(string $currentRelease, string $previousRelease)
+	{
+		$step = 'getMigrationsDif';
+		$this->setStep('getMigrationsDif', function () {
+			return;
+		});
+		$this->consoleOutput->writeln('Checking migrations diff...');
+		$migrationsFolder = 'database/migrations';
+		$migrations = [
+			'current'  => DeployHelper::getReleaseMigrations(
+				$this->config['app']['id'],
+				$currentRelease . '/' . $migrationsFolder,
+				$this->application
+			),
+			'previous' => DeployHelper::getReleaseMigrations(
+				$this->config['app']['id'],
+				$previousRelease . '/' . $migrationsFolder,
+				$this->application
+			),
+		];
+		$this->updateStepToSuccess($step);
+		return count($migrations['current']) - count($migrations['previous']);
+	}
+
+	/**
+	 * @param string $releaseFolder
+	 * @param int $steps
+	 * @param string $dbBackupId
+	 * @throws Exception
+	 */
+	private function rollbackMigrations(string $releaseFolder, int $steps, string $dbBackupId)
+	{
+		$step = 'rollbackMigrations';
+		$this->setStep($step, function () use ($dbBackupId) {
+			$this->restoreDatabase($dbBackupId);
+		});
+		$this->appRunCommand(
+			$this->config['app']['id'],
+			'php ' . $releaseFolder . 'artisan migrate:rollback --force --step=' . $steps,
+			'Rollback migrations to previous release'
+		);
+		$this->updateStepToSuccess($step);
+	}
+
+	/**
 	 * @throws Exception
 	 */
 	private function runCommands()
@@ -93,38 +163,69 @@ class Laravel extends DeployAbstract
 		$this->setStep($step, function () {
 			return;
 		});
+
 		$commands = [
-			[
-				'command' => 'if [ -d $(echo ' . $this->releaseFolder . 'public/storage) ]; then rm -rf ' . $this->releaseFolder . 'public/storage; fi',
+			'delete_public_storage'            => [
 				'message' => 'Removing release/public/storage',
+				'execute' => function (string $message) {
+					$deleteFileUrl = sprintf(
+						FilesDeleteCommand::API_ENDPOINT,
+						$this->config['app']['id'],
+						$this->releaseFolder . 'public/storage'
+					);
+					$this->sendRequest($deleteFileUrl, 'DELETE', $message);
+				},
 			],
-			[
-				'command' => 'mkdir -p shared/',
+			'create_shared'                    => [
 				'message' => 'Creating shared storage folder if not exists',
+				'execute' => function (string $message) {
+					$this->createRemoteIfFileNotExists('shared', $message);
+				},
 			],
-			[
-				'command' => 'cp -rv ' . $this->releaseFolder . 'storage/ shared/',
+			'copy_storage_to_shared'           => [
 				'message' => 'Copying release storage to shared folder',
+				'execute' => function (string $message) {
+					$this->appRunCommand(
+						$this->config['app']['id'],
+						'cp -rv ' . $this->releaseFolder . 'storage/ shared/',
+						$message
+					);
+				},
 			],
-			[
-				'command' => 'rm -rf ' . $this->releaseFolder . 'storage/',
-				'message' => 'Removing storage folder from release',
-			],
-			[
-				'command' => 'ln -s /var/www/shared/storage ' . $this->releaseFolder . 'storage',
+			'symlink_shared_to_release'        => [
 				'message' => 'Symlink shared storage to release',
+				'execute' => function (string $message) {
+					$this->appRunCommand(
+						$this->config['app']['id'],
+						'ln -s /var/www/shared/storage ' . $this->releaseFolder . 'storage',
+						$message
+					);
+				},
 			],
-			[
-				'command' => 'ln -s /var/www/' . $this->releaseFolder . 'storage/app/public ' . $this->releaseFolder . 'public/storage',
+			'delete_release_storage'           => [
+				'message' => 'Removing storage folder from release',
+				'execute' => function (string $message) {
+					$deleteFileUrl = sprintf(
+						FilesDeleteCommand::API_ENDPOINT,
+						$this->config['app']['id'],
+						$this->releaseFolder . 'storage'
+					);
+					$this->sendRequest($deleteFileUrl, 'DELETE', $message);
+				},
+			],
+			'symlink_shared_to_release_public' => [
 				'message' => 'Symlink storage to public dir',
+				'execute' => function (string $message) {
+					$this->appRunCommand(
+						$this->config['app']['id'],
+						'ln -s /var/www/' . $this->releaseFolder . 'storage/app/public ' . $this->releaseFolder . 'public/storage',
+						$message
+					);
+				},
 			],
 		];
 		foreach ($commands as $command) {
-			$this->appRunCommand(
-				$this->config['app']['id'],
-				$command['command'],
-				$command['message']
-			);
+			$command['execute']($command['message']);
 		}
 		$this->updateStepToSuccess($step);
 	}
@@ -355,6 +456,7 @@ class Laravel extends DeployAbstract
 	 * @param string $releaseFolder
 	 * @param string $message
 	 * @param bool $isFirstDeploy
+	 * @throws GuzzleException
 	 * @throws Exception
 	 */
 	private function symlinkRelease(string $releaseFolder, string $message, bool $isFirstDeploy = false)
@@ -363,13 +465,32 @@ class Laravel extends DeployAbstract
 		$this->setStep($step, function () {
 			return;
 		});
-		$symLinkOptions = ($isFirstDeploy) ? '-s' : '-sfn';
-		$command = 'ln ' . $symLinkOptions . ' ' . $releaseFolder . 'public public';
-		$this->appRunCommand(
-			$this->config['app']['id'],
-			$command,
-			$message
-		);
+		if ($isFirstDeploy) {
+			$url = sprintf(
+				FilesUploadCommand::API_ENDPOINT,
+				$this->config['app']['id']
+			);
+			$httpType = 'POST';
+		} else {
+			$url = sprintf(
+				FilesUpdateCommand::API_ENDPOINT,
+				$this->config['app']['id'],
+				'public'
+			);
+			$httpType = 'PATCH';
+		}
+
+		$this->sendRequest($url, $httpType, $message, json_encode([
+			'data' => [
+				'attributes' => [
+					'target'     => $releaseFolder . 'public',
+					'is_dir'     => false,
+					'is_symlink' => true,
+				],
+				'id'         => 'public',
+				'type'       => 'files',
+			],
+		]));
 		$this->updateStepToSuccess($step);
 	}
 
@@ -397,7 +518,7 @@ class Laravel extends DeployAbstract
 	}
 
 	/**
-	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	private function setUpPermissions()
 	{
@@ -415,17 +536,28 @@ class Laravel extends DeployAbstract
 			'shared/storage/framework/views',
 			'shared/storage/logs',
 		];
+
+		if (!empty($this->config['apache_permissions_dir'])) {
+			$directories = array_merge($directories, array_map(function ($val) {
+				return $this->releaseFolder . $val;
+			}, $this->config['apache_permissions_dir']));
+		}
+
 		foreach ($directories as $directory) {
-			$appRunsDescribeCommand = $this->application->find(FilesUpdateCommand::getDefaultName());
-			$args = [
-				'command'     => FilesUpdateCommand::getDefaultName(),
-				'app_id'      => $this->config['app']['id'],
-				'remote_path' => $directory,
-				'--json'      => true,
-			];
-			if ($appRunsDescribeCommand->run(new ArrayInput($args), $this->consoleOutput) != '0') {
-				throw new Exception('Cant set appache writable for ' . $directory);
-			}
+			$this->sendRequest(
+				sprintf(FilesUpdateCommand::API_ENDPOINT, $this->config['app']['id'], ''),
+				'PATCH',
+				'Setting apache writable ' . $directory . '/',
+				json_encode([
+					'data' => [
+						'attributes' => [
+							'apache_writable' => true,
+						],
+						'id'         => $directory,
+						'type'       => 'files',
+					],
+				])
+			);
 		}
 		$this->updateStepToSuccess($step);
 	}
