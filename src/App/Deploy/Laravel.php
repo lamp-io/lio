@@ -9,7 +9,6 @@ use Console\App\Commands\Databases\DatabasesDescribeCommand;
 use Console\App\Commands\Files\FilesDeleteCommand;
 use Console\App\Commands\Files\FilesUpdateCommand;
 use Console\App\Commands\Files\FilesUploadCommand;
-use Console\App\Helpers\DeployHelper;
 use Dotenv\Dotenv;
 use Exception;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -62,72 +61,6 @@ class Laravel extends DeployAbstract
 		$this->artisanMigrate($dbBackupId);
 		$this->symlinkRelease($this->releaseFolder, 'Linking your current release', $this->isFirstDeploy);
 		$this->deleteArchiveLocal();
-	}
-
-	/**
-	 * @param string $currentRelease
-	 * @param string $previousRelease
-	 * @throws Exception
-	 * @throws GuzzleException
-	 */
-	public function revert(string $currentRelease, string $previousRelease)
-	{
-		$migrationsDif = $this->getMigrationsDif($currentRelease, $previousRelease);
-		if ($migrationsDif >= 1) {
-			$dbBackupId = $this->backupDatabase();
-			$this->rollbackMigrations($currentRelease, $migrationsDif, $dbBackupId);
-		}
-		$this->symlinkRelease($previousRelease, 'Linking your previous release');
-	}
-
-	/**
-	 * @param string $currentRelease
-	 * @param string $previousRelease
-	 * @return int
-	 * @throws Exception
-	 */
-	private function getMigrationsDif(string $currentRelease, string $previousRelease)
-	{
-		$step = 'getMigrationsDif';
-		$this->setStep('getMigrationsDif', function () {
-			return;
-		});
-		$this->consoleOutput->writeln('Checking migrations diff...');
-		$migrationsFolder = 'database/migrations';
-		$migrations = [
-			'current'  => DeployHelper::getReleaseMigrations(
-				$this->config['app']['id'],
-				$currentRelease . '/' . $migrationsFolder,
-				$this->application
-			),
-			'previous' => DeployHelper::getReleaseMigrations(
-				$this->config['app']['id'],
-				$previousRelease . '/' . $migrationsFolder,
-				$this->application
-			),
-		];
-		$this->updateStepToSuccess($step);
-		return count($migrations['current']) - count($migrations['previous']);
-	}
-
-	/**
-	 * @param string $releaseFolder
-	 * @param int $steps
-	 * @param string $dbBackupId
-	 * @throws Exception
-	 */
-	private function rollbackMigrations(string $releaseFolder, int $steps, string $dbBackupId)
-	{
-		$step = 'rollbackMigrations';
-		$this->setStep($step, function () use ($dbBackupId) {
-			$this->restoreDatabase($dbBackupId);
-		});
-		$this->appRunCommand(
-			$this->config['app']['id'],
-			'php ' . $releaseFolder . 'artisan migrate:rollback --force --step=' . $steps,
-			'Rollback migrations to previous release'
-		);
-		$this->updateStepToSuccess($step);
 	}
 
 	/**
