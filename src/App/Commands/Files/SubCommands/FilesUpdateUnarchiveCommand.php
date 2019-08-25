@@ -39,7 +39,7 @@ class FilesUpdateUnarchiveCommand extends Command
 	{
 		parent::execute($input, $output);
 		try {
-			$progressBar = self::getProgressBar('Extracting it', $output);
+			$progressBar = self::getProgressBar('Extracting ' . $input->getArgument('remote_path'), $output);
 			$this->httpHelper->getClient()->request(
 				'PATCH',
 				sprintf(
