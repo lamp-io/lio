@@ -11,6 +11,7 @@ use Console\App\Commands\Files\FilesUpdateCommand;
 use Console\App\Commands\Files\FilesUploadCommand;
 use Dotenv\Dotenv;
 use Exception;
+use GuzzleHttp\Exception\ClientException;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 use GuzzleHttp\Exception\GuzzleException;
@@ -106,7 +107,12 @@ class Laravel extends DeployAbstract
 						$this->config['app']['id'],
 						$this->releaseFolder . 'public/storage'
 					);
-					$this->sendRequest($deleteFileUrl, 'DELETE', $message);
+					try {
+						$this->sendRequest($deleteFileUrl, 'DELETE', $message);
+					} catch (ClientException $clientException) {
+						$this->consoleOutput->write(PHP_EOL);
+						return;
+					}
 				},
 			],
 			'create_shared'                    => [
@@ -125,6 +131,16 @@ class Laravel extends DeployAbstract
 					);
 				},
 			],
+			'delete_release_storage'           => [
+				'message' => 'Removing storage folder from release',
+				'execute' => function (string $message) {
+					$this->appRunCommand(
+						$this->config['app']['id'],
+						'rm -rf ' . $this->releaseFolder . 'storage/',
+						$message
+					);
+				},
+			],
 			'symlink_shared_to_release'        => [
 				'message' => 'Symlink shared storage to release',
 				'execute' => function (string $message) {
@@ -135,17 +151,6 @@ class Laravel extends DeployAbstract
 					);
 				},
 			],
-			'delete_release_storage'           => [
-				'message' => 'Removing storage folder from release',
-				'execute' => function (string $message) {
-					$deleteFileUrl = sprintf(
-						FilesDeleteCommand::API_ENDPOINT,
-						$this->config['app']['id'],
-						$this->releaseFolder . 'storage'
-					);
-					$this->sendRequest($deleteFileUrl, 'DELETE', $message);
-				},
-			],
 			'symlink_shared_to_release_public' => [
 				'message' => 'Symlink storage to public dir',
 				'execute' => function (string $message) {
@@ -154,6 +159,30 @@ class Laravel extends DeployAbstract
 						'ln -s /var/www/' . $this->releaseFolder . 'storage/app/public ' . $this->releaseFolder . 'public/storage',
 						$message
 					);
+				},
+			],
+			'give_permissions'                 => [
+				'message' => 'Apache can write in shared storage',
+				'execute' => function (string $message) {
+					if ($this->isFirstDeploy) {
+						$fileUpdateUrl = sprintf(
+							sprintf(
+								FilesUpdateCommand::API_ENDPOINT . '?recur=true',
+								$this->config['app']['id'],
+								'shared/storage'
+							)
+						);
+						$this->sendRequest($fileUpdateUrl, 'PATCH', $message, json_encode([
+							'data' => [
+								'attributes' => [
+									'apache_writable' => true,
+								],
+								'id'         => 'shared/storage',
+								'type'       => 'files',
+							],
+						]));
+					}
+
 				},
 			],
 		];
@@ -459,28 +488,20 @@ class Laravel extends DeployAbstract
 		$this->setStep($step, function () {
 			return;
 		});
-		$directories = [
-			'shared/storage',
-			'shared/storage/app',
-			'shared/storage/app/public',
-			'shared/storage/framework',
-			'shared/storage/framework/cache',
-			'shared/storage/framework/sessions',
-			'shared/storage/framework/views',
-			'shared/storage/logs',
-		];
-
-		if (!empty($this->config['apache_permissions_dir'])) {
-			$directories = array_merge($directories, array_map(function ($val) {
-				return $this->releaseFolder . $val;
-			}, $this->config['apache_permissions_dir']));
+		if (empty($this->config['apache_permissions_dir'])) {
+			return;
 		}
+		$directories = array_map(function ($val) {
+			if (strpos($val, 'storage') === false) {
+				return $this->releaseFolder . $val;
+			}
+		}, $this->config['apache_permissions_dir']);
 
 		foreach ($directories as $directory) {
 			$this->sendRequest(
 				sprintf(FilesUpdateCommand::API_ENDPOINT, $this->config['app']['id'], ''),
 				'PATCH',
-				'Setting apache writable ' . $directory . '/',
+				'Setting apache writable ' . $directory,
 				json_encode([
 					'data' => [
 						'attributes' => [

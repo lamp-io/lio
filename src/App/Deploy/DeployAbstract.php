@@ -237,12 +237,16 @@ abstract class DeployAbstract implements DeployInterface
 		$this->setStep($step, function () {
 			return;
 		});
-		$deleteFileUrl = sprintf(
-			FilesDeleteCommand::API_ENDPOINT,
-			$this->config['app']['id'],
-			'public'
-		);
-		$this->sendRequest($deleteFileUrl, 'DELETE', 'Removing default files');
+		try {
+			$deleteFileUrl = sprintf(
+				FilesDeleteCommand::API_ENDPOINT,
+				$this->config['app']['id'],
+				'public'
+			);
+			$this->sendRequest($deleteFileUrl, 'DELETE', 'Removing default files');
+		} catch (ClientException $clientException) {
+			$this->consoleOutput->write(PHP_EOL);
+		}
 		$this->updateStepToSuccess($step);
 	}
 
