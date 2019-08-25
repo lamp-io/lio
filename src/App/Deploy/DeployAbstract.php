@@ -138,6 +138,9 @@ abstract class DeployAbstract implements DeployInterface
 	 */
 	protected function backupDatabase(): string
 	{
+		if ($this->config['database']['type'] == 'external' || $this->config['database']['system'] == 'sqlite') {
+			return '';
+		}
 		$step = 'backupDatabase';
 		$this->setStep($step, function () {
 			return;

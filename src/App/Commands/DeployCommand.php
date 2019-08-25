@@ -96,6 +96,7 @@ class DeployCommand extends Command
 			}
 			$appId = $this->createApp($output, $input);
 			$this->createDatabase($output, $input);
+
 			$this->configHelper->save();
 			if (!$this->isFirstDeploy()) {
 				$this->deleteOldReleases(
@@ -166,13 +167,47 @@ class DeployCommand extends Command
 		return $appsDescribe->run(new ArrayInput($args), new NullOutput()) === 0;
 	}
 
+
 	/**
 	 * @param OutputInterface $output
 	 * @param InputInterface $input
-	 * @return string
+	 * @return void|string
 	 * @throws Exception
 	 */
-	protected function createDatabase(OutputInterface $output, InputInterface $input): string
+	protected function createDatabase(OutputInterface $output, InputInterface $input)
+	{
+		if ($this->configHelper->get('database.type') == 'external') {
+			if (!$this->isDbCredentialsSet($this->configHelper->get('database.connection'))) {
+				throw new Exception('Please set connection credentials for external database in a lamp.io.yaml');
+			}
+			$this->configHelper->set('database.system', 'mysql');
+			return;
+		}
+		if ($this->configHelper->get('database.system') == 'sqlite') {
+			$this->configHelper->set('database.type', 'internal');
+			$this->configHelper->set('database.connection.host', DeployHelper::SQLITE_ABSOLUTE_REMOTE_PATH);
+			return;
+		}
+
+		$this->createLampIoDatabase($output, $input);
+	}
+
+	/**
+	 * @param array $credentials
+	 * @return bool
+	 */
+	protected function isDbCredentialsSet(array $credentials): bool
+	{
+		return (!empty($credentials['host']) || !empty($credentials['user']) || !empty($credentials['password']));
+	}
+
+	/**
+	 * @param OutputInterface $output
+	 * @param InputInterface $input
+	 * @return array|mixed|string
+	 * @throws Exception
+	 */
+	protected function createLampIoDatabase(OutputInterface $output, InputInterface $input)
 	{
 		if (!empty($this->configHelper->get('database.id'))) {
 			if (!$this->isDatabaseExists($this->configHelper->get('database.id'))) {
@@ -208,12 +243,14 @@ class DeployCommand extends Command
 			$this->configHelper->set('database.id', $databaseId);
 			$this->configHelper->set('database.connection.host', $this->configHelper->get('database.id'));
 			$this->configHelper->set('database.root_password', $document->get('data.attributes.mysql_root_password'));
+			$this->configHelper->set('database.system', 'mysql');
+			$this->configHelper->set('database.type', 'internal');
 			$this->setDatabaseCredentials($input, $output);
-			return $databaseId;
 		} else {
 			throw new Exception($bufferOutput->fetch());
 		}
 	}
+
 
 	/**
 	 * @return bool
@@ -308,6 +345,9 @@ class DeployCommand extends Command
 		}
 	}
 
+	/**
+	 * @param array $options
+	 */
 	protected function setAppType(array $options)
 	{
 		foreach ($options as $optionKey => $option) {

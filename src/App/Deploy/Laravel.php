@@ -9,6 +9,7 @@ use Console\App\Commands\Databases\DatabasesDescribeCommand;
 use Console\App\Commands\Files\FilesDeleteCommand;
 use Console\App\Commands\Files\FilesUpdateCommand;
 use Console\App\Commands\Files\FilesUploadCommand;
+use Console\App\Helpers\DeployHelper;
 use Dotenv\Dotenv;
 use Exception;
 use GuzzleHttp\Exception\ClientException;
@@ -47,17 +48,20 @@ class Laravel extends DeployAbstract
 		$this->createSymlinkStorage();
 		$this->setUpPermissions();
 		if ($this->isFirstDeploy) {
-			$this->initDatabase();
-			$this->createDatabaseUser();
-			$this->createDatabase();
-			if (!empty($this->config['database']['sql_dump'])) {
-				$this->importSqlDump();
+			if ($this->config['database']['type'] == 'external') {
+				$this->createDatabase();
+			} elseif ($this->config['database']['system'] == 'sqlite') {
+				$this->initSqliteDatabase();
+			} else {
+				$this->initDatabase();
+				$this->createDatabaseUser();
+				$this->createDatabase();
+				if (!empty($this->config['database']['sql_dump'])) {
+					$this->importSqlDump();
+				}
 			}
-			$dbBackupId = '';
-		} else {
-			$dbBackupId = $this->backupDatabase();
 		}
-
+		$dbBackupId = $this->backupDatabase();
 		$this->runCommands();
 		$this->artisanMigrate($dbBackupId);
 		$this->symlinkRelease($this->releaseFolder, 'Linking your current release', $this->isFirstDeploy);
@@ -237,15 +241,23 @@ class Laravel extends DeployAbstract
 	 */
 	private function prepareEnvFile(): array
 	{
+		if ($this->config['database']['system'] == 'sqlite') {
+			$env = [
+				'APP_URL'       => $this->config['app']['url'],
+				'DB_HOST'       => 'localhost',
+				'DB_DATABASE'   => $this->config['database']['connection']['host'],
+				'DB_CONNECTION' => 'sqlite',
+			];
+		} else {
+			$env = [
+				'APP_URL'     => $this->config['app']['url'],
+				'DB_HOST'     => $this->config['database']['connection']['host'],
+				'DB_USERNAME' => $this->config['database']['connection']['user'],
+				'DB_PASSWORD' => $this->config['database']['connection']['password'],
+			];
+		}
 		$envFromConfig = !empty($this->config['environment']) ? $this->config['environment'] : [];
-		$newEnv = array_merge($envFromConfig, [
-			'APP_URL'     => $this->config['app']['url'],
-			'DB_HOST'     => $this->config['database']['connection']['host'],
-			'DB_USERNAME' => $this->config['database']['connection']['user'],
-			'DB_PASSWORD' => $this->config['database']['connection']['password'],
-			'APP_ENV'     => 'production',
-			'APP_DEBUG'   => false,
-		]);
+		$newEnv = array_merge($envFromConfig, $env);
 		return array_merge($this->localEnv, $newEnv);
 	}
 
@@ -324,7 +336,7 @@ class Laravel extends DeployAbstract
 		$progressBar->start();
 		$dbIsRunning = false;
 		while (!$dbIsRunning) {
-			$dbIsRunning = $this->isDbAlreadyRunning($this->config['database']['id']);
+			$dbIsRunning = $this->isDbAlreadyRunning($this->config['database']['connection']['host']);
 			$progressBar->advance();
 		}
 		$counter = 0;
@@ -373,6 +385,47 @@ class Laravel extends DeployAbstract
 			$command,
 			'Creating database `' . getenv('DB_DATABASE') . '`'
 		);
+		$this->updateStepToSuccess($step);
+	}
+
+	/**
+	 * @throws Exception
+	 * @throws GuzzleException
+	 */
+	private function initSqliteDatabase()
+	{
+		$step = 'initSqliteDatabase';
+		$this->setStep($step, function () {
+			return;
+		});
+		if (!empty($this->config['database']['sql_dump'])) {
+			$filesUploadCommand = $this->application->find(FilesUploadCommand::getDefaultName());
+			$args = [
+				'command'     => FilesUploadCommand::getDefaultName(),
+				'file'        => $this->config['database']['sql_dump'],
+				'app_id'      => $this->config['app']['id'],
+				'remote_path' => DeployHelper::SQLITE_RELATIVE_REMOTE_PATH,
+				'--json'      => true,
+			];
+			if ($filesUploadCommand->run(new ArrayInput($args), $this->consoleOutput) != '0') {
+				throw new Exception('Cant upload mysqli dump');
+			}
+			$this->consoleOutput->write(PHP_EOL);
+		} else {
+			$url = sprintf(
+				FilesUploadCommand::API_ENDPOINT,
+				$this->config['app']['id']
+			);
+			$this->sendRequest($url, 'POST', 'Creating sqlite database', json_encode([
+				'data' => [
+					'attributes' => [
+						'apache_writable' => true,
+					],
+					'id'         => DeployHelper::SQLITE_RELATIVE_REMOTE_PATH,
+					'type'       => 'files',
+				],
+			]));
+		}
 		$this->updateStepToSuccess($step);
 	}
 
@@ -498,20 +551,24 @@ class Laravel extends DeployAbstract
 		}, $this->config['apache_permissions_dir']);
 
 		foreach ($directories as $directory) {
-			$this->sendRequest(
-				sprintf(FilesUpdateCommand::API_ENDPOINT, $this->config['app']['id'], ''),
-				'PATCH',
-				'Setting apache writable ' . $directory,
-				json_encode([
-					'data' => [
-						'attributes' => [
-							'apache_writable' => true,
+			try {
+				$this->sendRequest(
+					sprintf(FilesUpdateCommand::API_ENDPOINT, $this->config['app']['id'], ''),
+					'PATCH',
+					'Setting apache writable ' . $directory,
+					json_encode([
+						'data' => [
+							'attributes' => [
+								'apache_writable' => true,
+							],
+							'id'         => $directory,
+							'type'       => 'files',
 						],
-						'id'         => $directory,
-						'type'       => 'files',
-					],
-				])
-			);
+					])
+				);
+			} catch (ClientException $clientException) {
+				$this->consoleOutput->writeln(PHP_EOL . '<comment>Directory ' . $directory . '/ not exists</comment>');
+			}
 		}
 		$this->updateStepToSuccess($step);
 	}

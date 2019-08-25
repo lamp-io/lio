@@ -19,6 +19,10 @@ class DeployHelper
 
 	const PUBLIC_FOLDER = 'public';
 
+	const SQLITE_ABSOLUTE_REMOTE_PATH = '/var/www/sqlite/db.sqlite';
+
+	const SQLITE_RELATIVE_REMOTE_PATH = 'sqlite/db.sqlite';
+
 	/**
 	 * @param string $appType
 	 * @param string $appPath
