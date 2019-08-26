@@ -308,6 +308,12 @@ abstract class DeployAbstract implements DeployInterface
 		$this->setStep($step, function () {
 			return;
 		});
+		if ($this->isFirstDeploy) {
+			/** Temporally fix, to let NFS be mounted when you only created app  */
+			for ($timer = 0; $timer <= 4; $timer++) {
+				sleep(1);
+			}
+		}
 		$appRunsDescribeCommand = $this->application->find(FilesUpdateUnarchiveCommand::getDefaultName());
 		$args = [
 			'command'     => FilesUpdateUnarchiveCommand::getDefaultName(),
