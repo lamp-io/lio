@@ -50,6 +50,9 @@ class Laravel extends DeployAbstract
 		if ($this->isFirstDeploy) {
 			if ($this->config['database']['type'] == 'external') {
 				$this->createDatabase();
+				if (!empty($this->config['database']['sql_dump'])) {
+					$this->importSqlDump();
+				}
 			} elseif ($this->config['database']['system'] == 'sqlite') {
 				$this->initSqliteDatabase();
 			} else {
@@ -438,7 +441,6 @@ class Laravel extends DeployAbstract
 		$this->setStep($step, function () {
 			return;
 		});
-		$this->consoleOutput->writeln('Uploading sql dump to app');
 		$filesUploadCommand = $this->application->find(FilesUploadCommand::getDefaultName());
 		$args = [
 			'command'     => FilesUploadCommand::getDefaultName(),
