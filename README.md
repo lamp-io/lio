@@ -606,6 +606,7 @@ Composer scripts
         * `host` ***(string)*** DB host
         * `user` ***(string)*** DB user
         * `password` ***(string)*** DB password
+    * `attributes` ***(dictionary)*** Lamp-io database attributes, it use same values has [database:new](#databasesnew---d--description--m--memory---organization_id---mysql_root_password---my_cnf---ssd---vcpu) command options
     * `sql_dump` ***(string)*** Absolute path to your sql dump, that you need to have imported to remote database
     * `type` ***(enum)*** Internal(db hosted on lamp-io platform) or external(db hosted outside of lamp-io platform) DB
     * `system` ***(string)*** DB engine (e.g mysql, sqlite)
