@@ -11,6 +11,7 @@ use Console\App\Commands\DbBackups\DbBackupsNewCommand;
 use Console\App\Commands\DbRestores\DbRestoresDescribeCommand;
 use Console\App\Commands\DbRestores\DbRestoresNewCommand;
 use Console\App\Commands\Files\FilesDeleteCommand;
+use Console\App\Commands\Files\FilesUpdateCommand;
 use Console\App\Commands\Files\FilesUploadCommand;
 use Console\App\Commands\Files\SubCommands\FilesUpdateUnarchiveCommand;
 use Console\App\Helpers\AuthHelper;
@@ -83,12 +84,17 @@ abstract class DeployAbstract implements DeployInterface
 	/**
 	 * @param string $appPath
 	 * @param bool $isFirstDeploy
+	 * @throws GuzzleException
 	 */
 	public function deployApp(string $appPath, bool $isFirstDeploy)
 	{
 		$this->appPath = $appPath;
 		$this->isFirstDeploy = $isFirstDeploy;
 		$this->releaseFolder = DeployHelper::RELEASE_FOLDER . '/' . $this->config['release'] . '/';
+
+		if ($this->isFirstDeploy) {
+			$this->clearApp();
+		}
 	}
 
 	/**
@@ -400,6 +406,97 @@ abstract class DeployAbstract implements DeployInterface
 			'http' => $response->getStatusCode(),
 			'body' => trim($response->getBody()->getContents()),
 		];
+	}
+
+	/**
+	 * @param array $defaultDirs
+	 * @param array $skip
+	 * @param bool $recur
+	 * @throws GuzzleException
+	 */
+	protected function setUpPermissions(array $defaultDirs = [], array $skip = [], bool $recur = false)
+	{
+		$step = 'setDirectoryPermissions';
+		$this->setStep($step, function () {
+			return;
+		});
+		$directories = [];
+		if (!empty($this->config['apache_permissions_dir'])) {
+			$directories = array_map(function ($val) use ($skip) {
+				if (strpos($val, 'storage') === false) {
+					return $this->releaseFolder . $val;
+				}
+			}, $this->config['apache_permissions_dir']);
+		}
+
+		$directories = array_merge($defaultDirs, $directories);
+		foreach ($directories as $directory) {
+			try {
+				$this->sendRequest(
+					sprintf(
+						FilesUpdateCommand::API_ENDPOINT,
+						$this->config['app']['id'],
+						($recur) ? '?recur=true' : ''
+					),
+					'PATCH',
+					'Setting apache writable ' . $directory,
+					json_encode([
+						'data' => [
+							'attributes' => [
+								'apache_writable' => true,
+							],
+							'id'         => $directory,
+							'type'       => 'files',
+						],
+					])
+				);
+			} catch (ClientException $clientException) {
+				$this->consoleOutput->writeln(PHP_EOL . '<comment>Directory ' . $directory . '/ not exists</comment>');
+			}
+		}
+		$this->updateStepToSuccess($step);
+	}
+
+	/**
+	 * @param string $appPublic
+	 * @param string $message
+	 * @param bool $isFirstDeploy
+	 * @throws GuzzleException
+	 * @throws Exception
+	 */
+	protected function symlinkRelease(string $appPublic, string $message, bool $isFirstDeploy = false)
+	{
+		$step = 'symlinkRelease';
+		$this->setStep($step, function () {
+			return;
+		});
+		if ($isFirstDeploy) {
+			$url = sprintf(
+				FilesUploadCommand::API_ENDPOINT,
+				$this->config['app']['id']
+			);
+			$httpType = 'POST';
+		} else {
+			$url = sprintf(
+				FilesUpdateCommand::API_ENDPOINT,
+				$this->config['app']['id'],
+				'public'
+			);
+			$httpType = 'PATCH';
+		}
+
+		$this->sendRequest($url, $httpType, $message, json_encode([
+			'data' => [
+				'attributes' => [
+					'target'     => $appPublic,
+					'is_dir'     => false,
+					'is_symlink' => true,
+				],
+				'id'         => 'public',
+				'type'       => 'files',
+			],
+		]));
+		$this->updateStepToSuccess($step);
 	}
 
 	/**

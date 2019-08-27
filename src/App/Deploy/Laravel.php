@@ -38,9 +38,7 @@ class Laravel extends DeployAbstract
 		$this->localEnv = $_ENV;
 		$this->updateEnvFileToUpload();
 		$zip = $this->getZipApp();
-		if ($this->isFirstDeploy) {
-			$this->clearApp();
-		}
+
 		$this->restoreLocalEnvFile();
 		$this->uploadToApp($zip, $this->releaseFolder . self::ARCHIVE_NAME);
 		$this->unarchiveApp($this->releaseFolder . self::ARCHIVE_NAME);
@@ -67,7 +65,7 @@ class Laravel extends DeployAbstract
 		$dbBackupId = $this->backupDatabase();
 		$this->runCommands();
 		$this->artisanMigrate($dbBackupId);
-		$this->symlinkRelease($this->releaseFolder, 'Linking your current release', $this->isFirstDeploy);
+		$this->symlinkRelease($this->releaseFolder . 'public', 'Linking your current release', $this->isFirstDeploy);
 		$this->deleteArchiveLocal();
 	}
 
@@ -469,47 +467,6 @@ class Laravel extends DeployAbstract
 		}
 	}
 
-	/**
-	 * @param string $releaseFolder
-	 * @param string $message
-	 * @param bool $isFirstDeploy
-	 * @throws GuzzleException
-	 * @throws Exception
-	 */
-	private function symlinkRelease(string $releaseFolder, string $message, bool $isFirstDeploy = false)
-	{
-		$step = 'symlinkRelease';
-		$this->setStep($step, function () {
-			return;
-		});
-		if ($isFirstDeploy) {
-			$url = sprintf(
-				FilesUploadCommand::API_ENDPOINT,
-				$this->config['app']['id']
-			);
-			$httpType = 'POST';
-		} else {
-			$url = sprintf(
-				FilesUpdateCommand::API_ENDPOINT,
-				$this->config['app']['id'],
-				'public'
-			);
-			$httpType = 'PATCH';
-		}
-
-		$this->sendRequest($url, $httpType, $message, json_encode([
-			'data' => [
-				'attributes' => [
-					'target'     => $releaseFolder . 'public',
-					'is_dir'     => false,
-					'is_symlink' => true,
-				],
-				'id'         => 'public',
-				'type'       => 'files',
-			],
-		]));
-		$this->updateStepToSuccess($step);
-	}
 
 	/**
 	 * @param string $dbId
@@ -535,10 +492,14 @@ class Laravel extends DeployAbstract
 	}
 
 	/**
+	 * @param array $defaultDirs
+	 * @param array $skip
+	 * @param bool $recur
 	 * @throws GuzzleException
 	 */
-	private function setUpPermissions()
+	protected function setUpPermissions(array $defaultDirs = [], array $skip = [], bool $recur = false)
 	{
+		/** TODO rewrite this method */
 		$step = 'setDirectoryPermissions';
 		$this->setStep($step, function () {
 			return;
