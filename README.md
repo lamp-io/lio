@@ -39,22 +39,16 @@ Commands
 
     Deploy your app.
     
+    Deploy command will create [lamp.yo.yaml](#lampioyaml) config file, inside of your project root, deploy process can be controlled by editing this file, you can check doc here [lamp.yo.yaml](#lampioyaml)
+    
     Arguments:
     
     * `<dir>[optional](string){$PWD}` Path to your project, default your current working directory
     
     Options:
     * `[--laravel](bool){false}` Specify your app as a laravel project 
-    
-2. #### deploy:rollback <app_id>
 
-    Rollback deploy to previous one
-    
-    Arguments:
-        
-    * `<app_id>(string)` The ID of the app
-
-3. #### deploy:list <app_id>
+2. #### deploy:list <app_id>
 
     Get list of available deploys
     
@@ -597,3 +591,27 @@ Composer scripts
 ------------
 
 1. `composer build` Create phar build
+
+# Lamp.io.yaml
+
+* `release` ***(int)*** Id of your release (this value will be set automatically)
+* `type` ***(string)*** Type of your application (e.g laravel, symfony)
+* `app` ***(dictionary)*** Settings related to your lamp-io app
+    * `attributes` ***(dictionary)*** Lamp-io app attributes, it use same values has [apps:new](#appsnew-organization_id--d--description---httpd_conf---max_replicas--m--memory---min_replicas---php_ini--r--replicas---vcpu---github_webhook_secret---webhook_run_command) command options
+    * `id` ***(string)*** Lamp-io app id
+    * `url` ***(string)*** Web app url (this value will be set automatically)
+* `database` ***(dictionary)*** Settings related to your database
+    * `id` ***(string)*** Lamp-io database id 
+    * `connection` ***(dictionary)*** Connection params for database
+        * `host` ***(string)*** DB host
+        * `user` ***(string)*** DB user
+        * `password` ***(string)*** DB password
+    * `attributes` ***(dictionary)*** Lamp-io database attributes, it use same values has [database:new](#databasesnew---d--description--m--memory---organization_id---mysql_root_password---my_cnf---ssd---vcpu) command options
+    * `sql_dump` ***(string)*** Absolute path to your sql dump, that you need to have imported to remote database
+    * `type` ***(enum)*** Internal(db hosted on lamp-io platform) or external(db hosted outside of lamp-io platform) DB
+    * `system` ***(string)*** DB engine (e.g mysql, sqlite)
+    * `root_password` ***(string)*** DB root password
+* `environment` ***(dictionary)*** Environment variables that will be added to .env file (e.g foo: bar)
+* `apache_permissions_dir` ***(list)*** Select a dir that need to has apache permissions to write on it. NOTE: all default files that required apache write permissions, will be updated automatically
+* `retain` ***(int)*** How many old releases should be kept (Default value 10)
+    

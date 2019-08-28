@@ -38,6 +38,8 @@ class DeployCommand extends Command
 		'laravel' => Laravel::class,
 	];
 
+	const DEFAULT_RELEASE_RETAIN = 10;
+
 	/**
 	 * @var ConfigHelper
 	 */
@@ -48,9 +50,12 @@ class DeployCommand extends Command
 	 */
 	protected $isAppAlreadyExists = true;
 
+	protected $httpClient;
+
 	public function __construct(ClientInterface $httpClient, $name = null)
 	{
 		parent::__construct($httpClient, $name);
+		$this->httpClient = $httpClient;
 	}
 
 	/**
@@ -83,17 +88,19 @@ class DeployCommand extends Command
 			}
 			$releaseId = date('YmdHis', time());
 			$this->configHelper->set('release', $releaseId);
+			if (empty($this->configHelper->get('retain'))) {
+				$this->configHelper->set('retain', self::DEFAULT_RELEASE_RETAIN);
+			}
 			if (!DeployHelper::isCorrectApp($this->configHelper->get('type'), $appPath)) {
 				throw new Exception(ucfirst($this->configHelper->get('type')) . ' has not been found found on your directory');
 			}
 			$appId = $this->createApp($output, $input);
 			$this->createDatabase($output, $input);
+
 			$this->configHelper->save();
 			if (!$this->isFirstDeploy()) {
 				$this->deleteOldReleases(
 					DeployHelper::getReleases($appId, $this->getApplication()),
-					$this->configHelper->get(),
-					$input,
 					$output
 				);
 			}
@@ -102,6 +109,7 @@ class DeployCommand extends Command
 			$output->writeln('<info>Done, check it out at https://' . $appId . '.lamp.app/</info>');
 		} catch (Exception $exception) {
 			$output->writeln('<error>' . trim($exception->getMessage()) . '</error>');
+			$this->configHelper->save();
 			if (!empty($deployObject)) {
 				$deployObject->revertProcess();
 				$output->writeln(PHP_EOL . '<comment>Revert completed</comment>');
@@ -112,31 +120,20 @@ class DeployCommand extends Command
 
 	/**
 	 * @param array $releases
-	 * @param array $config
-	 * @param InputInterface $input
 	 * @param OutputInterface $output
 	 * @throws Exception
 	 */
-	protected function deleteOldReleases(array $releases, array $config, InputInterface $input, OutputInterface $output)
+	protected function deleteOldReleases(array $releases, OutputInterface $output)
 	{
-		$allowedPrevReleases = isset($config['removeOldReleases']) && is_int($config['removeOldReleases']) ? $config['removeOldReleases'] : DeployHelper::KEEP_OLD_RELEASES;
-		if ((count($releases) + 1 <= $allowedPrevReleases) || (isset($config['removeOldReleases']) && $config['removeOldReleases'] <= '0')) {
-			return;
-		}
-		$questionHelper = $this->getHelper('question');
-		$question = new ConfirmationQuestion('<info>Please confirm delete oldest releases (Y/n):</info>');
-		$answer = $questionHelper->ask($input, $output, $question);
-		$output->writeln('<comment>If you dont want to see that message, you need to increase `removeOldReleases` on lamp.io.yaml or set value of it <= 0 to not delete them at all</comment>');
-		if (!$answer) {
+		if (count($releases) + 1 < $this->configHelper->get('retain') || $this->configHelper->get('retain') <= '0') {
 			return;
 		}
 		foreach ($releases as $key => $release) {
-			if ($key <= (count($releases) - $allowedPrevReleases)) {
-				DeployHelper::deleteRelease($config['app']['id'], $release['id'], $this->getApplication(), $output);
+			if ($key <= (count($releases) - $this->configHelper->get('retain'))) {
+				DeployHelper::deleteRelease($this->configHelper->get('app.id'), $release['id'], $this->getApplication(), $output);
 			}
 		}
 	}
-
 
 	/**
 	 * @param string $dbId
@@ -170,18 +167,51 @@ class DeployCommand extends Command
 		return $appsDescribe->run(new ArrayInput($args), new NullOutput()) === 0;
 	}
 
+
 	/**
 	 * @param OutputInterface $output
 	 * @param InputInterface $input
-	 * @return string
+	 * @return void|string
 	 * @throws Exception
 	 */
-	protected function createDatabase(OutputInterface $output, InputInterface $input): string
+	protected function createDatabase(OutputInterface $output, InputInterface $input)
+	{
+		if ($this->configHelper->get('database.type') == 'external') {
+			if (!$this->isDbCredentialsSet($this->configHelper->get('database.connection'))) {
+				throw new Exception('Please set connection credentials for external database in a lamp.io.yaml');
+			}
+			$this->configHelper->set('database.system', 'mysql');
+			return;
+		}
+		if ($this->configHelper->get('database.system') == 'sqlite') {
+			$this->configHelper->set('database.type', 'internal');
+			$this->configHelper->set('database.connection.host', DeployHelper::SQLITE_ABSOLUTE_REMOTE_PATH);
+			return;
+		}
+
+		$this->createLampIoDatabase($output, $input);
+	}
+
+	/**
+	 * @param array $credentials
+	 * @return bool
+	 */
+	protected function isDbCredentialsSet(array $credentials): bool
+	{
+		return (!empty($credentials['host']) || !empty($credentials['user']) || !empty($credentials['password']));
+	}
+
+	/**
+	 * @param OutputInterface $output
+	 * @param InputInterface $input
+	 * @return array|mixed|string
+	 * @throws Exception
+	 */
+	protected function createLampIoDatabase(OutputInterface $output, InputInterface $input)
 	{
 		if (!empty($this->configHelper->get('database.id'))) {
 			if (!$this->isDatabaseExists($this->configHelper->get('database.id'))) {
-				$output->writeln('<error>db-id(<db_id>) specified in lamp.io.yaml does not exist</error>');
-				exit(1);
+				throw new Exception('db-id(<db_id>) specified in lamp.io.yaml does not exist');
 			}
 			return $this->configHelper->get('database.id');
 		}
@@ -189,8 +219,7 @@ class DeployCommand extends Command
 		$questionHelper = $this->getHelper('question');
 		$question = new ConfirmationQuestion('<info>This looks like a new app, shall we create a lamp.io database for it? (Y/n):</info>');
 		if (!$questionHelper->ask($input, $output, $question)) {
-			$output->writeln('<info>You must to create new database or select to which database your project should use, in lamp.io.yaml file inside of your project</info>');
-			exit(1);
+			throw new Exception('You must to create new database or select to which database your project should use, in lamp.io.yaml file inside of your project');
 		}
 
 		$databasesNewCommand = $this->getApplication()->find(DatabasesNewCommand::getDefaultName());
@@ -214,12 +243,14 @@ class DeployCommand extends Command
 			$this->configHelper->set('database.id', $databaseId);
 			$this->configHelper->set('database.connection.host', $this->configHelper->get('database.id'));
 			$this->configHelper->set('database.root_password', $document->get('data.attributes.mysql_root_password'));
+			$this->configHelper->set('database.system', 'mysql');
+			$this->configHelper->set('database.type', 'internal');
 			$this->setDatabaseCredentials($input, $output);
-			return $databaseId;
 		} else {
 			throw new Exception($bufferOutput->fetch());
 		}
 	}
+
 
 	/**
 	 * @return bool
@@ -230,6 +261,10 @@ class DeployCommand extends Command
 		return !($this->isAppAlreadyExists && DeployHelper::isReleasesFolderExists($this->configHelper->get('app.id'), $this->getApplication()));
 	}
 
+	/**
+	 * @param InputInterface $input
+	 * @param OutputInterface $output
+	 */
 	protected function setDatabaseCredentials(InputInterface $input, OutputInterface $output)
 	{
 		if (empty($this->configHelper->get('database.connection.user'))) {
@@ -269,8 +304,7 @@ class DeployCommand extends Command
 	{
 		if (!empty($this->configHelper->get('app.id'))) {
 			if (!$this->isAppExists($this->configHelper->get('app.id'))) {
-				$output->writeln('<error>app-id(<app_id>) specified in lamp.io.yaml does not exist</error>');
-				exit(1);
+				throw new Exception('app-id(<app_id>) specified in lamp.io.yaml does not exist');
 			}
 			$this->isAppAlreadyExists = true;
 			return $this->configHelper->get('app.id');
@@ -279,8 +313,7 @@ class DeployCommand extends Command
 		$questionHelper = $this->getHelper('question');
 		$question = new ConfirmationQuestion('<info>This looks like a new app, shall we create a lamp.io app for it? (Y/n):</info>');
 		if (!$questionHelper->ask($input, $output, $question)) {
-			$output->writeln('<info>You must to create new app or select to which app your project should be deployed, in lamp.io.yaml file inside of your project</info>');
-			exit(1);
+			throw new Exception('You must to create new app or select to which app your project should be deployed, in lamp.io.yaml file inside of your project');
 		}
 		$appsNewCommand = $this->getApplication()->find(AppsNewCommand::getDefaultName());
 		$args = [
@@ -312,6 +345,9 @@ class DeployCommand extends Command
 		}
 	}
 
+	/**
+	 * @param array $options
+	 */
 	protected function setAppType(array $options)
 	{
 		foreach ($options as $optionKey => $option) {
@@ -331,7 +367,7 @@ class DeployCommand extends Command
 	protected function getDeployObject(): DeployInterface
 	{
 		$deployClass = (self::DEPLOYS[$this->configHelper->get('type')]);
-		return new $deployClass($this->getApplication(), $this->configHelper->get());
+		return new $deployClass($this->getApplication(), $this->configHelper->get(), $this->httpClient);
 	}
 
 }

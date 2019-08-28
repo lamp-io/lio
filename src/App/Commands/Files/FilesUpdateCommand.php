@@ -4,6 +4,7 @@ namespace Console\App\Commands\Files;
 
 use Console\App\Commands\Command;
 use GuzzleHttp\Exception\GuzzleException;
+use InvalidArgumentException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -69,7 +70,7 @@ class FilesUpdateCommand extends Command
 	protected function validateArguments($file)
 	{
 		if (!file_exists($file)) {
-			throw new \InvalidArgumentException('File not exists');
+			throw new InvalidArgumentException('File not exists');
 		}
 	}
 
@@ -85,7 +86,6 @@ class FilesUpdateCommand extends Command
 				'attributes' =>
 					array_merge([
 						'apache_writable' => true,
-						'target'          => '',
 					], !empty($localFile) ? [
 						'contents' => file_get_contents($localFile),
 					] : []),

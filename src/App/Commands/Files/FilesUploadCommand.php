@@ -44,7 +44,7 @@ class FilesUploadCommand extends Command
 		}
 
 		try {
-			$progressBar = self::getProgressBar('Uploading it', $output);
+			$progressBar = self::getProgressBar('Uploading ' . $input->getArgument('file'), $output);
 			$this->httpHelper->getClient()->request(
 				'POST',
 				sprintf(self::API_ENDPOINT, $input->getArgument('app_id')),

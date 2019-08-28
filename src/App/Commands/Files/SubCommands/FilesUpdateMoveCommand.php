@@ -42,7 +42,10 @@ class FilesUpdateMoveCommand extends Command
 	{
 		parent::execute($input, $output);
 		try {
-			$progressBar = self::getProgressBar('Moving it', $output);
+			$progressBar = self::getProgressBar(
+				'Moving ' . $input->getArgument('remote_path') . ' to ' . $input->getArgument('move_path'),
+				$output
+			);
 			$response = $this->httpHelper->getClient()->request(
 				'PATCH',
 				sprintf(

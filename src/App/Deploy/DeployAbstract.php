@@ -13,8 +13,11 @@ use Console\App\Commands\DbRestores\DbRestoresNewCommand;
 use Console\App\Commands\Files\FilesDeleteCommand;
 use Console\App\Commands\Files\FilesUploadCommand;
 use Console\App\Commands\Files\SubCommands\FilesUpdateUnarchiveCommand;
+use Console\App\Helpers\AuthHelper;
 use Console\App\Helpers\DeployHelper;
 use Exception;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\NullOutput;
@@ -24,6 +27,7 @@ use Symfony\Component\Console\Input\ArrayInput;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 use ZipArchive;
+use GuzzleHttp\Exception\GuzzleException;
 
 abstract class DeployAbstract implements DeployInterface
 {
@@ -58,15 +62,22 @@ abstract class DeployAbstract implements DeployInterface
 	protected $steps = [];
 
 	/**
+	 * @var Client
+	 */
+	protected $httpClient;
+
+	/**
 	 * DeployAbstract constructor.
 	 * @param Application $application
 	 * @param array $config
+	 * @param Client $httpClient
 	 */
-	public function __construct(Application $application, array $config)
+	public function __construct(Application $application, array $config, Client $httpClient)
 	{
 		$this->application = $application;
 		$this->consoleOutput = new ConsoleOutput();
 		$this->config = $config;
+		$this->httpClient = $httpClient;
 	}
 
 	/**
@@ -127,6 +138,9 @@ abstract class DeployAbstract implements DeployInterface
 	 */
 	protected function backupDatabase(): string
 	{
+		if ($this->config['database']['type'] == 'external' || $this->config['database']['system'] == 'sqlite') {
+			return '';
+		}
 		$step = 'backupDatabase';
 		$this->setStep($step, function () {
 			return;
@@ -218,7 +232,7 @@ abstract class DeployAbstract implements DeployInterface
 	}
 
 	/**
-	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function clearApp()
 	{
@@ -226,8 +240,16 @@ abstract class DeployAbstract implements DeployInterface
 		$this->setStep($step, function () {
 			return;
 		});
-		$command = 'rm -rf *';
-		$this->appRunCommand($this->config['app']['id'], $command, 'Removing default files');
+		try {
+			$deleteFileUrl = sprintf(
+				FilesDeleteCommand::API_ENDPOINT,
+				$this->config['app']['id'],
+				'public'
+			);
+			$this->sendRequest($deleteFileUrl, 'DELETE', 'Removing default files');
+		} catch (ClientException $clientException) {
+			$this->consoleOutput->write(PHP_EOL);
+		}
 		$this->updateStepToSuccess($step);
 	}
 
@@ -241,8 +263,12 @@ abstract class DeployAbstract implements DeployInterface
 		$step = 'uploadToApp';
 		$this->setStep($step, function () use ($remotePath) {
 			if ($this->isFirstDeploy) {
-				$command = 'rm -rf *';
-				$this->appRunCommand($this->config['app']['id'], $command, 'Clean up failed deploy');
+				$deleteFileUrl = sprintf(
+					FilesDeleteCommand::API_ENDPOINT,
+					$this->config['app']['id'],
+					DeployHelper::RELEASE_FOLDER
+				);
+				$this->sendRequest($deleteFileUrl, 'DELETE', 'Clean up failed deploy');
 			} else {
 				$this->consoleOutput->writeln('Deleting failed release');
 				$filesDeleteCommand = $this->application->find(FilesDeleteCommand::getDefaultName());
@@ -253,7 +279,8 @@ abstract class DeployAbstract implements DeployInterface
 					'--json'      => true,
 					'--yes'       => true,
 				];
-				$filesDeleteCommand->run(new ArrayInput($args), $this->consoleOutput);}
+				$filesDeleteCommand->run(new ArrayInput($args), $this->consoleOutput);
+			}
 		});
 		$filesUploadCommand = $this->application->find(FilesUploadCommand::getDefaultName());
 		$args = [
@@ -281,6 +308,7 @@ abstract class DeployAbstract implements DeployInterface
 		$this->setStep($step, function () {
 			return;
 		});
+
 		$appRunsDescribeCommand = $this->application->find(FilesUpdateUnarchiveCommand::getDefaultName());
 		$args = [
 			'command'     => FilesUpdateUnarchiveCommand::getDefaultName(),
@@ -332,6 +360,74 @@ abstract class DeployAbstract implements DeployInterface
 		} else {
 			throw new Exception('Deleting archive failed');
 		}
+	}
+
+	/**
+	 * @param string $url
+	 * @param string $httpType
+	 * @param string $progressBarMessage
+	 * @param string $body
+	 * @param array $headers
+	 * @return array
+	 * @throws GuzzleException
+	 * @throws Exception
+	 */
+	protected function sendRequest(string $url, string $httpType, string $progressBarMessage = '', string $body = '', array $headers = []): array
+	{
+		$output = !empty($progressBarMessage) ? new ConsoleOutput() : new NullOutput();
+		if (empty($headers)) {
+			$headers = [
+				'Content-type'  => 'application/vnd.api+json',
+				'Accept'        => 'application/vnd.api+json',
+				'Authorization' => 'Bearer ' . AuthHelper::getToken(),
+			];
+		}
+		$progressBar = Command::getProgressBar($progressBarMessage, $output);
+		$response = $this->httpClient->request(
+			$httpType,
+			$url,
+			[
+				'headers'  => $headers,
+				'body'     => $body,
+				'progress' => function () use ($progressBar) {
+					$progressBar->advance();
+				},
+			]
+		);
+		$progressBar->finish();
+		$output->write(PHP_EOL);
+		return [
+			'http' => $response->getStatusCode(),
+			'body' => trim($response->getBody()->getContents()),
+		];
+	}
+
+	/**
+	 * @param string $name
+	 * @param string $message
+	 * @throws GuzzleException
+	 */
+	protected function createRemoteIfFileNotExists(string $name, string $message)
+	{
+		$postFileUrl = sprintf(
+			FilesUploadCommand::API_ENDPOINT,
+			$this->config['app']['id']
+		);
+		$postFileBody = json_encode([
+			'data' => [
+				'attributes' => [
+					'is_dir' => true,
+				],
+				'id'         => $name,
+				'type'       => 'files',
+			],
+		]);
+		try {
+			$this->sendRequest($postFileUrl, 'POST', $message, $postFileBody);
+		} catch (ClientException $clientException) {
+			return;
+		}
+
 	}
 
 	/**
