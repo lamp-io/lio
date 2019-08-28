@@ -6,6 +6,7 @@ use Closure;
 use Console\App\Commands\AppRuns\AppRunsDescribeCommand;
 use Console\App\Commands\AppRuns\AppRunsNewCommand;
 use Console\App\Commands\Command;
+use Console\App\Commands\Databases\DatabasesDescribeCommand;
 use Console\App\Commands\DbBackups\DbBackupsDescribeCommand;
 use Console\App\Commands\DbBackups\DbBackupsNewCommand;
 use Console\App\Commands\DbRestores\DbRestoresDescribeCommand;
@@ -260,6 +261,202 @@ abstract class DeployAbstract implements DeployInterface
 	}
 
 	/**
+	 * @param array $localEnv
+	 * @param array $remoteEnv
+	 */
+	protected function updateEnvFileToUpload(array $localEnv, array $remoteEnv)
+	{
+		$step = 'updateEnvFileToUpload';
+		$this->setStep($step, function () use ($localEnv) {
+			$this->updateEnvFile($localEnv);
+		});
+		$this->updateEnvFile($remoteEnv);
+		$this->updateStepToSuccess($step);
+	}
+
+	/**
+	 * @param array $localEnv
+	 */
+	protected function restoreLocalEnvFile(array $localEnv)
+	{
+		$step = 'restoreLocalEnvFile';
+		$this->setStep($step, function () {
+			return;
+		});
+		$this->updateEnvFile($localEnv);
+		$this->updateStepToSuccess($step);
+	}
+
+	/**
+	 * @param array $newEnvVars
+	 */
+	protected function updateEnvFile(array $newEnvVars)
+	{
+		file_put_contents($this->appPath . '.env', '');
+		foreach ($newEnvVars as $key => $val) {
+			file_put_contents($this->appPath . '.env', $key . '=' . $val . PHP_EOL, FILE_APPEND);
+		}
+	}
+
+	/**
+	 * @param string $dbName
+	 * @throws Exception
+	 */
+	protected function importSqlDump(string $dbName)
+	{
+		$step = 'ImportSqlDump';
+		$this->setStep($step, function () {
+			return;
+		});
+		$filesUploadCommand = $this->application->find(FilesUploadCommand::getDefaultName());
+		$args = [
+			'command'     => FilesUploadCommand::getDefaultName(),
+			'file'        => $this->config['database']['sql_dump'],
+			'app_id'      => $this->config['app']['id'],
+			'remote_path' => $this->releaseFolder . self::SQL_DUMP_NAME,
+			'--json'      => true,
+		];
+		if ($filesUploadCommand->run(new ArrayInput($args), $this->consoleOutput) == '0') {
+			$command = sprintf(
+				'mysql -u %s --host=%s --password=%s  %s < %s',
+				$this->config['database']['connection']['user'],
+				$this->config['database']['connection']['host'],
+				$this->config['database']['connection']['password'],
+				$dbName,
+				$this->releaseFolder . self::SQL_DUMP_NAME
+			);
+			$this->appRunCommand(
+				$this->config['app']['id'],
+				$command,
+				'Importing sql dump'
+			);
+			$this->updateStepToSuccess($step);
+		} else {
+			throw new Exception('Uploading sql dump to app failed');
+		}
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	protected function createDatabaseUser()
+	{
+		$step = 'createDatabaseUser';
+		$this->setStep($step, function () {
+			$command = sprintf(
+				'mysql --user=root --host=%s --password=%s --execute "DROP USER \'%s\'"',
+				$this->config['database']['connection']['host'],
+				$this->config['database']['root_password'],
+				$this->config['database']['connection']['user']
+			);
+			$this->appRunCommand(
+				$this->config['app']['id'],
+				$command,
+				'Drop database user ' . $this->config['database']['connection']['user']
+			);
+		});
+		$command = sprintf(
+			'mysql --user=root --host=%s --password=%s --execute "CREATE USER \'%s\'@\'%%\' IDENTIFIED WITH mysql_native_password BY \'%s\';GRANT ALL PRIVILEGES ON * . * TO \'%s\'@\'%%\';FLUSH PRIVILEGES;"',
+			$this->config['database']['connection']['host'],
+			$this->config['database']['root_password'],
+			$this->config['database']['connection']['user'],
+			$this->config['database']['connection']['password'],
+			$this->config['database']['connection']['user']
+		);
+		$this->appRunCommand(
+			$this->config['app']['id'],
+			$command,
+			'Creating database user ' . $this->config['database']['connection']['user']
+		);
+		$this->updateStepToSuccess($step);
+	}
+
+	/**
+	 * @param string $dbId
+	 * @return bool
+	 * @throws Exception
+	 */
+	protected function isDbAlreadyRunning(string $dbId): bool
+	{
+		$appRunsNewCommand = $this->application->find(DatabasesDescribeCommand::getDefaultName());
+		$args = [
+			'command'     => DatabasesDescribeCommand::getDefaultName(),
+			'database_id' => $dbId,
+			'--json'      => true,
+		];
+		$bufferOutput = new BufferedOutput();
+		if ($appRunsNewCommand->run(new ArrayInput($args), $bufferOutput) == '0') {
+			/** @var Document $document */
+			$document = Parser::parseResponseString($bufferOutput->fetch());
+			return $document->get('data.attributes.status') === 'running';
+		} else {
+			throw new Exception('Checking db status failed');
+		}
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	protected function initDatabase()
+	{
+		$progressBar = Command::getProgressBar('Initializing database', $this->consoleOutput);
+		$progressBar->start();
+		$dbIsRunning = false;
+		while (!$dbIsRunning) {
+			$dbIsRunning = $this->isDbAlreadyRunning($this->config['database']['connection']['host']);
+			$progressBar->advance();
+		}
+		$counter = 0;
+		/** We need this hack with sleep, because status of database is running,
+		 * but it still not ready for connections so ~30-40 secs need to wait
+		 */
+		while ($counter != 50) {
+			$progressBar->advance();
+			$counter++;
+			sleep(1);
+		}
+		$progressBar->finish();
+		$this->consoleOutput->write(PHP_EOL);
+	}
+
+	/**
+	 * @param string $dbName
+	 * @throws Exception
+	 */
+	protected function createDatabase(string $dbName)
+	{
+		$step = 'CreateDatabase';
+		$this->setStep($step, function () use ($dbName) {
+			$command = sprintf(
+				'mysql --user=%s --host=%s --password=%s --execute "drop database %s;"',
+				$this->config['database']['connection']['user'],
+				$this->config['database']['connection']['host'],
+				$this->config['database']['connection']['password'],
+				$dbName
+			);
+			$this->appRunCommand(
+				$this->config['app']['id'],
+				$command,
+				'Drop database'
+			);
+		});
+
+		$command = sprintf(
+			'mysql --user=%s --host=%s --password=%s --execute "create database %s;"',
+			$this->config['database']['connection']['user'],
+			$this->config['database']['connection']['host'],
+			$this->config['database']['connection']['password'],
+			$dbName
+		);
+		$this->appRunCommand(
+			$this->config['app']['id'],
+			$command,
+			'Creating database `' . $dbName . '`'
+		);
+		$this->updateStepToSuccess($step);
+	}
+
+	/**
 	 * @param string $localFile
 	 * @param string $remotePath
 	 * @throws Exception
@@ -409,27 +606,21 @@ abstract class DeployAbstract implements DeployInterface
 	}
 
 	/**
-	 * @param array $defaultDirs
-	 * @param array $skip
+	 * @param array $directories
 	 * @param bool $recur
 	 * @throws GuzzleException
 	 */
-	protected function setUpPermissions(array $defaultDirs = [], array $skip = [], bool $recur = false)
+	protected function setUpPermissions(array $directories = [], bool $recur = false)
 	{
 		$step = 'setDirectoryPermissions';
 		$this->setStep($step, function () {
 			return;
 		});
-		$directories = [];
-		if (!empty($this->config['apache_permissions_dir'])) {
-			$directories = array_map(function ($val) use ($skip) {
-				if (strpos($val, 'storage') === false) {
-					return $this->releaseFolder . $val;
-				}
-			}, $this->config['apache_permissions_dir']);
+
+		if (!empty($this->config['apache_permissions_dir']) && is_array($this->config['apache_permissions_dir'])) {
+			$directories = array_merge($directories, $this->config['apache_permissions_dir']);
 		}
 
-		$directories = array_merge($defaultDirs, $directories);
 		foreach ($directories as $directory) {
 			try {
 				$this->sendRequest(
@@ -452,6 +643,77 @@ abstract class DeployAbstract implements DeployInterface
 				);
 			} catch (ClientException $clientException) {
 				$this->consoleOutput->writeln(PHP_EOL . '<comment>Directory ' . $directory . '/ not exists</comment>');
+			}
+		}
+		$this->updateStepToSuccess($step);
+	}
+
+	/**
+	 * @throws Exception
+	 * @throws GuzzleException
+	 */
+	protected function initSqliteDatabase()
+	{
+		$step = 'initSqliteDatabase';
+		$this->setStep($step, function () {
+			return;
+		});
+		if (!empty($this->config['database']['sql_dump'])) {
+			$filesUploadCommand = $this->application->find(FilesUploadCommand::getDefaultName());
+			$args = [
+				'command'     => FilesUploadCommand::getDefaultName(),
+				'file'        => $this->config['database']['sql_dump'],
+				'app_id'      => $this->config['app']['id'],
+				'remote_path' => DeployHelper::SQLITE_RELATIVE_REMOTE_PATH,
+				'--json'      => true,
+			];
+			if ($filesUploadCommand->run(new ArrayInput($args), $this->consoleOutput) != '0') {
+				throw new Exception('Cant up load mysqli dump');
+			}
+			$this->consoleOutput->write(PHP_EOL);
+		} else {
+			$url = sprintf(
+				FilesUploadCommand::API_ENDPOINT,
+				$this->config['app']['id']
+			);
+			$this->sendRequest($url, 'POST', 'Creating sqlite database', json_encode([
+				'data' => [
+					'attributes' => [
+						'apache_writable' => true,
+					],
+					'id'         => DeployHelper::SQLITE_RELATIVE_REMOTE_PATH,
+					'type'       => 'files',
+				],
+			]));
+		}
+		$this->updateStepToSuccess($step);
+	}
+
+	/**
+	 * @param array $skipCommands
+	 * @throws Exception
+	 */
+	protected function runCommands(array $skipCommands)
+	{
+		$step = 'runCommands';
+		$this->setStep($step, function () {
+			return;
+		});
+		if (!empty($this->config['commands'])) {
+			foreach ($this->config['commands'] as $command) {
+				foreach ($skipCommands as $skipCommand) {
+					if (preg_match('/' . $skipCommand . '/', $command)) {
+						$skip = true;
+					}
+				}
+				if (empty($skip)) {
+					$this->appRunCommand(
+						$this->config['app']['id'],
+						'cd ' . $this->releaseFolder . ' && ' . $command,
+						$command
+					);
+				}
+				$skip = false;
 			}
 		}
 		$this->updateStepToSuccess($step);
@@ -546,6 +808,5 @@ abstract class DeployAbstract implements DeployInterface
 	{
 		$this->steps[$step]['status'] = 'success';
 	}
-
 
 }

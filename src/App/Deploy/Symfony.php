@@ -29,12 +29,11 @@ class Symfony extends DeployAbstract
 	public function deployApp(string $appPath, bool $isFirstDeploy)
 	{
 		parent::deployApp($appPath, $isFirstDeploy);
-
 		$zip = $this->getZipApp();
 		$this->uploadToApp($zip, $this->releaseFolder . self::ARCHIVE_NAME);
 		$this->unarchiveApp($this->releaseFolder . self::ARCHIVE_NAME);
 		$this->deleteArchiveRemote($this->releaseFolder . self::ARCHIVE_NAME);
-		$this->setUpPermissions([$this->releaseFolder . 'var'], [], true);
+		$this->setUpPermissions([$this->releaseFolder . 'var'], true);
 		$this->symlinkRelease($this->releaseFolder . 'public', 'Linking your current release', $this->isFirstDeploy);
 		$this->deleteArchiveLocal();
 	}
