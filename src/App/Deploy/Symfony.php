@@ -36,6 +36,12 @@ class Symfony extends DeployAbstract
 		$this->setUpPermissions([$this->releaseFolder . 'var'], true);
 		$this->symlinkRelease($this->releaseFolder . 'public', 'Linking your current release', $this->isFirstDeploy);
 		$this->deleteArchiveLocal();
+		if ($this->isFirstDeploy) {
+			$this->initSqliteDatabase();
+		}
+		$dbBackupId = $this->backupDatabase();
+		$this->runCommands();
+		$this->runMigrations('bin/console doctrine:migrations:migrate --no-interaction', $dbBackupId);
 	}
 
 }

@@ -54,7 +54,7 @@ class Laravel extends DeployAbstract
 		}
 		$dbBackupId = $this->backupDatabase();
 		$this->runCommands(self::SKIP_COMMANDS);
-		$this->artisanMigrate($dbBackupId);
+		$this->runMigrations('artisan migrate --force', $dbBackupId);
 		$this->symlinkRelease($this->releaseFolder . 'public', 'Linking your current release', $this->isFirstDeploy);
 		$this->deleteArchiveLocal();
 	}
@@ -202,25 +202,4 @@ class Laravel extends DeployAbstract
 		$remoteEnv = array_merge($envFromConfig, $env);
 		return array_merge($localEnv, $remoteEnv);
 	}
-
-	/**
-	 * @param string $dbBackupId
-	 * @throws Exception
-	 */
-	private function artisanMigrate(string $dbBackupId = '')
-	{
-		$step = 'artisanMigrate';
-		$this->setStep($step, function () use ($dbBackupId) {
-			if (!empty($dbBackupId)) {
-				$this->restoreDatabase($dbBackupId);
-			}
-		});
-		$this->appRunCommand(
-			$this->config['app']['id'],
-			'php ' . $this->releaseFolder . 'artisan migrate --force',
-			'Migrating schema'
-		);
-		$this->updateStepToSuccess($step);
-	}
-
 }

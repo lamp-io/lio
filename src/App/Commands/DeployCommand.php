@@ -98,7 +98,14 @@ class DeployCommand extends Command
 				throw new Exception(ucfirst($this->configHelper->get('type')) . ' has not been found found on your directory');
 			}
 			$appId = $this->createApp($output, $input);
-			$this->createDatabase($output, $input);
+			/** Need to remove this condition after mysql support will be added for symfony deploy */
+			if ($this->configHelper->get('type') == 'symfony') {
+				$this->configHelper->set('database.system', 'sqlite');
+				$this->configHelper->set('database.type', 'internal');
+				$this->configHelper->set('database.connection.host', DeployHelper::SQLITE_ABSOLUTE_REMOTE_PATH);
+			} else {
+				$this->createDatabase($output, $input);
+			}
 
 			$this->configHelper->save();
 			if (!$this->isFirstDeploy()) {

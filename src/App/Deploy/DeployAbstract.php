@@ -106,7 +106,9 @@ abstract class DeployAbstract implements DeployInterface
 	{
 		$stepName = 'zip';
 		$this->setStep($stepName, function () {
-			unlink($this->appPath . self::ARCHIVE_NAME);
+			if (file_exists($this->appPath . self::ARCHIVE_NAME)) {
+				unlink($this->appPath . self::ARCHIVE_NAME);
+			}
 		});
 		$zipName = $this->appPath . self::ARCHIVE_NAME;
 		if (file_exists($zipName)) {
@@ -693,7 +695,7 @@ abstract class DeployAbstract implements DeployInterface
 	 * @param array $skipCommands
 	 * @throws Exception
 	 */
-	protected function runCommands(array $skipCommands)
+	protected function runCommands(array $skipCommands = [])
 	{
 		$step = 'runCommands';
 		$this->setStep($step, function () {
@@ -717,6 +719,29 @@ abstract class DeployAbstract implements DeployInterface
 			}
 		}
 		$this->updateStepToSuccess($step);
+	}
+
+	/**
+	 * @param string $migrationCommand
+	 * @param string $dbBackupId
+	 * @throws Exception
+	 */
+	protected function runMigrations(string $migrationCommand, string $dbBackupId = '')
+	{
+		$step = 'runMigrations';
+		$this->setStep($step, function () use ($dbBackupId) {
+			if (!empty($dbBackupId)) {
+				$this->restoreDatabase($dbBackupId);
+			}
+		});
+
+		$this->appRunCommand(
+			$this->config['app']['id'],
+			'php ' . $this->releaseFolder . $migrationCommand,
+			'Migrating schema'
+		);
+		$this->updateStepToSuccess($step);
+
 	}
 
 	/**
@@ -795,6 +820,8 @@ abstract class DeployAbstract implements DeployInterface
 	 */
 	protected function setStep(string $step, Closure $revertFunction)
 	{
+		/** TODO remove it */
+		sleep(1);
 		$this->steps[$step] = [
 			'status'         => 'init',
 			'revertFunction' => $revertFunction,
