@@ -54,9 +54,9 @@ class Laravel extends DeployAbstract
 		}
 		$dbBackupId = $this->backupDatabase();
 		$this->runCommands(self::SKIP_COMMANDS);
+		$this->deleteArchiveLocal();
 		$this->runMigrations('artisan migrate --force', $dbBackupId);
 		$this->symlinkRelease($this->releaseFolder . 'public', 'Linking your current release', $this->isFirstDeploy);
-		$this->deleteArchiveLocal();
 	}
 
 	/**
