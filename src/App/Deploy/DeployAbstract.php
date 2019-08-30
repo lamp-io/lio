@@ -786,6 +786,19 @@ abstract class DeployAbstract implements DeployInterface
 		$this->updateStepToSuccess($step);
 	}
 
+	protected function createSharedStorage(array $commands)
+	{
+		$step = 'createSymlinkStorage';
+		$this->setStep($step, function () {
+			return;
+		});
+
+		foreach ($commands as $command) {
+			$command['execute']($command['message']);
+		}
+		$this->updateStepToSuccess($step);
+	}
+
 	/**
 	 * @param string $name
 	 * @param string $message
@@ -820,8 +833,6 @@ abstract class DeployAbstract implements DeployInterface
 	 */
 	protected function setStep(string $step, Closure $revertFunction)
 	{
-		/** TODO remove it */
-		sleep(1);
 		$this->steps[$step] = [
 			'status'         => 'init',
 			'revertFunction' => $revertFunction,

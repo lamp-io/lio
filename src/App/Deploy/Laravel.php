@@ -33,7 +33,7 @@ class Laravel extends DeployAbstract
 		$this->uploadToApp($zip, $this->releaseFolder . self::ARCHIVE_NAME);
 		$this->unarchiveApp($this->releaseFolder . self::ARCHIVE_NAME);
 		$this->deleteArchiveRemote($this->releaseFolder . self::ARCHIVE_NAME);
-		$this->createSymlinkStorage();
+		$this->createSharedStorage($this->getSharedStorageCommands());
 		$this->setUpPermissions();
 		if ($this->isFirstDeploy) {
 			if ($this->config['database']['type'] == 'external') {
@@ -62,14 +62,10 @@ class Laravel extends DeployAbstract
 	/**
 	 * @throws Exception
 	 */
-	private function createSymlinkStorage()
+	protected function getSharedStorageCommands(): array
 	{
-		$step = 'createSymlinkStorage';
-		$this->setStep($step, function () {
-			return;
-		});
-
-		$commands = [
+		/** TODO need to rework it */
+		return [
 			'delete_public_storage'            => [
 				'message' => 'Removing release/public/storage',
 				'execute' => function (string $message) {
@@ -157,10 +153,6 @@ class Laravel extends DeployAbstract
 				},
 			],
 		];
-		foreach ($commands as $command) {
-			$command['execute']($command['message']);
-		}
-		$this->updateStepToSuccess($step);
 	}
 
 
