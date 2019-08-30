@@ -2,6 +2,7 @@
 
 namespace Console\App\Deploy;
 
+use Console\App\Commands\Files\FilesUpdateCommand;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 
@@ -33,21 +34,21 @@ class Symfony extends DeployAbstract
 		$this->uploadToApp($zip, $this->releaseFolder . self::ARCHIVE_NAME);
 		$this->unarchiveApp($this->releaseFolder . self::ARCHIVE_NAME);
 		$this->deleteArchiveRemote($this->releaseFolder . self::ARCHIVE_NAME);
-		$this->createSharedStorage($this->getSharedStorageCommands($this->getSharedDirs()));
 		$this->setUpPermissions([$this->releaseFolder . 'var'], true);
-		$this->deleteArchiveLocal();
+		$this->createSharedStorage($this->getSharedStorageCommands($this->getSharedDirs()));
 		if ($this->isFirstDeploy) {
 			$this->initSqliteDatabase();
 		}
-		$dbBackupId = $this->backupDatabase();
 		$this->runCommands();
+		$this->deleteArchiveLocal();
+		$dbBackupId = $this->backupDatabase();
 		$this->runMigrations('bin/console doctrine:migrations:migrate --no-interaction', $dbBackupId);
 		$this->symlinkRelease($this->releaseFolder . 'public', 'Linking your current release', $this->isFirstDeploy);
 	}
 
 	protected function getSharedDirs(): array
 	{
-		return $this->config['shared'] + ['var/log', 'var/sessions',];
+		return array_unique(array_merge(['var/log', 'var/sessions'], $this->config['shared']));
 	}
 
 	/**
@@ -92,12 +93,35 @@ class Symfony extends DeployAbstract
 				'message' => 'Symlink %s to release',
 				'execute' => function (string $message) use ($dirs) {
 					foreach ($dirs as $dir) {
+						$dirName = explode('/', $dir);
+						$dirName = $dirName[count($dirName) - 1];
 						$this->appRunCommand(
 							$this->config['app']['id'],
-							'ln -s /var/www/shared/' . rtrim($dir, '/') . ' ' . $this->releaseFolder . rtrim($dir, '/'),
+							'ln -s /var/www/shared/' . rtrim($dirName, '/') . ' ' . $this->releaseFolder . rtrim($dir, '/'),
 							sprintf($message, $dir)
 						);
 					}
+				},
+			],
+			'give_permissions'          => [
+				'message' => 'Apache can write in shared storage',
+				'execute' => function (string $message) {
+					$fileUpdateUrl = sprintf(
+						sprintf(
+							FilesUpdateCommand::API_ENDPOINT . '?recur=true',
+							$this->config['app']['id'],
+							'shared/storage'
+						)
+					);
+					$this->sendRequest($fileUpdateUrl, 'PATCH', $message, json_encode([
+						'data' => [
+							'attributes' => [
+								'apache_writable' => true,
+							],
+							'id'         => 'shared',
+							'type'       => 'files',
+						],
+					]));
 				},
 			],
 		];
