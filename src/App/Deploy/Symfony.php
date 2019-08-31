@@ -3,6 +3,8 @@
 namespace Console\App\Deploy;
 
 use Console\App\Commands\Files\FilesUpdateCommand;
+use Console\App\Helpers\DeployHelper;
+use Dotenv\Dotenv;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 
@@ -30,7 +32,10 @@ class Symfony extends DeployAbstract
 	public function deployApp(string $appPath, bool $isFirstDeploy)
 	{
 		parent::deployApp($appPath, $isFirstDeploy);
+		(Dotenv::create($this->appPath))->load();
+		$this->updateEnvFileToUpload($_ENV, $this->prepareEnvFile($_ENV));
 		$zip = $this->getZipApp();
+		$this->restoreLocalEnvFile($_ENV);
 		$this->uploadToApp($zip, $this->releaseFolder . self::ARCHIVE_NAME);
 		$this->unarchiveApp($this->releaseFolder . self::ARCHIVE_NAME);
 		$this->deleteArchiveRemote($this->releaseFolder . self::ARCHIVE_NAME);
@@ -46,7 +51,7 @@ class Symfony extends DeployAbstract
 		$this->symlinkRelease($this->releaseFolder . 'public', 'Linking your current release', $this->isFirstDeploy);
 	}
 
-	protected function getSharedDirs(): array
+	private function getSharedDirs(): array
 	{
 		return array_unique(array_merge(['var/log', 'var/sessions'], $this->config['shared']));
 	}
@@ -56,7 +61,7 @@ class Symfony extends DeployAbstract
 	 * @return array
 	 * @throws Exception
 	 */
-	protected function getSharedStorageCommands(array $dirs): array
+	private function getSharedStorageCommands(array $dirs): array
 	{
 		return [
 			'create_shared'             => [
@@ -125,6 +130,22 @@ class Symfony extends DeployAbstract
 				},
 			],
 		];
+	}
+
+	/**
+	 * @param array $localEnv
+	 * @return array
+	 */
+	private function prepareEnvFile(array $localEnv): array
+	{
+		if ($this->config['database']['system'] == 'sqlite') {
+			$env = [
+				'DATABASE_URL' => 'sqlite:///' . DeployHelper::SQLITE_ABSOLUTE_REMOTE_PATH,
+			];
+		}
+		$envFromConfig = !empty($this->config['environment']) ? $this->config['environment'] : [];
+		$remoteEnv = array_merge($envFromConfig, $env);
+		return array_merge($localEnv, $remoteEnv);
 	}
 
 }
