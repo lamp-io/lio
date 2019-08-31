@@ -16,6 +16,8 @@ class Laravel extends DeployAbstract
 		'artisan migrate',
 	];
 
+	const SHARED_DIR = 'storage';
+
 	/**
 	 * @param string $appPath
 	 * @param bool $isFirstDeploy
@@ -33,7 +35,7 @@ class Laravel extends DeployAbstract
 		$this->uploadToApp($zip, $this->releaseFolder . self::ARCHIVE_NAME);
 		$this->unarchiveApp($this->releaseFolder . self::ARCHIVE_NAME);
 		$this->deleteArchiveRemote($this->releaseFolder . self::ARCHIVE_NAME);
-		$this->createSharedStorage($this->getSharedStorageCommands());
+		$this->createSharedStorage($this->getSharedStorageCommands($this->getSharedDirs()));
 		$this->setUpPermissions();
 		if ($this->isFirstDeploy) {
 			if ($this->config['database']['type'] == 'external') {
@@ -59,12 +61,28 @@ class Laravel extends DeployAbstract
 		$this->symlinkRelease($this->releaseFolder . 'public', 'Linking your current release', $this->isFirstDeploy);
 	}
 
+	private function getSharedDirs(): array
+	{
+		if (!empty($this->config['shared'])) {
+			foreach ($this->config['shared'] as $key => $value) {
+				if (preg_match('/' . self::SHARED_DIR . '/', $value)) {
+					unset($this->config['shared'][$key]);
+				}
+			}
+		}
+		return array_merge(
+			[self::SHARED_DIR],
+			!empty($this->config['shared']) ? $this->config['shared'] : []
+		);
+	}
+
 	/**
+	 * @param array $dirs
+	 * @return array
 	 * @throws Exception
 	 */
-	protected function getSharedStorageCommands(): array
+	protected function getSharedStorageCommands(array $dirs): array
 	{
-		/** TODO need to rework it */
 		return [
 			'delete_public_storage'            => [
 				'message' => 'Removing release/public/storage',
@@ -89,33 +107,47 @@ class Laravel extends DeployAbstract
 				},
 			],
 			'copy_storage_to_shared'           => [
-				'message' => 'Copying release storage to shared folder',
-				'execute' => function (string $message) {
-					$this->appRunCommand(
-						$this->config['app']['id'],
-						'cp -rv ' . $this->releaseFolder . 'storage/ shared/',
-						$message
-					);
+				'message' => 'Copying release %s to shared folder',
+				'execute' => function (string $message) use ($dirs) {
+					foreach ($dirs as $dir) {
+						if (file_exists($this->appPath . $dir)) {
+							$this->appRunCommand(
+								$this->config['app']['id'],
+								'cp -rv ' . $this->releaseFolder . rtrim($dir, '/') . '/ shared/',
+								sprintf($message, $dir)
+							);
+						}
+					}
 				},
 			],
 			'delete_release_storage'           => [
-				'message' => 'Removing storage folder from release',
-				'execute' => function (string $message) {
-					$this->appRunCommand(
-						$this->config['app']['id'],
-						'rm -rf ' . $this->releaseFolder . 'storage/',
-						$message
-					);
+				'message' => 'Removing %s folder from release',
+				'execute' => function (string $message) use ($dirs) {
+					foreach ($dirs as $dir) {
+						if (file_exists($this->appPath . $dir)) {
+							$this->appRunCommand(
+								$this->config['app']['id'],
+								'rm -rf ' . $this->releaseFolder . rtrim($dir, '/') . '/',
+								sprintf($message, $dir)
+							);
+						}
+					}
 				},
 			],
 			'symlink_shared_to_release'        => [
 				'message' => 'Symlink shared storage to release',
-				'execute' => function (string $message) {
-					$this->appRunCommand(
-						$this->config['app']['id'],
-						'ln -s /var/www/shared/storage ' . $this->releaseFolder . 'storage',
-						$message
-					);
+				'execute' => function (string $message) use ($dirs) {
+					foreach ($dirs as $dir) {
+						if (file_exists($this->appPath . $dir)) {
+							$dirName = explode('/', $dir);
+							$dirName = $dirName[count($dirName) - 1];
+							$this->appRunCommand(
+								$this->config['app']['id'],
+								'ln -s /var/www/shared/' . rtrim($dirName, '/') . ' ' . $this->releaseFolder . rtrim($dir, '/'),
+								sprintf($message, $dir)
+							);
+						}
+					}
 				},
 			],
 			'symlink_shared_to_release_public' => [
@@ -129,27 +161,28 @@ class Laravel extends DeployAbstract
 				},
 			],
 			'give_permissions'                 => [
-				'message' => 'Apache can write in shared storage',
-				'execute' => function (string $message) {
-					if ($this->isFirstDeploy) {
+				'message' => 'Apache can write in shared/%s',
+				'execute' => function (string $message) use ($dirs) {
+					foreach ($dirs as $dir) {
+						$dirName = explode('/', $dir);
+						$dirName = $dirName[count($dirName) - 1];
 						$fileUpdateUrl = sprintf(
 							sprintf(
 								FilesUpdateCommand::API_ENDPOINT . '?recur=true',
 								$this->config['app']['id'],
-								'shared/storage'
+								'shared/' . rtrim($dirName, '/')
 							)
 						);
-						$this->sendRequest($fileUpdateUrl, 'PATCH', $message, json_encode([
+						$this->sendRequest($fileUpdateUrl, 'PATCH', sprintf($message, $dir), json_encode([
 							'data' => [
 								'attributes' => [
 									'apache_writable' => true,
 								],
-								'id'         => 'shared/storage',
+								'id'         => 'shared/' . rtrim($dirName, '/'),
 								'type'       => 'files',
 							],
 						]));
 					}
-
 				},
 			],
 		];

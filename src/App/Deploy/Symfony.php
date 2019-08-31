@@ -10,6 +10,8 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class Symfony extends DeployAbstract
 {
+	const SHARED_DIRS = ['var/log', 'var/sessions'];
+
 	/**
 	 *
 	 */
@@ -39,8 +41,8 @@ class Symfony extends DeployAbstract
 		$this->uploadToApp($zip, $this->releaseFolder . self::ARCHIVE_NAME);
 		$this->unarchiveApp($this->releaseFolder . self::ARCHIVE_NAME);
 		$this->deleteArchiveRemote($this->releaseFolder . self::ARCHIVE_NAME);
-		$this->setUpPermissions([$this->releaseFolder . 'var'], true);
 		$this->createSharedStorage($this->getSharedStorageCommands($this->getSharedDirs()));
+		$this->setUpPermissions([$this->releaseFolder . 'var'], true);
 		if ($this->isFirstDeploy) {
 			$this->initSqliteDatabase();
 		}
@@ -53,7 +55,11 @@ class Symfony extends DeployAbstract
 
 	private function getSharedDirs(): array
 	{
-		return array_unique(array_merge(['var/log', 'var/sessions'], $this->config['shared']));
+		return array_unique(
+			array_merge(
+				self::SHARED_DIRS,
+				!empty($this->config['shared']) ? $this->config['shared'] : []
+			));
 	}
 
 	/**
@@ -74,11 +80,13 @@ class Symfony extends DeployAbstract
 				'message' => 'Copying release %s to shared folder',
 				'execute' => function (string $message) use ($dirs) {
 					foreach ($dirs as $dir) {
-						$this->appRunCommand(
-							$this->config['app']['id'],
-							'cp -rv ' . $this->releaseFolder . rtrim($dir, '/') . '/ shared/',
-							sprintf($message, $dir)
-						);
+						if (file_exists($this->appPath . $dir)) {
+							$this->appRunCommand(
+								$this->config['app']['id'],
+								'cp -rv ' . $this->releaseFolder . rtrim($dir, '/') . '/ shared/',
+								sprintf($message, $dir)
+							);
+						}
 					}
 				},
 			],
@@ -86,11 +94,13 @@ class Symfony extends DeployAbstract
 				'message' => 'Removing %s from release',
 				'execute' => function (string $message) use ($dirs) {
 					foreach ($dirs as $dir) {
-						$this->appRunCommand(
-							$this->config['app']['id'],
-							'rm -rf ' . $this->releaseFolder . rtrim($dir, '/') . '/',
-							sprintf($message, $dir)
-						);
+						if (file_exists($this->appPath . $dir)) {
+							$this->appRunCommand(
+								$this->config['app']['id'],
+								'rm -rf ' . $this->releaseFolder . rtrim($dir, '/') . '/',
+								sprintf($message, $dir)
+							);
+						}
 					}
 				},
 			],
@@ -98,35 +108,41 @@ class Symfony extends DeployAbstract
 				'message' => 'Symlink %s to release',
 				'execute' => function (string $message) use ($dirs) {
 					foreach ($dirs as $dir) {
-						$dirName = explode('/', $dir);
-						$dirName = $dirName[count($dirName) - 1];
-						$this->appRunCommand(
-							$this->config['app']['id'],
-							'ln -s /var/www/shared/' . rtrim($dirName, '/') . ' ' . $this->releaseFolder . rtrim($dir, '/'),
-							sprintf($message, $dir)
-						);
+						if (file_exists($this->appPath . $dir)) {
+							$dirName = explode('/', $dir);
+							$dirName = $dirName[count($dirName) - 1];
+							$this->appRunCommand(
+								$this->config['app']['id'],
+								'ln -s /var/www/shared/' . rtrim($dirName, '/') . ' ' . $this->releaseFolder . rtrim($dir, '/'),
+								sprintf($message, $dir)
+							);
+						}
 					}
 				},
 			],
 			'give_permissions'          => [
-				'message' => 'Apache can write in shared storage',
-				'execute' => function (string $message) {
-					$fileUpdateUrl = sprintf(
-						sprintf(
-							FilesUpdateCommand::API_ENDPOINT . '?recur=true',
-							$this->config['app']['id'],
-							'shared/storage'
-						)
-					);
-					$this->sendRequest($fileUpdateUrl, 'PATCH', $message, json_encode([
-						'data' => [
-							'attributes' => [
-								'apache_writable' => true,
+				'message' => 'Apache can write in shared/%s',
+				'execute' => function (string $message) use ($dirs) {
+					foreach ($dirs as $dir) {
+						$dirName = explode('/', $dir);
+						$dirName = $dirName[count($dirName) - 1];
+						$fileUpdateUrl = sprintf(
+							sprintf(
+								FilesUpdateCommand::API_ENDPOINT . '?recur=true',
+								$this->config['app']['id'],
+								'shared/' . rtrim($dirName, '/')
+							)
+						);
+						$this->sendRequest($fileUpdateUrl, 'PATCH', sprintf($message, $dir), json_encode([
+							'data' => [
+								'attributes' => [
+									'apache_writable' => true,
+								],
+								'id'         => 'shared/' . rtrim($dirName, '/'),
+								'type'       => 'files',
 							],
-							'id'         => 'shared',
-							'type'       => 'files',
-						],
-					]));
+						]));
+					}
 				},
 			],
 		];
