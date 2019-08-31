@@ -638,7 +638,7 @@ abstract class DeployAbstract implements DeployInterface
 							'attributes' => [
 								'apache_writable' => true,
 							],
-							'id'         => $directory,
+							'id'         => $this->releaseFolder . $directory,
 							'type'       => 'files',
 						],
 					])
@@ -728,6 +728,9 @@ abstract class DeployAbstract implements DeployInterface
 	 */
 	protected function runMigrations(string $migrationCommand, string $dbBackupId = '')
 	{
+		if (!empty($this->config['no_migrations'])) {
+			return;
+		}
 		$step = 'runMigrations';
 		$this->setStep($step, function () use ($dbBackupId) {
 			if (!empty($dbBackupId)) {
