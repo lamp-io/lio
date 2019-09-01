@@ -615,3 +615,18 @@ Composer scripts
 * `apache_permissions_dir` ***(list)*** Select a dir that need to has apache permissions to write on it. NOTE: all default files that required apache write permissions, will be updated automatically
 * `retain` ***(int)*** How many old releases should be kept (Default value 10)
     
+# Examples
+
+* Example of lamp.io.yaml config for deploy with sqlite db (other values will be added during deploy process)
+```yaml
+database:
+    type: internal
+    system: sqlite
+```
+
+* Example of lamp.io.yaml config for deploy with external mysql db (other values will be added during deploy process)
+```yaml
+database:
+    type: external
+    system: mysql
+```
