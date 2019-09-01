@@ -3,10 +3,9 @@
 
 namespace Console\App\Commands\Apps;
 
-
-use Art4\JsonApiClient\Exception\ValidationException;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Input\InputArgument;
@@ -47,14 +46,17 @@ class AppsNewCommand extends Command
 			->addOption('replicas', 'r', InputOption::VALUE_REQUIRED, 'The number current number replicas available. 0 stops app. INT', 1)
 			->addOption('vcpu', null, InputOption::VALUE_REQUIRED, 'The number of virtual cpu cores available (maximum: 4, minimum: 0.25) FLOAT', 0.25)
 			->addOption('github_webhook_secret', null, InputOption::VALUE_REQUIRED, 'Github web-hook secret token', '')
-			->addOption('webhook_run_command', null, InputOption::VALUE_REQUIRED, 'Github web-hook command', '');
+			->addOption('webhook_run_command', null, InputOption::VALUE_REQUIRED, 'Github web-hook command', '')
+			->addOption('hostname', null, InputOption::VALUE_REQUIRED, 'The hostname for the app', '')
+			->addOption('hostname_certificate_valid', null, InputOption::VALUE_NONE, 'The hostname for the app')
+			->addOption('public', 'p', InputOption::VALUE_NONE, 'Public for read-only');
 	}
 
 	/**
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
 	 * @return int|null|void
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -79,9 +81,6 @@ class AppsNewCommand extends Command
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
 			return 1;
-		} catch (\InvalidArgumentException $invalidArgumentException) {
-			$output->writeln($invalidArgumentException->getMessage());
-			return 1;
 		}
 	}
 
@@ -99,16 +98,19 @@ class AppsNewCommand extends Command
 				'attributes' =>
 					array_merge(
 						[
-							'description'           => (string)$input->getOption('description'),
-							'httpd_conf'            => $httpdConfig,
-							'max_replicas'          => (int)$input->getOption('max_replicas'),
-							'memory'                => (string)$input->getOption('memory'),
-							'min_replicas'          => (int)$input->getOption('min_replicas'),
-							'php_ini'               => $phpConfig,
-							'replicas'              => (int)$input->getOption('replicas'),
-							'vcpu'                  => (float)$input->getOption('vcpu'),
-							'github_webhook_secret' => (string)$input->getOption('github_webhook_secret'),
-							'webhook_run_command'   => (string)$input->getOption('webhook_run_command'),
+							'description'                => (string)$input->getOption('description'),
+							'httpd_conf'                 => $httpdConfig,
+							'max_replicas'               => (int)$input->getOption('max_replicas'),
+							'memory'                     => (string)$input->getOption('memory'),
+							'min_replicas'               => (int)$input->getOption('min_replicas'),
+							'php_ini'                    => $phpConfig,
+							'replicas'                   => (int)$input->getOption('replicas'),
+							'vcpu'                       => (float)$input->getOption('vcpu'),
+							'github_webhook_secret'      => (string)$input->getOption('github_webhook_secret'),
+							'webhook_run_command'        => (string)$input->getOption('webhook_run_command'),
+							'hostname'                   => (string)$input->getOption('hostname'),
+							'hostname_certificate_valid' => (bool)$input->getOption('hostname_certificate_valid'),
+							'public'                     => (bool)$input->getOption('public'),
 						],
 						!empty($input->getArgument('organization_id')) ? ['organization_id' => (string)$input->getArgument('organization_id')] : []
 					),
