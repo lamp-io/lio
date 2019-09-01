@@ -613,5 +613,7 @@ Composer scripts
     * `root_password` ***(string)*** DB root password
 * `environment` ***(dictionary)*** Environment variables that will be added to .env file (e.g foo: bar)
 * `apache_permissions_dir` ***(list)*** Select a dir that need to has apache permissions to write on it. NOTE: all default files that required apache write permissions, will be updated automatically
+* `commands` ***(dictionary)*** Commands that should be runt before symlink release (Please note that you can not add here migrate commands, it will be runt by default)
+* `no_migrations` ***(bool)*** Is need to run migrations, default TRUE
 * `retain` ***(int)*** How many old releases should be kept (Default value 10)
     
