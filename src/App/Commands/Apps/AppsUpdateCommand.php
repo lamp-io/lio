@@ -55,7 +55,7 @@ class AppsUpdateCommand extends Command
 			->addOption('github_webhook_secret', null, InputOption::VALUE_REQUIRED, 'Github web-hook secret token', '')
 			->addOption('webhook_run_command', null, InputOption::VALUE_REQUIRED, 'Github web-hook command', '')
 			->addOption('hostname', null, InputOption::VALUE_REQUIRED, 'The hostname for the app', '')
-			->addOption('hostname_certificate_valid', null, InputOption::VALUE_NONE, 'The hostname for the app')
+			->addOption('hostname_certificate_valid', null, InputOption::VALUE_NONE, 'Is hostname certificate valid')
 			->addOption('public', 'p', InputOption::VALUE_NONE, 'Public for read-only');
 	}
 
