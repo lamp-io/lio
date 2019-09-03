@@ -80,7 +80,7 @@ Commands
     * `<app_id>(string)` The ID of the app
     
 
-3. #### apps:new <organization_id> [-d][--description] [--httpd_conf] [--max_replicas] [-m][--memory] [--min_replicas] [--php_ini] [-r][--replicas] [--vcpu] [--github_webhook_secret] [--webhook_run_command]
+3. #### apps:new <organization_id> [-d][--description] [--httpd_conf] [--max_replicas] [-m][--memory] [--min_replicas] [--php_ini] [-r][--replicas] [--vcpu] [--github_webhook_secret] [--webhook_run_command] [--hostname] [--hostname_certificate_valid] [--public]
 
     Will allow you to create an app
 
@@ -98,8 +98,11 @@ Commands
     * `[--php_ini]{default php.ini}` Path to your php.ini
     * `[-r][--replicas](int){1}` The number current number replicas available. 0 stops app.
     * `[--vcpu](float){0.25} `The number of virtual cpu cores available (maximum: 4, minimum: 0.25)
-    * `[--github_webhook_secret](string){''}` Github web-hook secret token
-    * `[--webhook_run_command](string){''}` Github web-hook command
+    * `[--github_webhook_secret](string)` Github web-hook secret token
+    * `[--webhook_run_command](string)` Github web-hook command
+    * `[--hostname](string)` The hostname for the app
+    * `[--hostname_certificate_valid](bool)` Is hostname certificate valid
+    * `[--public](bool)` Public for read-only
     
 4. #### apps:update <app_id> <organization_id>  [-d][--description] [--httpd_conf] [--max_replicas] [-m][--memory] [--min_replicas] [--php_ini] [-r][--replicas] [--vcpu]
     
@@ -122,6 +125,9 @@ Commands
     * `[--vcpu](float){0.25} `The number of virtual cpu cores available (maximum: 4, minimum: 0.25)
     * `[--github_webhook_secret](string){''}` Github web-hook secret token
     * `[--webhook_run_command](string){''}` Github web-hook command
+    * `[--hostname](string)` The hostname for the app
+    * `[--hostname_certificate_valid](bool)` Is hostname certificate valid
+    * `[--public](bool)` Public for read-only
     
 5. #### apps:delete <app_id> [--yes][-y]
 
@@ -597,7 +603,8 @@ Composer scripts
 * `release` ***(int)*** Id of your release (this value will be set automatically)
 * `type` ***(string)*** Type of your application (e.g laravel, symfony)
 * `app` ***(dictionary)*** Settings related to your lamp-io app
-    * `attributes` ***(dictionary)*** Lamp-io app attributes, it use same values has [apps:new](#appsnew-organization_id--d--description---httpd_conf---max_replicas--m--memory---min_replicas---php_ini--r--replicas---vcpu---github_webhook_secret---webhook_run_command) command options
+    * `attributes` ***(dictionary)*** Lamp-io app attributes, it use same values has [apps:new](#appsnew-organization_id--d--description---httpd_conf---max_replicas--m--memory---min_replicas---php_ini--r--replicas---vcpu---github_webhook_secret---webhook_run_command---hostname---hostname_certificate_valid---public)
+     command options
     * `id` ***(string)*** Lamp-io app id
     * `url` ***(string)*** Web app url (this value will be set automatically)
 * `database` ***(dictionary)*** Settings related to your database
@@ -617,3 +624,18 @@ Composer scripts
 * `no_migrations` ***(bool)*** Is need to run migrations, default TRUE
 * `retain` ***(int)*** How many old releases should be kept (Default value 10)
     
+# Examples
+
+* Example of lamp.io.yaml config for deploy with sqlite db (other values will be added during deploy process)
+```yaml
+database:
+    type: internal
+    system: sqlite
+```
+
+* Example of lamp.io.yaml config for deploy with external mysql db (other values will be added during deploy process)
+```yaml
+database:
+    type: external
+    system: mysql
+```
