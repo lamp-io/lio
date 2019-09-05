@@ -392,7 +392,7 @@ Commands
     * `[--human-readable](bool){false}` Format size values from raw bytes to human readable format
     * `[-r][--recursive](bool){false}` Command is performed on all files or objects under the specified path
 
-2. #### files:upload <file> <app_id> <remote_path>
+2. #### files:upload <file> <app_id> <file_id>
 
     Upload file to selected app
 
@@ -400,7 +400,7 @@ Commands
 
     * `<file>(string)` Path to file, that should be uploaded
     * `<app_id>(string)` The ID of the app
-    * `<remote_path>(string)` Path on app, where uploaded file should be saved
+    * `<file_id>(string)` Path on app, where uploaded file should be saved
 
 3. #### files:download <app_id> <file_id> <dir>
 
@@ -412,24 +412,24 @@ Commands
     * `<file_id>(string)` The ID of the file. The ID is also the file path relative to its app root.
     * `<dir>(string){$PWD}` Path to directory, where should be stored downloaded file. Default value current working directory
 
-4. #### files:update <app_id> [<remote_path>] [<local_file>] [-r][--recur] [--command] [--source]
+4. #### files:update <app_id> [<file_id>] [<local_file>] [-r][--recur] [--command] [--source]
 
    Update file at file_id(file path including file name, relative to app root)
 
    Arguments:
 
    * `<app_id(string)>` The ID of the app
-   * `<remote_path>(string)[optional]{}` File path on app, that should be updated
+   * `<file_id>(string)[optional]{}` File path on app, that should be updated
    * `<local_file>(string)[optional]{}` Path to a local file; this is uploaded to remote_path
 
-5. #### files:delete <app_id> <remote_path> [--yes][-y]
+5. #### files:delete <app_id> <file_id> [--yes][-y]
 
     Delete file/directory on selected app
 
     Arguments:
 
     * `<app_id>(string)` The ID of the app
-    * `<remote_path>(string)` Remote path on app of file to delete
+    * `<file_id>(string)` Remote path on app of file to delete
 
     Options:
 
@@ -437,33 +437,33 @@ Commands
 
 ### Files sub commands:
 
-1. #### files:update:unarchive <app_id> <remote_path>
+1. #### files:update:unarchive <app_id> <file_id>
 
     Extract archive file
 
     Arguments:
 
     * `<app_id>(string)` The ID of the app
-    * `<remote_path>(string)` File path on app, that should be unarchived
+    * `<file_id>(string)` File path on app, that should be unarchived
 
-2. ### files:update:fetch <app_id> <remote_path> <source>
+2. ### files:update:fetch <app_id> <file_id> <source>
 
     Fetch file from URL
 
     Arguments:
 
     * `<app_id>(string)` The ID of the app
-    * `<remote_path>(string)` File path on app, that should be filled with fetched data
+    * `<file_id>(string)` File path on app, that should be filled with fetched data
     * `<source>(string)` URL to fetch
 
-3. ### files:update:move <app_id> <remote_path> <move_path>
+3. ### files:update:move <app_id> <file_id> <move_path>
 
     Move file to another directory
 
     Arguments:
 
     * `<app_id>(string)` The ID of the app
-    * `<remote_path>(string)` File path on app, that should be filled with fetched data
+    * `<file_id>(string)` File path on app, that should be filled with fetched data
     * `<move_path>(string)` File path on app, which should be moved. NOTE: * target directory MUST exists, * move path MUST have same name as a target file
 
 ### Logs

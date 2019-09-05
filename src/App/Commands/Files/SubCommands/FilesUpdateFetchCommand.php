@@ -29,7 +29,7 @@ class FilesUpdateFetchCommand extends Command
 		$this->setDescription('Fetch file from URL')
 			->setHelp('https://www.lamp.io/api#/files/filesUpdateID')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addArgument('remote_path', InputArgument::REQUIRED, 'File ID of file to fetch')
+			->addArgument('file_id', InputArgument::REQUIRED, 'File ID of file to fetch')
 			->addArgument('source', InputArgument::REQUIRED, 'URL to fetch');
 	}
 
@@ -55,7 +55,7 @@ class FilesUpdateFetchCommand extends Command
 				[
 					'headers'  => $this->httpHelper->getHeaders(),
 					'body'     => $this->getRequestBody(
-						$input->getArgument('remote_path')
+						$input->getArgument('file_id')
 					),
 					'progress' => function () use ($progressBar) {
 						$progressBar->advance();
@@ -64,7 +64,7 @@ class FilesUpdateFetchCommand extends Command
 			if (!empty($input->getOption('json'))) {
 				$output->writeln($response->getBody()->getContents());
 			} else {
-				$output->writeln(PHP_EOL . '<info>Success, file ' . $input->getArgument('remote_path') . ' has been filled, with fetched data</info>');
+				$output->writeln(PHP_EOL . '<info>Success, file ' . $input->getArgument('file_id') . ' has been filled, with fetched data</info>');
 			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());

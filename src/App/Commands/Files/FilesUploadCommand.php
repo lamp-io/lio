@@ -26,7 +26,7 @@ class FilesUploadCommand extends Command
 			->setHelp('Upload file to selected app')
 			->addArgument('file', InputArgument::REQUIRED, 'Local path of file to upload')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addArgument('remote_path', InputArgument::REQUIRED, 'File ID of file to save');
+			->addArgument('file_id', InputArgument::REQUIRED, 'File ID of file to save');
 	}
 
 	/**
@@ -56,7 +56,7 @@ class FilesUploadCommand extends Command
 					'multipart' => [
 						[
 							'name'     => $this->getRemoteFileName(
-								$input->getArgument('remote_path'),
+								$input->getArgument('file_id'),
 								$input->getArgument('file')
 							),
 							'contents' => fopen($input->getArgument('file'), 'r'),
@@ -68,7 +68,7 @@ class FilesUploadCommand extends Command
 				]);
 			if (empty($input->getOption('json'))) {
 				$output->writeln(PHP_EOL . '<info>File ' . $this->getRemoteFileName(
-						$input->getArgument('remote_path'),
+						$input->getArgument('file_id'),
 						$input->getArgument('file')
 					) . ' successfully uploaded</info>');
 			}
