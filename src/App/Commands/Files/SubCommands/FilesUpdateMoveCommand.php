@@ -28,8 +28,8 @@ class FilesUpdateMoveCommand extends Command
 		$this->setDescription('Move file to another directory')
 			->setHelp('https://www.lamp.io/api#/files/filesUpdateID')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addArgument('remote_path', InputArgument::REQUIRED, 'File path on app, that should be moved')
-			->addArgument('move_path', InputArgument::REQUIRED, 'File path on app, which should be moved. NOTE: * target directory MUST exists, * move path MUST have same name as a target file');
+			->addArgument('remote_path', InputArgument::REQUIRED, 'File ID of file to move')
+			->addArgument('move_path', InputArgument::REQUIRED, 'The target File ID to move to. NOTE: The target directory must exist');
 	}
 
 	/**

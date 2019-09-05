@@ -25,7 +25,7 @@ class FilesDeleteCommand extends Command
 		$this->setDescription('Remove file/directory from your app')
 			->setHelp('https://www.lamp.io/api#/files/filesDestroy')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addArgument('remote_path', InputArgument::REQUIRED, 'Remote path on app, what file/directory you need to delete')
+			->addArgument('remote_path', InputArgument::REQUIRED, 'File ID of file to delete')
 			->addOption('yes', 'y', InputOption::VALUE_NONE, 'Skip confirm delete question');
 	}
 

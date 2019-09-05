@@ -26,11 +26,11 @@ class FilesUpdateFetchCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('Fill file with fetched data')
+		$this->setDescription('Fetch file from URL')
 			->setHelp('https://www.lamp.io/api#/files/filesUpdateID')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addArgument('remote_path', InputArgument::REQUIRED, 'File path on app, that should be filled with fetched data')
-			->addArgument('source', InputArgument::REQUIRED, 'A URL that should be fetched');
+			->addArgument('remote_path', InputArgument::REQUIRED, 'File ID of file to fetch')
+			->addArgument('source', InputArgument::REQUIRED, 'URL to fetch');
 	}
 
 	/**

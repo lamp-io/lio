@@ -414,13 +414,13 @@ Commands
 
 4. #### files:update <app_id> [<remote_path>] [<local_file>] [-r][--recur] [--command] [--source]
 
-   This will update the file at specified file ID (file path including file name, relative to app root)
+   Update file at file_id(file path including file name, relative to app root)
 
    Arguments:
 
    * `<app_id(string)>` The ID of the app
    * `<remote_path>(string)[optional]{}` File path on app, that should be updated
-   * `<local_file>(string)[optional]{}` Path to a local file, which content will sent to remote. If not specified, will make your <remote_path> appache writable
+   * `<local_file>(string)[optional]{}` Path to a local file; this is uploaded to remote_path
 
 5. #### files:delete <app_id> <remote_path> [--yes][-y]
 
@@ -429,7 +429,7 @@ Commands
     Arguments:
 
     * `<app_id>(string)` The ID of the app
-    * `<remote_path>(string)` Remote path on app, what file/directory you need to delete
+    * `<remote_path>(string)` Remote path on app of file to delete
 
     Options:
 
@@ -448,13 +448,13 @@ Commands
 
 2. ### files:update:fetch <app_id> <remote_path> <source>
 
-    Fill file with fetched data
+    Fetch file from URL
 
     Arguments:
 
     * `<app_id>(string)` The ID of the app
     * `<remote_path>(string)` File path on app, that should be filled with fetched data
-    * `<source>(string)` A URL that should be fetched
+    * `<source>(string)` URL to fetch
 
 3. ### files:update:move <app_id> <remote_path> <move_path>
 

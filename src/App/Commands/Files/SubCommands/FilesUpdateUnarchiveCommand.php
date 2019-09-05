@@ -26,7 +26,7 @@ class FilesUpdateUnarchiveCommand extends Command
 		$this->setDescription('Extract archive file')
 			->setHelp('https://www.lamp.io/api#/files/filesUpdateID')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addArgument('remote_path', InputArgument::REQUIRED, 'File path on app, that should be unarchived');
+			->addArgument('remote_path', InputArgument::REQUIRED, 'File ID of file to unarchive');
 	}
 
 	/**
