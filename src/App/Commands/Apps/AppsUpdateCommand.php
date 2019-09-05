@@ -43,7 +43,7 @@ class AppsUpdateCommand extends Command
 		$this->setDescription('Creates a new app')
 			->setHelp('Allow you to create app, api reference https://www.lamp.io/api#/apps/appsCreate')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addOption('organization_id', null, InputOption::VALUE_REQUIRED, 'The ID(uuid) of the organization this app belongs to. STRING')
+			->addOption('organization_id', null, InputOption::VALUE_REQUIRED, 'The ID of the organization this app belongs to. STRING')
 			->addOption('description', 'd', InputOption::VALUE_REQUIRED, 'A description', '')
 			->addOption(self::HTTPD_CONF_OPTION_NAME, null, InputOption::VALUE_REQUIRED, 'Path to your httpd.conf', '')
 			->addOption('max_replicas', null, InputOption::VALUE_REQUIRED, 'The maximum number of auto-scaled replicas INT', '')

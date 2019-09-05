@@ -21,11 +21,11 @@ class FilesUpdateCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('This will update the file at specified file ID (file path including file name, relative to app root)')
+		$this->setDescription('Update file at file_id(file path including file name, relative to app root)')
 			->setHelp('https://www.lamp.io/api#/files/filesUpdateID')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addArgument('remote_path', InputArgument::OPTIONAL, 'File path on app, that should be updated.  If not specified, will make your app root appache writable', '')
-			->addArgument('file', InputArgument::OPTIONAL, 'Path to a local file, which content will sent to remote. If not specified, will make your <remote_path> appache writable', '');
+			->addArgument('remote_path', InputArgument::OPTIONAL, 'File ID of file to update.  If omitted, update app root directory', '')
+			->addArgument('file', InputArgument::OPTIONAL, 'Path to a local file; this is uploaded to remote_path', '');
 	}
 
 	/**

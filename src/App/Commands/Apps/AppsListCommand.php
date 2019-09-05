@@ -26,7 +26,7 @@ class AppsListCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('gets the set of apps from the org associated with your token')
+		$this->setDescription('Returns the apps for an organization')
 			->setHelp('try rebooting');
 	}
 

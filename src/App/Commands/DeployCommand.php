@@ -65,7 +65,7 @@ class DeployCommand extends Command
 	 */
 	protected function configure()
 	{
-		$this->setDescription('Deploy your app.')
+		$this->setDescription('Deploy your app to lamp.io')
 			->addArgument('dir', InputArgument::OPTIONAL, 'Path to a directory of your application, default value current working directory', getcwd())
 			->addOption('laravel', null, InputOption::VALUE_NONE, 'Deploy laravel app')
 			->addOption('symfony', null, InputOption::VALUE_NONE, 'Deploy symfony app');

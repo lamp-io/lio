@@ -24,9 +24,9 @@ class FilesUploadCommand extends Command
 		parent::configure();
 		$this->setDescription('Creates new file')
 			->setHelp('Upload file to selected app')
-			->addArgument('file', InputArgument::REQUIRED, 'Path to file, that should be uploaded')
+			->addArgument('file', InputArgument::REQUIRED, 'Local path of file to upload')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addArgument('remote_path', InputArgument::REQUIRED, 'Path on app, where uploaded file should be saved');
+			->addArgument('remote_path', InputArgument::REQUIRED, 'File ID of file to save');
 	}
 
 	/**

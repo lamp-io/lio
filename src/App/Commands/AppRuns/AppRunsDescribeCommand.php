@@ -29,9 +29,9 @@ class AppRunsDescribeCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('Get info about runned command')
+		$this->setDescription('Return app run')
 			->setHelp('https://www.lamp.io/api#/app_runs/appRunsCreate')
-			->addArgument('app_run_id', InputArgument::REQUIRED, 'ID of runned command');
+			->addArgument('app_run_id', InputArgument::REQUIRED, 'ID of app run');
 	}
 
 	/**

@@ -23,7 +23,7 @@ class AppBackupsDownloadCommand extends Command
 		$this->setDescription('Download an app backup')
 			->setHelp('https://www.lamp.io/api#/app_backups/appBackupsShow')
 			->addArgument('app_backup_id', InputArgument::REQUIRED, 'The ID of the app backup')
-			->addArgument('dir', InputArgument::OPTIONAL, 'Specify path where will be stored downloaded files (Default is your working dir)', getcwd());
+			->addArgument('dir', InputArgument::OPTIONAL, 'Local path for downloaded file', getcwd());
 	}
 
 	/**

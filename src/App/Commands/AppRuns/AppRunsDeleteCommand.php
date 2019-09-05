@@ -23,9 +23,9 @@ class AppRunsDeleteCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('Delete runned command')
+		$this->setDescription('Delete app run')
 			->setHelp('https://www.lamp.io/api#/app_runs/appRunsDelete')
-			->addArgument('app_run_id', InputArgument::REQUIRED, 'ID of runned command');
+			->addArgument('app_run_id', InputArgument::REQUIRED, 'ID of app run');
 	}
 
 	/**
