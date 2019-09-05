@@ -25,7 +25,7 @@ class FilesUpdateMoveCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('Move file on app to another directory')
+		$this->setDescription('Move file to another directory')
 			->setHelp('https://www.lamp.io/api#/files/filesUpdateID')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
 			->addArgument('remote_path', InputArgument::REQUIRED, 'File path on app, that should be moved')

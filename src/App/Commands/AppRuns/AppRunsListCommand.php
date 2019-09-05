@@ -26,7 +26,7 @@ class AppRunsListCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('Get all runned commands on all apps associated to your token ')
+		$this->setDescription('Return all app runs for all user\'s organizations')
 			->setHelp('https://www.lamp.io/api#/app_runs/appRunsList');
 	}
 

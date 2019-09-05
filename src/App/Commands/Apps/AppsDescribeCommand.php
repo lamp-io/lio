@@ -28,7 +28,7 @@ class AppsDescribeCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('Gets your app description')
+		$this->setDescription('Return your app')
 			->setHelp('try rebooting')
 			->addArgument('app_id', InputArgument::REQUIRED, 'which app would you like to describe?');
 	}
@@ -92,4 +92,3 @@ class AppsDescribeCommand extends Command
 		return $table;
 	}
 }
-

@@ -25,7 +25,7 @@ class AuthCommand extends Command
     {
         $this->setDescription('Set auth token')
             ->setHelp('Get your token at https://www.lamp.io/ on settings page')
-            ->addOption('update_token', '-u', InputOption::VALUE_NONE, 'Set this option, if you need to overwrite token, that already stored');
+            ->addOption('update_token', '-u', InputOption::VALUE_NONE, 'Update existing token');
     }
 
     /**
