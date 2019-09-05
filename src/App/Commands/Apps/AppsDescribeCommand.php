@@ -5,7 +5,6 @@ namespace Console\App\Commands\Apps;
 use Art4\JsonApiClient\V1\Document;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Art4\JsonApiClient\Exception\ValidationException;
@@ -78,15 +77,19 @@ class AppsDescribeCommand extends Command
 	{
 		$table->setHeaderTitle('App Describe');
 		$table->setHeaders([
-			'Name', 'Description', 'Status', 'VCPU', 'Memory', 'Replicas',
+			'Name', 'Hostname', 'Description', 'Status', 'VCPU', 'Memory', 'Replicas', 'Certificate valid', 'Public',
 		]);
+		$hostNameCert = $document->has('data.attributes.hostname_certificate_valid') &&  $document->get('data.attributes.hostname_certificate_valid') ? 'true' : 'false';
 		$table->addRow([
 			$document->get('data.id'),
+			$document->get('data.attributes.hostname'),
 			$document->get('data.attributes.description'),
 			$document->get('data.attributes.status'),
 			$document->get('data.attributes.vcpu'),
 			$document->get('data.attributes.memory'),
 			$document->get('data.attributes.replicas'),
+			$hostNameCert,
+			$document->get('data.attributes.public') ? 'true' : 'false',
 		]);
 
 		return $table;
