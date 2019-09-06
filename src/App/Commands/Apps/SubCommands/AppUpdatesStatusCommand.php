@@ -26,7 +26,7 @@ class AppUpdatesStatusCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Enable/disable app')
-			->setHelp('Allow you to enable/disable app, api reference https://www.lamp.io/api#/apps/appsUpdate')
+			->setHelp('Enable/disable app, api reference' . PHP_EOL . 'https://www.lamp.io/api#/apps/appsUpdate')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
 			->addOption('enable', null, InputOption::VALUE_NONE, 'Enable your stopped app')
 			->addOption('disable', null, InputOption::VALUE_NONE, 'Disable your running app');

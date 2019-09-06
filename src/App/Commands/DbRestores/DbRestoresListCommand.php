@@ -35,7 +35,7 @@ class DbRestoresListCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Return db restore jobs')
-			->setHelp('Allow you to get db restore jobs, api reference https://www.lamp.io/api#/db_restores/dbRestoresList')
+			->setHelp('Get db restore jobs, api reference' . PHP_EOL . 'https://www.lamp.io/api#/db_restores/dbRestoresList')
 			->addOption('organization_id', 'o', InputOption::VALUE_REQUIRED, 'Comma-separated list of requested organization_ids. If omitted defaults to user\'s default organization');
 	}
 

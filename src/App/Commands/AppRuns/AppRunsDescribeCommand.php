@@ -30,7 +30,7 @@ class AppRunsDescribeCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Return app run')
-			->setHelp('Allow you to get app run, api reference https://www.lamp.io/api#/app_runs/appRunsShow')
+			->setHelp('Get app run, api reference' . PHP_EOL . 'https://www.lamp.io/api#/app_runs/appRunsShow')
 			->addArgument('app_run_id', InputArgument::REQUIRED, 'ID of app run');
 	}
 

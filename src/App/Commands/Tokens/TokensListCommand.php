@@ -32,7 +32,7 @@ class TokensListCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Returns all tokens for this user')
-			->setHelp('Allow you to get all tokens for this user, api reference https://www.lamp.io/api#/tokens/tokensList');
+			->setHelp('Get all tokens for this user, api reference' . PHP_EOL . 'https://www.lamp.io/api#/tokens/tokensList');
 	}
 
 	/**

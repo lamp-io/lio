@@ -22,7 +22,7 @@ class FilesUpdateCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Update file at file_id(file path including file name, relative to app root)')
-			->setHelp('Allow you to update files, api reference https://www.lamp.io/api#/files/filesUpdateID')
+			->setHelp('Update files, api reference' . PHP_EOL . 'https://www.lamp.io/api#/files/filesUpdateID')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
 			->addArgument('file_id', InputArgument::OPTIONAL, 'File ID of file to update. If omitted, update app root directory', '')
 			->addArgument('file', InputArgument::OPTIONAL, 'Path to a local file; this is uploaded to remote_path', '');

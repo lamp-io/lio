@@ -26,7 +26,7 @@ class AppsListCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Returns the apps for an organization')
-			->setHelp('Allow you to get list all allowed apps, api reference https://www.lamp.io/api#/apps/appsList');
+			->setHelp('Get list all allowed apps, api reference' . PHP_EOL . 'https://www.lamp.io/api#/apps/appsList');
 	}
 
 	/**

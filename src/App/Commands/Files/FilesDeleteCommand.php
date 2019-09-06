@@ -23,7 +23,7 @@ class FilesDeleteCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Remove file/directory from your app')
-			->setHelp('Allow you to delete files, api reference https://www.lamp.io/api#/files/filesDestroy')
+			->setHelp('Delete files, api reference' . PHP_EOL . 'https://www.lamp.io/api#/files/filesDestroy')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
 			->addArgument('file_id', InputArgument::REQUIRED, 'File ID of file to delete')
 			->addOption('yes', 'y', InputOption::VALUE_NONE, 'Skip confirm delete question');

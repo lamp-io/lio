@@ -34,7 +34,7 @@ class UsersListCommand extends Command
 		parent::configure();
 		$this->setDescription('Returns users')
 			->setHelp('https://www.lamp.io/api#/users/usersList')
-			->setHelp('Allow you to get all users, api reference https://www.lamp.io/api#/users/usersList')
+			->setHelp('Get all users, api reference' . PHP_EOL . 'https://www.lamp.io/api#/users/usersList')
 			->addOption('organization_id', 'o', InputOption::VALUE_REQUIRED, 'Comma-separated list of requested organization_ids. If omitted defaults to user\'s default organization')
 			->addOption('email', 'e', InputOption::VALUE_REQUIRED, 'Email address to filter for');
 	}

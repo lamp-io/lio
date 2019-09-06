@@ -28,7 +28,7 @@ class DbBackupsDescribeCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Return a db backup')
-			->setHelp('Allow you to get delete a db backup, api reference https://www.lamp.io/api#/db_backups/dbBackupsShow')
+			->setHelp('Get delete a db backup, api reference' . PHP_EOL . 'https://www.lamp.io/api#/db_backups/dbBackupsShow')
 			->addArgument('db_backup_id', InputArgument::REQUIRED, 'The ID of the db backup');
 	}
 

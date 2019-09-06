@@ -41,7 +41,7 @@ class AppsUpdateCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Update app')
-			->setHelp('Allow you to update app, api reference https://www.lamp.io/api#/apps/appsUpdate')
+			->setHelp('Update app, api reference' . PHP_EOL . 'https://www.lamp.io/api#/apps/appsUpdate')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
 			->addOption('organization_id', null, InputOption::VALUE_REQUIRED, 'The ID of the organization this app belongs to. STRING')
 			->addOption('description', 'd', InputOption::VALUE_REQUIRED, 'A description', '')

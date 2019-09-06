@@ -38,7 +38,7 @@ class OrganizationsUpdateCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Update an organization')
-			->setHelp('Allow you to update an organization, api reference https://www.lamp.io/api#/organizations/organizationsUpdate')
+			->setHelp('Update an organization, api reference' . PHP_EOL . 'https://www.lamp.io/api#/organizations/organizationsUpdate')
 			->addArgument('organization_id', InputArgument::REQUIRED, 'The ID of the organization')
 			->addOption('name', null, InputOption::VALUE_REQUIRED, 'New organization name')
 			->addOption('promo_code', null, InputOption::VALUE_REQUIRED, 'Apply promo code')

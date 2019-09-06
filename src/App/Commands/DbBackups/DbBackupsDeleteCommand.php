@@ -23,7 +23,7 @@ class DbBackupsDeleteCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Delete a db backup')
-			->setHelp('Allow you to delete a db backup, api reference https://www.lamp.io/api#/db_backups/dbBackupsDelete')
+			->setHelp('Delete a db backup, api reference' . PHP_EOL . 'https://www.lamp.io/api#/db_backups/dbBackupsDelete')
 			->addArgument('db_backup_id', InputArgument::REQUIRED, 'The ID of the db backup')
 			->addOption('yes', 'y', InputOption::VALUE_NONE, 'Skip confirm delete question');
 	}

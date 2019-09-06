@@ -41,7 +41,7 @@ class FilesDownloadCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Download files')
-			->setHelp('Allow you to download files, api reference https://www.lamp.io/api#/files/filesShow')
+			->setHelp('Download files, api reference' . PHP_EOL . 'https://www.lamp.io/api#/files/filesShow')
 			->addArgument('app_id', InputArgument::REQUIRED, 'App ID')
 			->addArgument('file_id', InputArgument::REQUIRED, 'The ID of the file. The ID is also the file path relative to its app root.')
 			->addArgument('dir', InputArgument::OPTIONAL, 'Local path for downloaded file', getcwd());

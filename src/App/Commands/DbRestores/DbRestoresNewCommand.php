@@ -21,7 +21,7 @@ class DbRestoresNewCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Create db restore job (restore a db backup to a database)')
-			->setHelp('Allow you to restore a db backup to a database, api reference https://www.lamp.io/api#/db_restores/dbRestoresCreate')
+			->setHelp('Restore a db backup to a database, api reference' . PHP_EOL . 'https://www.lamp.io/api#/db_restores/dbRestoresCreate')
 			->addArgument('database_id', InputArgument::REQUIRED, 'The id of database')
 			->addArgument('db_backup_id', InputArgument::REQUIRED, 'The ID of the db backup');
 	}

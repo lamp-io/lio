@@ -76,7 +76,7 @@ Commands
 
     Creates a new app
     
-    Allow you to create app, api reference https://www.lamp.io/api#/apps/appsCreate
+    Api reference https://www.lamp.io/api#/apps/appsCreate
 
     Arguments:
 
@@ -102,7 +102,7 @@ Commands
 
     Update app
     
-    Allow you to update app, api reference https://www.lamp.io/api#/apps/appsCreate
+    Api reference https://www.lamp.io/api#/apps/appsCreate
 
     Arguments:
 
@@ -128,7 +128,7 @@ Commands
 
     Delete an app
     
-    Allow you to delete app, api reference https://www.lamp.io/api#/apps/appsDestroy
+    Api reference https://www.lamp.io/api#/apps/appsDestroy
 
     Arguments:
 
@@ -142,13 +142,13 @@ Commands
 
     Returns the apps for an organization
     
-    Allow you to get list all allowed apps, api reference https://www.lamp.io/api#/apps/appsList
+    Api reference https://www.lamp.io/api#/apps/appsList
 
 5.  #### apps:describe <app_id>
 
     Return your app
     
-    Allow you to get selected app, api reference https://www.lamp.io/api#/apps/appsShow
+    Api reference https://www.lamp.io/api#/apps/appsShow
 
     Arguments:
 
@@ -160,7 +160,7 @@ Commands
 
     Enable/disable app
     
-    Allow you to enable/disable app, api reference https://www.lamp.io/api#/apps/appsUpdate
+    Api reference https://www.lamp.io/api#/apps/appsUpdate
 
     Arguments:
 
@@ -177,7 +177,7 @@ Commands
 
     Back up files in app
     
-    Allow you to backup files in app, api reference https://www.lamp.io/api#/app_backups/appBackupsCreate
+    Api reference https://www.lamp.io/api#/app_backups/appBackupsCreate
 
     Arguments:
 
@@ -187,7 +187,7 @@ Commands
 
    Download an app backup
    
-   Allow you to Download an app backup, api reference https://www.lamp.io/api#/app_backups/appBackupsShow
+   Api reference https://www.lamp.io/api#/app_backups/appBackupsShow
 
     Arguments:
 
@@ -198,7 +198,7 @@ Commands
 
     Delete an app backup
     
-    Allow you to delete an app backup, api reference https://www.lamp.io/api#/app_backups/appBackupsShow
+    Api reference https://www.lamp.io/api#/app_backups/appBackupsShow
 
     Arguments:
 
@@ -212,7 +212,7 @@ Commands
 
     Return app backups
     
-    Allow you to get all app backups, api reference https://www.lamp.io/api#/app_backups/appBackupsList
+    Api reference https://www.lamp.io/api#/app_backups/appBackupsList
 
     Options:
 
@@ -234,7 +234,7 @@ Commands
 
     Run command on app
     
-    Allow you to run command on app, api reference https://www.lamp.io/api#/app_backups/appRunsCreate
+    Api reference https://www.lamp.io/api#/app_backups/appRunsCreate
 
     Arguments:
     
@@ -245,7 +245,7 @@ Commands
 
     Delete app run
     
-    Allow you to delete app run, api reference https://www.lamp.io/api#/app_runs/appRunsDelete
+    Api reference https://www.lamp.io/api#/app_runs/appRunsDelete
 
     Arguments:
     
@@ -255,13 +255,13 @@ Commands
 
     Return all app runs for all user's organizations
     
-    Allow you to get all app runs for all user\s organizations, api reference https://www.lamp.io/api#/app_runs/appRunsList
+    Api reference https://www.lamp.io/api#/app_runs/appRunsList
 
 4. ### app_runs:describe
 
     Return app run
     
-    Allow you to get app run, api reference https://www.lamp.io/api#/app_runs/appRunsShow
+    Api reference https://www.lamp.io/api#/app_runs/appRunsShow
 
     Arguments:
     
@@ -273,7 +273,7 @@ Commands
 
    Create a new database
    
-   Allow you to create a new database, api reference https://www.lamp.io/api#/databases/databasesCreate
+   Api reference https://www.lamp.io/api#/databases/databasesCreate
 
    Options:
 
@@ -289,7 +289,7 @@ Commands
 
     Delete a database
     
-    Allow you to delete a database, api reference https://www.lamp.io/api#/databases/databasesDelete
+    Api reference https://www.lamp.io/api#/databases/databasesDelete
     
     Arguments:
 
@@ -303,7 +303,7 @@ Commands
 
     Update a database.
     
-    Allow you to update a database, api reference https://www.lamp.io/api#/databases/databasesUpdate
+    Api reference https://www.lamp.io/api#/databases/databasesUpdate
 
     Arguments:
 
@@ -323,7 +323,7 @@ Commands
 
     Returns all databases
     
-    Allow you to get all databases, api reference https://www.lamp.io/api#/databases/databasesList
+    Api reference https://www.lamp.io/api#/databases/databasesList
 
     Options:
 
@@ -333,7 +333,7 @@ Commands
 
     Returns a database
     
-    Allow you to get database, api reference https://www.lamp.io/api#/databases/databasesShow
+    Api reference https://www.lamp.io/api#/databases/databasesShow
 
     Arguments:
 
@@ -345,7 +345,7 @@ Commands
 
     Back up database
     
-    Allow you to back database, api reference https://www.lamp.io/api#/db_backups/dbBackupsCreate
+    Api reference https://www.lamp.io/api#/db_backups/dbBackupsCreate
     
     Arguments:
 
@@ -355,7 +355,7 @@ Commands
 
     Delete a db backup
     
-    Allow you to delete a db backup, api reference https://www.lamp.io/api#/db_backups/dbBackupsDelete
+    Api reference https://www.lamp.io/api#/db_backups/dbBackupsDelete
 
     Arguments:
 
@@ -369,7 +369,7 @@ Commands
 
     Return db backups
     
-    Allow you to get all databases backups, api reference https://www.lamp.io/api#/db_backups/dbBackupsList
+    Api reference https://www.lamp.io/api#/db_backups/dbBackupsList
 
     Options:
 
@@ -379,7 +379,7 @@ Commands
 
     Return a database backup
     
-    Allow you to get delete a db backup, api reference https://www.lamp.io/api#/db_backups/dbBackupsShow
+    Api reference https://www.lamp.io/api#/db_backups/dbBackupsShow
 
     Arguments:
 
@@ -391,7 +391,7 @@ Commands
 
     Create database restore job (restore backup to a database)
     
-    Allow you to restore a db backup to a database, api reference https://www.lamp.io/api#/db_restores/dbRestoresCreate
+    Api reference https://www.lamp.io/api#/db_restores/dbRestoresCreate
 
     Arguments:
 
@@ -402,7 +402,7 @@ Commands
 
     Delete a db restore job
     
-    Allow you to a db restore job, api reference https://www.lamp.io/api#/db_restores/dbRestoresDelete
+    Api reference https://www.lamp.io/api#/db_restores/dbRestoresDelete
 
     Arguments:
 
@@ -412,7 +412,7 @@ Commands
 
     Return db restore jobs
     
-    Allow you to get all db backups, api reference https://www.lamp.io/api#/db_backups/dbBackupsList
+    Api reference https://www.lamp.io/api#/db_backups/dbBackupsList
 
     Options:
 
@@ -422,7 +422,7 @@ Commands
 
     Return a db restore job
     
-    Allow you to get db restore job, api reference https://www.lamp.io/api#/db_backups/dbRestoresShow
+    Api reference https://www.lamp.io/api#/db_backups/dbRestoresShow
 
     Arguments:
 
@@ -434,7 +434,7 @@ Commands
 
     Return files from the root of an app
     
-    Allow you to get files from the root of an app, api reference https://www.lamp.io/api#/files/filesList
+    Api reference https://www.lamp.io/api#/files/filesList
 
     Arguments:
 
@@ -451,7 +451,7 @@ Commands
 
     Creates new file
     
-    Allow you to create new file, api reference https://www.lamp.io/api#/files/filesCreate
+    Api reference https://www.lamp.io/api#/files/filesCreate
 
     Arguments:
 
@@ -463,7 +463,7 @@ Commands
 
     Download files as zip.
     
-    Allow you to download files, api reference https://www.lamp.io/api#/files/filesShow
+    Api reference https://www.lamp.io/api#/files/filesShow
 
     Arguments:
 
@@ -475,7 +475,7 @@ Commands
 
    Update file at file_id(file path including file name, relative to app root)
    
-   Allow you to update files, api reference https://www.lamp.io/api#/files/filesUpdateID
+   Api reference https://www.lamp.io/api#/files/filesUpdateID
    
    Arguments:
 
@@ -487,7 +487,7 @@ Commands
 
     Remove file/directory from your app
     
-    Allow you to delete files, api reference https://www.lamp.io/api#/files/filesDestroy
+    Api reference https://www.lamp.io/api#/files/filesDestroy
     
     Arguments:
 
@@ -504,7 +504,7 @@ Commands
 
     Extract archive file
     
-    Allow you to extract archive file, api reference https://www.lamp.io/api#/files/filesUpdateID
+    Api reference https://www.lamp.io/api#/files/filesUpdateID
 
     Arguments:
 
@@ -515,7 +515,7 @@ Commands
 
     Fetch file from URL
     
-    Allow you to fetch file from URL, api reference https://www.lamp.io/api#/files/filesUpdateID
+    Api reference https://www.lamp.io/api#/files/filesUpdateID
 
     Arguments:
 
@@ -539,7 +539,7 @@ Commands
 
     Return logs
     
-    Allow you to get logs, api reference https://www.lamp.io/api#/logs/logsList
+    Api reference https://www.lamp.io/api#/logs/logsList
 
     Options
 
@@ -554,7 +554,7 @@ Commands
 
     Update an organization
     
-    Allow you to update an organization, api reference https://www.lamp.io/api#/organizations/organizationsUpdate
+    Api reference https://www.lamp.io/api#/organizations/organizationsUpdate
 
     Arguments:
 
@@ -570,7 +570,7 @@ Commands
 
     Returns this user's organizations
     
-    Allow you to get an this user's organizations, api reference https://www.lamp.io/api#/organizations/organizationsList
+    Api reference https://www.lamp.io/api#/organizations/organizationsList
 
 ###Organization users
 
@@ -578,7 +578,7 @@ Commands
 
     Update an organization/user relationship (Allow to set/remove selected user role as an organization admin)
     
-    Allow you to update an organization/user relationship, api reference https://www.lamp.io/api#/organization_users/organizationUsersUpdate
+    Api reference https://www.lamp.io/api#/organization_users/organizationUsersUpdate
 
     Arguments:
 
@@ -592,7 +592,7 @@ Commands
 
     Returns organization/user relationships
     
-    Allow you to get organization/user relationship, api reference https://www.lamp.io/api#/organization_users/organizationUsersList
+    Api reference https://www.lamp.io/api#/organization_users/organizationUsersList
 
     Options:
 
@@ -602,7 +602,7 @@ Commands
 
     Returns a organization/user relationship
     
-    Allow you to get a organization/user relationship, api reference https://www.lamp.io/api#/organization_users/organizationUsersShow
+    Api reference https://www.lamp.io/api#/organization_users/organizationUsersShow
 
     Arguments:
 
@@ -614,7 +614,7 @@ Commands
 
     Creates a new token
     
-    Allow you to creates a new token, api reference https://www.lamp.io/api#/tokens/tokensCreate
+    Api reference https://www.lamp.io/api#/tokens/tokensCreate
 
     Options:
 
@@ -625,7 +625,7 @@ Commands
 
      Delete a token
      
-     Allow you to delete a token, api reference https://www.lamp.io/api#/tokens/tokensDelete
+     Api reference https://www.lamp.io/api#/tokens/tokensDelete
 
      Arguments:
 
@@ -639,7 +639,7 @@ Commands
 
     Update a token
     
-    Allow you to update a token, api reference https://www.lamp.io/api#/tokens/tokensList
+    Api reference https://www.lamp.io/api#/tokens/tokensList
 
     Arguments:
 
@@ -654,7 +654,7 @@ Commands
 
     Returns all tokens for this user
     
-    Allow you to get all tokens for this user, api reference https://www.lamp.io/api#/tokens/tokensList
+    Api reference https://www.lamp.io/api#/tokens/tokensList
 
 5. ### tokens:describe <token_id>
 
@@ -670,7 +670,7 @@ Commands
 
     Returns users
     
-    Allow you to get all users, api reference https://www.lamp.io/api#/users/usersList
+    Api reference https://www.lamp.io/api#/users/usersList
     
     Options:
 

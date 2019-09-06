@@ -23,7 +23,7 @@ class FilesUploadCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Creates new file')
-			->setHelp('Allow you to create new file, api reference https://www.lamp.io/api#/files/filesCreate')
+			->setHelp('Create new file, api reference' . PHP_EOL . 'https://www.lamp.io/api#/files/filesCreate')
 			->addArgument('file', InputArgument::REQUIRED, 'Local path of file to upload')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
 			->addArgument('file_id', InputArgument::REQUIRED, 'File ID of file to save');

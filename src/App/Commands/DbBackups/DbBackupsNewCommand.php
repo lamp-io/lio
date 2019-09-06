@@ -21,7 +21,7 @@ class DbBackupsNewCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Back up database')
-			->setHelp('Allow you to back database, api reference https://www.lamp.io/api#/db_backups/dbBackupsCreate')
+			->setHelp('Backup database, api reference' . PHP_EOL . 'https://www.lamp.io/api#/db_backups/dbBackupsCreate')
 			->addArgument('database_id', InputArgument::REQUIRED, 'The id of database');
 	}
 

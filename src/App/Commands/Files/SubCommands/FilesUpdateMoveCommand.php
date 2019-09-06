@@ -26,7 +26,7 @@ class FilesUpdateMoveCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Move file to another directory')
-			->setHelp('Allow you to move file to another directory, api reference https://www.lamp.io/api#/files/filesUpdateID')
+			->setHelp('Move file to another directory, api reference' . PHP_EOL . 'https://www.lamp.io/api#/files/filesUpdateID')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
 			->addArgument('file_id', InputArgument::REQUIRED, 'File ID of file to move')
 			->addArgument('move_path', InputArgument::REQUIRED, 'The target File ID to move to. NOTE: The target directory must exist');

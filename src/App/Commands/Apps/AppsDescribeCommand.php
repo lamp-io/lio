@@ -28,7 +28,7 @@ class AppsDescribeCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Return your app')
-			->setHelp('Allow you to get selected app, api reference https://www.lamp.io/api#/apps/appsShow')
+			->setHelp('Get selected app, api reference' . PHP_EOL . 'https://www.lamp.io/api#/apps/appsShow')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app');
 	}
 

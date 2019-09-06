@@ -25,7 +25,7 @@ class DatabasesDeleteCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Delete a database')
-			->setHelp('Allow you to delete a database, api reference https://www.lamp.io/api#/databases/databasesDelete')
+			->setHelp('Delete a database, api reference' . PHP_EOL . 'https://www.lamp.io/api#/databases/databasesDelete')
 			->addArgument('database_id', InputArgument::REQUIRED, 'The id of database')
 			->addOption('yes', 'y', InputOption::VALUE_NONE, 'Skip confirm delete question');
 	}

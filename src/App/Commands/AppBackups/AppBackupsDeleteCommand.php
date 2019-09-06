@@ -22,7 +22,7 @@ class AppBackupsDeleteCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Delete an app backup')
-			->setHelp('Allow you to delete an app backup, api reference https://www.lamp.io/api#/app_backups/appBackupsShow')
+			->setHelp('Delete an app backup, api reference' . PHP_EOL . 'https://www.lamp.io/api#/app_backups/appBackupsShow')
 			->addArgument('app_backup_id', InputArgument::REQUIRED, 'The ID of the app backup')
 			->addOption('yes', 'y', InputOption::VALUE_NONE, 'Skip confirm delete question');
 	}
