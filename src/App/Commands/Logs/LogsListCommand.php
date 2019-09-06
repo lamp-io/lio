@@ -38,7 +38,7 @@ class LogsListCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Return logs')
-			->setHelp('https://www.lamp.io/api#/logs/logsList')
+			->setHelp('Allow you to get logs, api reference https://www.lamp.io/api#/logs/logsList')
 			->addOption('organization_id', 'o', InputOption::VALUE_REQUIRED, 'One organization_id. If omitted defaults to user\'s default organization')
 			->addOption('pod_name', 'p', InputOption::VALUE_REQUIRED, 'One pod_name. Uses wildcard prefix match')
 			->addOption('start_time', null, InputOption::VALUE_REQUIRED, 'Start time conforming to RFC3339. Defaults to 10 minutes in the past')

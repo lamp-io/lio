@@ -27,7 +27,7 @@ class FilesUpdateFetchCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Fetch file from URL')
-			->setHelp('https://www.lamp.io/api#/files/filesUpdateID')
+			->setHelp('Allow you to fetch file from URL, api reference https://www.lamp.io/api#/files/filesUpdateID')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
 			->addArgument('file_id', InputArgument::REQUIRED, 'File ID of file to fetch')
 			->addArgument('source', InputArgument::REQUIRED, 'URL to fetch');

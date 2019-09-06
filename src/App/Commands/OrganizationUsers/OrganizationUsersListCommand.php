@@ -34,8 +34,8 @@ class OrganizationUsersListCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('Returns organization/user relationships.')
-			->setHelp('https://www.lamp.io/api#/organization_users/organizationUsersList')
+		$this->setDescription('Returns organization/user relationships')
+			->setHelp('Allow you to get organization/user relationship, api reference https://www.lamp.io/api#/organization_users/organizationUsersList')
 			->addOption('organization_id', null, InputOption::VALUE_REQUIRED, 'Comma-separated list of requested organization_ids. If omitted defaults to user\'s default organization');
 	}
 

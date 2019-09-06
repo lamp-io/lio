@@ -27,7 +27,7 @@ class AppRunsListCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Return all app runs for all user\'s organizations')
-			->setHelp('https://www.lamp.io/api#/app_runs/appRunsList');
+			->setHelp('Allow you to get all app runs for all user\s organizations, api reference https://www.lamp.io/api#/app_runs/appRunsList');
 	}
 
 	/**

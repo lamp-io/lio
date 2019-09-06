@@ -38,7 +38,7 @@ class DatabasesUpdateCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Update a database')
-			->setHelp('https://www.lamp.io/api#/databases/databasesUpdate')
+			->setHelp('Allow you to update a database, api reference https://www.lamp.io/api#/databases/databasesUpdate')
 			->addArgument('database_id', InputArgument::REQUIRED, 'The id of database')
 			->addOption('description', 'd', InputOption::VALUE_REQUIRED, 'Description of your database')
 			->addOption('memory', 'm', InputOption::VALUE_REQUIRED, 'Amount of virtual memory on your database')

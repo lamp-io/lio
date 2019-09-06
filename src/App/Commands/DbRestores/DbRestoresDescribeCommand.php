@@ -28,7 +28,7 @@ class DbRestoresDescribeCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Return a db restore job')
-			->setHelp('https://www.lamp.io/api#/db_restores/dbRestoresShow')
+			->setHelp('Allow you to get db restore job, api reference https://www.lamp.io/api#/db_backups/dbRestoresShow')
 			->addArgument('db_restore_id', InputArgument::REQUIRED, 'The ID of the db restore');
 	}
 

@@ -24,7 +24,7 @@ class AppRunsDeleteCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Delete app run')
-			->setHelp('https://www.lamp.io/api#/app_runs/appRunsDelete')
+			->setHelp('Allow you to delete app run, api reference https://www.lamp.io/api#/app_runs/appRunsDelete')
 			->addArgument('app_run_id', InputArgument::REQUIRED, 'ID of app run');
 	}
 

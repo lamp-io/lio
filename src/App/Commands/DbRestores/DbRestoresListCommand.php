@@ -22,6 +22,7 @@ class DbRestoresListCommand extends Command
 	const OPTIONS_TO_QUERY_KEYS = [
 		'organization_id' => 'filter[organization_id]',
 	];
+
 	/**
 	 * @var string
 	 */
@@ -34,7 +35,7 @@ class DbRestoresListCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Return db restore jobs')
-			->setHelp('https://www.lamp.io/api#/db_restores/dbRestoresList')
+			->setHelp('Allow you to get db restore jobs, api reference https://www.lamp.io/api#/db_restores/dbRestoresList')
 			->addOption('organization_id', 'o', InputOption::VALUE_REQUIRED, 'Comma-separated list of requested organization_ids. If omitted defaults to user\'s default organization');
 	}
 

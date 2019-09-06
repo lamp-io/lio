@@ -27,7 +27,7 @@ class TokensNewCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Creates a new token')
-			->setHelp('https://www.lamp.io/api#/tokens/tokensCreate')
+			->setHelp('Allow you to creates a new token, api reference https://www.lamp.io/api#/tokens/tokensCreate')
 			->addOption('description', 'd', InputOption::VALUE_REQUIRED, 'Token description', '')
 			->addOption('enable', null, InputOption::VALUE_NONE, 'Enable token');
 	}

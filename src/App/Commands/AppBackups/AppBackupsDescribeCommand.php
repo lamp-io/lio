@@ -6,7 +6,6 @@ use Console\App\Commands\Command;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Art4\JsonApiClient\V1\Document;
 use Symfony\Component\Console\Helper\Table;
@@ -25,7 +24,7 @@ class AppBackupsDescribeCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Return an app backup')
-			->setHelp('https://www.lamp.io/api#/app_backups/appBackupsShow')
+			->setHelp('Allow you to get an app backup, api reference https://www.lamp.io/api#/app_backups/appBackupsShow')
 			->addArgument('app_backup_id', InputArgument::REQUIRED, 'The ID of the app backup');
 	}
 

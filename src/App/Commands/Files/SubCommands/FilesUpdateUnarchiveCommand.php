@@ -24,7 +24,7 @@ class FilesUpdateUnarchiveCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Extract archive file')
-			->setHelp('https://www.lamp.io/api#/files/filesUpdateID')
+			->setHelp('Allow you to extract archive file, api reference https://www.lamp.io/api#/files/filesUpdateID')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
 			->addArgument('file_id', InputArgument::REQUIRED, 'File ID of file to unarchive');
 	}

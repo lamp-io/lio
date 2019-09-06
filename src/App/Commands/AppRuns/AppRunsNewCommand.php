@@ -27,7 +27,7 @@ class AppRunsNewCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Run command on app')
-			->setHelp('https://www.lamp.io/api#/app_runs/appRunsCreate')
+			->setHelp('Allow you to run command on app, api reference https://www.lamp.io/api#/app_runs/appRunsCreate')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
 			->addArgument('exec', InputArgument::REQUIRED, 'Command to run');
 	}

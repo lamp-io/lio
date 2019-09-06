@@ -34,7 +34,7 @@ class DbBackupsListCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Return db backups')
-			->setHelp('https://www.lamp.io/api#/db_backups/dbBackupsList')
+			->setHelp('Allow you to get all db backups, api reference https://www.lamp.io/api#/db_backups/dbBackupsList')
 			->addOption('organization_id', 'o', InputOption::VALUE_REQUIRED, 'Comma-separated list of requested organization_ids. If omitted defaults to user\'s default organization');
 	}
 

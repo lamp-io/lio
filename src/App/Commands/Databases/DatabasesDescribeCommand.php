@@ -29,7 +29,7 @@ class DatabasesDescribeCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Returns a database')
-			->setHelp('https://www.lamp.io/api#/databases/databasesShow')
+			->setHelp('Allow you to get database, api reference https://www.lamp.io/api#/databases/databasesShow')
 			->addArgument('database_id', InputArgument::REQUIRED, 'The id of database');
 	}
 

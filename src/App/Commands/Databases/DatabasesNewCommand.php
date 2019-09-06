@@ -40,7 +40,7 @@ class DatabasesNewCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Create a new database')
-			->setHelp('https://www.lamp.io/api#/databases/databasesCreate')
+			->setHelp('Allow you to create a new database, api reference https://www.lamp.io/api#/databases/databasesCreate')
 			->addOption('description', 'd', InputOption::VALUE_REQUIRED, 'Description of your database', '')
 			->addOption('memory', 'm', InputOption::VALUE_REQUIRED, 'Amount of virtual memory on your database, default 512Mi', '512Mi')
 			->addOption('organization_id', null, InputOption::VALUE_REQUIRED, 'Name of your organization', '')

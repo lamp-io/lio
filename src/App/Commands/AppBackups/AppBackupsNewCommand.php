@@ -22,7 +22,7 @@ class AppBackupsNewCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Back up files in app')
-			->setHelp('https://www.lamp.io/api#/app_backups/appBackupsCreate')
+			->setHelp('Allow you to backup files in app, api reference https://www.lamp.io/api#/app_backups/appBackupsCreate')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app');
 	}
 

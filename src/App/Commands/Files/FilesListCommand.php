@@ -42,7 +42,7 @@ class FilesListCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Return files from the root of an app')
-			->setHelp('try rebooting')
+			->setHelp('Allow you to get files from the root of an app, api reference https://www.lamp.io/api#/files/filesList')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
 			->addArgument('file_id', InputArgument::OPTIONAL, 'The ID of the file. The ID is also the file path relative to its app root.', '/')
 			->addOption('limit', 'l', InputOption::VALUE_REQUIRED, ' The number of results to return in each response to a list operation. The default value is 1000 (the maximum allowed). Using a lower value may help if an operation times out', self::MAX_LIMIT)

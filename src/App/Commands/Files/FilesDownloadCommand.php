@@ -6,6 +6,7 @@ namespace Console\App\Commands\Files;
 use Art4\JsonApiClient\Exception\ValidationException;
 use GuzzleHttp\Exception\GuzzleException;
 use Psr\Http\Message\ResponseInterface;
+use RuntimeException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -40,7 +41,7 @@ class FilesDownloadCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Download files')
-			->setHelp('try rebooting')
+			->setHelp('Allow you to download files, api reference https://www.lamp.io/api#/files/filesShow')
 			->addArgument('app_id', InputArgument::REQUIRED, 'App ID')
 			->addArgument('file_id', InputArgument::REQUIRED, 'The ID of the file. The ID is also the file path relative to its app root.')
 			->addArgument('dir', InputArgument::OPTIONAL, 'Local path for downloaded file', getcwd());
@@ -151,7 +152,7 @@ class FilesDownloadCommand extends Command
 		$question->setMaxAttempts(3);
 		$question->setValidator(function ($answer) {
 			if (!in_array($answer, ['yes', 'no', 'y', 'n'])) {
-				throw new \RuntimeException(
+				throw new RuntimeException(
 					'Please prompt your answer as [yes, no, y, n]'
 				);
 			}
