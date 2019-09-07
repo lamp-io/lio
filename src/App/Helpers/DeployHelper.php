@@ -23,6 +23,8 @@ class DeployHelper
 
 	const SQLITE_RELATIVE_REMOTE_PATH = 'sqlite/db.sqlite';
 
+	const CI_ENV_VARS = ['CI', 'JENKINS_URL', 'TEAMCITY_VERSION'];
+
 	/**
 	 * @param string $appType
 	 * @param string $appPath
@@ -132,4 +134,14 @@ class DeployHelper
 		$bufferOutput = new BufferedOutput();
 		return $filesListCommand->run(new ArrayInput($args), $bufferOutput) == '0';
 	}
+
+	static public function isRemoteDeploy(): bool
+	{
+		$isRemote = array_filter(self::CI_ENV_VARS, function ($value) {
+			return !empty(getenv($value));
+		});
+
+		return !empty($isRemote);
+	}
+
 }

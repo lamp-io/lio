@@ -3,8 +3,11 @@
 namespace Console\App\Commands;
 
 use Art4\JsonApiClient\Helper\Parser;
+use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\V1\Document;
+use Console\App\Commands\AppRuns\AppRunsNewCommand;
 use Console\App\Commands\Apps\AppsDescribeCommand;
+use Console\App\Commands\Apps\AppsListCommand;
 use Console\App\Commands\Apps\AppsNewCommand;
 use Console\App\Commands\Databases\DatabasesDescribeCommand;
 use Console\App\Deploy\DeployInterface;
@@ -97,7 +100,7 @@ class DeployCommand extends Command
 			if (!DeployHelper::isCorrectApp($this->configHelper->get('type'), $appPath)) {
 				throw new Exception(ucfirst($this->configHelper->get('type')) . ' has not been found found on your directory');
 			}
-			$appId = $this->createApp($output, $input);
+			$appId = $this->getAppId($output, $input);
 			/** Need to remove this condition after mysql support will be added for symfony deploy */
 			if ($this->configHelper->get('type') == 'symfony') {
 				$this->configHelper->set('database.system', 'sqlite');
@@ -303,14 +306,97 @@ class DeployCommand extends Command
 		}
 	}
 
-
 	/**
 	 * @param OutputInterface $output
 	 * @param InputInterface $input
 	 * @return string
 	 * @throws Exception
 	 */
-	protected function createApp(OutputInterface $output, InputInterface $input): string
+	protected function getAppId(OutputInterface $output, InputInterface $input): string
+	{
+		if (!empty($this->configHelper->get('app.id'))) {
+			if (!$this->isAppExists($this->configHelper->get('app.id'))) {
+				throw new Exception('app-id(<app_id>) specified in lamp.io.yaml does not exist');
+			}
+			$this->isAppAlreadyExists = true;
+			$appId = $this->configHelper->get('app.id');
+		} elseif (DeployHelper::isRemoteDeploy()) {
+			$pattern = 'autodeploy:<' . basename($input->getArgument('dir')) . '>:<' . $this->getGitBranchName($input->getArgument('dir')) . '>';
+			$appId = $this->getAutoDeployAppId($pattern);
+			$this->isAppAlreadyExists = true;
+			if (empty($appId)) {
+				$appId = $this->createNewApp($output, $input, $pattern);
+				$this->isAppAlreadyExists = false;
+			}
+		} else {
+			$appId = $this->createNewApp($output, $input);
+		}
+		$this->configHelper->set('app.id', $appId);
+		$this->configHelper->set('app.url', 'https://' . $appId . '.lamp.app');
+		return $appId;
+	}
+
+	/**
+	 * @param string $descriptionPattern
+	 * @return string
+	 * @throws Exception
+	 */
+	protected function getAutoDeployAppId(string $descriptionPattern): string
+	{
+		$appsList = $this->getAppsList();
+		foreach ($appsList as $app) {
+			if (strpos($app['attributes']['description'], $descriptionPattern) !== false) {
+				$appId = $app['id'];
+				break;
+			}
+		}
+		return $appId ?? '';
+	}
+
+	/**
+	 * @param string $appPath
+	 * @return string
+	 */
+	protected function getGitBranchName(string $appPath): string
+	{
+		$gitPath = $appPath . '/.git';
+		if (!file_exists($gitPath)) {
+			return '';
+		}
+		$gitStr = file_get_contents($gitPath . '/HEAD');
+		return rtrim(preg_replace("/(.*?\/){2}/", '', $gitStr));
+	}
+
+	/**
+	 * @return array
+	 * @throws Exception
+	 */
+	protected function getAppsList(): array
+	{
+		$appRunsNewCommand = $this->getApplication()->find(AppsListCommand::getDefaultName());
+		$args = [
+			'command' => AppRunsNewCommand::getDefaultName(),
+			'--json'  => true,
+		];
+		$bufferOutput = new BufferedOutput();
+		if ($appRunsNewCommand->run(new ArrayInput($args), $bufferOutput) == '0') {
+			/** @var Document $document */
+			$document = Parser::parseResponseString($bufferOutput->fetch());
+			return (new ArraySerializer(['recursive' => true]))->serialize($document->get('data'));
+		} else {
+			throw new Exception('Cant get apps list. ' . $bufferOutput->fetch());
+		}
+	}
+
+
+	/**
+	 * @param OutputInterface $output
+	 * @param InputInterface $input
+	 * @param string $autoDeployDescription
+	 * @return string
+	 * @throws Exception
+	 */
+	protected function createNewApp(OutputInterface $output, InputInterface $input, string $autoDeployDescription = ''): string
 	{
 		if (!empty($this->configHelper->get('app.id'))) {
 			if (!$this->isAppExists($this->configHelper->get('app.id'))) {
@@ -338,6 +424,9 @@ class DeployCommand extends Command
 			}
 			$args = array_merge($args, $attributes);
 		}
+		if (!empty($autoDeployDescription)) {
+			$args['--description'] = $args['--description'] . ' ' . $autoDeployDescription;
+		}
 		if (empty($this->configHelper->get('app.attributes.description'))) {
 			$this->configHelper->set('app.attributes.description', basename($input->getArgument('dir')));
 		}
@@ -347,8 +436,6 @@ class DeployCommand extends Command
 			$document = Parser::parseResponseString($bufferOutput->fetch());
 			$appId = $document->get('data.id');
 			$output->writeln('<info>' . $appId . ' created!</info>');
-			$this->configHelper->set('app.id', $appId);
-			$this->configHelper->set('app.url', 'https://' . $appId . '.lamp.app');
 			return $appId;
 		} else {
 			throw new Exception($bufferOutput->fetch());

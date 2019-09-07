@@ -157,7 +157,7 @@ abstract class DeployAbstract implements DeployInterface
 		$dbBackupNewCommand = $this->application->find(DbBackupsNewCommand::getDefaultName());
 		$args = [
 			'command'     => DbBackupsNewCommand::getDefaultName(),
-			'database_id' => $this->config['database']['id'],
+			'database_id' => ['database']['connection']['host'],
 			'--json'      => true,
 		];
 		$bufferOutput = new BufferedOutput();
@@ -187,7 +187,7 @@ abstract class DeployAbstract implements DeployInterface
 		$dbRestoreNewCommand = $this->application->find(DbRestoresNewCommand::getDefaultName());
 		$args = [
 			'command'      => DbRestoresNewCommand::getDefaultName(),
-			'database_id'  => $this->config['database']['id'],
+			'database_id'  => ['database']['connection']['host'],
 			'db_backup_id' => $dbBackupId,
 			'--json'       => true,
 		];
