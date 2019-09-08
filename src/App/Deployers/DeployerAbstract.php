@@ -1,6 +1,6 @@
 <?php
 
-namespace Console\App\Deploy;
+namespace Console\App\Deployers;
 
 use Closure;
 use Console\App\Commands\AppRuns\AppRunsDescribeCommand;
@@ -31,7 +31,7 @@ use Art4\JsonApiClient\V1\Document;
 use ZipArchive;
 use GuzzleHttp\Exception\GuzzleException;
 
-abstract class DeployAbstract implements DeployInterface
+abstract class DeployerAbstract implements DeployInterface
 {
 	const ARCHIVE_NAME = 'lamp-io.zip';
 

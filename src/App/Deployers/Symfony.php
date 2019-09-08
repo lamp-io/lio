@@ -1,6 +1,6 @@
 <?php
 
-namespace Console\App\Deploy;
+namespace Console\App\Deployers;
 
 use Console\App\Commands\Files\FilesUpdateCommand;
 use Console\App\Helpers\DeployHelper;
@@ -8,7 +8,7 @@ use Dotenv\Dotenv;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 
-class Symfony extends DeployAbstract
+class Symfony extends DeployerAbstract
 {
 	const SHARED_DIRS = ['var/log', 'var/sessions'];
 

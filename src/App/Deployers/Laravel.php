@@ -1,6 +1,6 @@
 <?php
 
-namespace Console\App\Deploy;
+namespace Console\App\Deployers;
 
 use Console\App\Commands\Files\FilesDeleteCommand;
 use Console\App\Commands\Files\FilesUpdateCommand;
@@ -10,7 +10,7 @@ use Exception;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
 
-class Laravel extends DeployAbstract
+class Laravel extends DeployerAbstract
 {
 
 	const SKIP_COMMANDS = [
