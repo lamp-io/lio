@@ -118,7 +118,12 @@ class DeployCommand extends Command
 			}
 			$deployObject = $this->getDeployObject();
 			$deployObject->deployApp($appPath, $this->isFirstDeploy());
-			$output->writeln('<info>Done, check it out at https://' . $appId . '.lamp.app/</info>');
+			if (!empty($this->configHelper->get('app.attributes.hostname'))) {
+				$url = 'https://' . $this->configHelper->get('app.attributes.hostname') . '/';
+			} else {
+				$url = 'https://' . $appId . '.lamp.app/';
+			}
+			$output->writeln('<info>Done, check it out at ' . $url . '</info>');
 		} catch (Exception $exception) {
 			$output->writeln('<error>' . trim($exception->getMessage()) . '</error>');
 			$this->configHelper->save();
@@ -200,7 +205,7 @@ class DeployCommand extends Command
 			$this->configHelper->set('database.type', 'internal');
 			return;
 		}
-		$dbId =  $this->getLampIoDatabaseId($appId);
+		$dbId = $this->getLampIoDatabaseId($appId);
 		if (empty($dbId)) {
 			$this->createLampIoDatabase($output, $input, $appId);
 		}
