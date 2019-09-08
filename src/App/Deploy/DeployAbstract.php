@@ -92,9 +92,11 @@ abstract class DeployAbstract implements DeployInterface
 		$this->appPath = $appPath;
 		$this->isFirstDeploy = $isFirstDeploy;
 		$this->releaseFolder = DeployHelper::RELEASE_FOLDER . '/' . $this->config['release'] . '/';
-
 		if ($this->isFirstDeploy) {
 			$this->clearApp();
+		}
+		if (!file_exists($appPath . DIRECTORY_SEPARATOR . '.env')) {
+			file_put_contents($appPath . DIRECTORY_SEPARATOR . '.env', '');
 		}
 	}
 
@@ -157,7 +159,7 @@ abstract class DeployAbstract implements DeployInterface
 		$dbBackupNewCommand = $this->application->find(DbBackupsNewCommand::getDefaultName());
 		$args = [
 			'command'     => DbBackupsNewCommand::getDefaultName(),
-			'database_id' => ['database']['connection']['host'],
+			'database_id' => $this->config['database']['id'],
 			'--json'      => true,
 		];
 		$bufferOutput = new BufferedOutput();
@@ -187,7 +189,7 @@ abstract class DeployAbstract implements DeployInterface
 		$dbRestoreNewCommand = $this->application->find(DbRestoresNewCommand::getDefaultName());
 		$args = [
 			'command'      => DbRestoresNewCommand::getDefaultName(),
-			'database_id'  => ['database']['connection']['host'],
+			'database_id'  => $this->config['database']['id'],
 			'db_backup_id' => $dbBackupId,
 			'--json'       => true,
 		];
@@ -301,10 +303,13 @@ abstract class DeployAbstract implements DeployInterface
 	}
 
 	/**
+	 * @param string $dbHost
 	 * @param string $dbName
+	 * @param string $dbUser
+	 * @param string $dbPassword
 	 * @throws Exception
 	 */
-	protected function importSqlDump(string $dbName)
+	protected function importSqlDump(string $dbHost, string $dbName, string $dbUser, string $dbPassword)
 	{
 		$step = 'ImportSqlDump';
 		$this->setStep($step, function () {
@@ -321,9 +326,9 @@ abstract class DeployAbstract implements DeployInterface
 		if ($filesUploadCommand->run(new ArrayInput($args), $this->consoleOutput) == '0') {
 			$command = sprintf(
 				'mysql -u %s --host=%s --password=%s  %s < %s',
-				$this->config['database']['connection']['user'],
-				$this->config['database']['connection']['host'],
-				$this->config['database']['connection']['password'],
+				$dbUser,
+				$dbHost,
+				$dbPassword,
 				$dbName,
 				$this->releaseFolder . self::SQL_DUMP_NAME
 			);
@@ -339,36 +344,40 @@ abstract class DeployAbstract implements DeployInterface
 	}
 
 	/**
+	 * @param string $dbUser
+	 * @param string $dbPassword
+	 * @param string $dbHost
+	 * @param string $rootPassword
 	 * @throws Exception
 	 */
-	protected function createDatabaseUser()
+	protected function createDatabaseUser(string $dbHost, string $dbUser, string $dbPassword, string $rootPassword)
 	{
 		$step = 'createDatabaseUser';
-		$this->setStep($step, function () {
+		$this->setStep($step, function () use ($dbUser, $rootPassword, $dbHost) {
 			$command = sprintf(
 				'mysql --user=root --host=%s --password=%s --execute "DROP USER \'%s\'"',
-				$this->config['database']['connection']['host'],
-				$this->config['database']['root_password'],
-				$this->config['database']['connection']['user']
+				$dbHost,
+				$rootPassword,
+				$dbUser
 			);
 			$this->appRunCommand(
 				$this->config['app']['id'],
 				$command,
-				'Drop database user ' . $this->config['database']['connection']['user']
+				'Drop database user ' . $dbUser
 			);
 		});
 		$command = sprintf(
 			'mysql --user=root --host=%s --password=%s --execute "CREATE USER \'%s\'@\'%%\' IDENTIFIED WITH mysql_native_password BY \'%s\';GRANT ALL PRIVILEGES ON * . * TO \'%s\'@\'%%\';FLUSH PRIVILEGES;"',
-			$this->config['database']['connection']['host'],
-			$this->config['database']['root_password'],
-			$this->config['database']['connection']['user'],
-			$this->config['database']['connection']['password'],
-			$this->config['database']['connection']['user']
+			$dbHost,
+			$rootPassword,
+			$dbUser,
+			$dbPassword,
+			$dbUser
 		);
 		$this->appRunCommand(
 			$this->config['app']['id'],
 			$command,
-			'Creating database user ' . $this->config['database']['connection']['user']
+			'Creating database user ' . $dbUser
 		);
 		$this->updateStepToSuccess($step);
 	}
@@ -397,15 +406,16 @@ abstract class DeployAbstract implements DeployInterface
 	}
 
 	/**
+	 * @param string $dbHost
 	 * @throws Exception
 	 */
-	protected function initDatabase()
+	protected function initDatabase(string $dbHost)
 	{
 		$progressBar = Command::getProgressBar('Initializing database', $this->consoleOutput);
 		$progressBar->start();
 		$dbIsRunning = false;
 		while (!$dbIsRunning) {
-			$dbIsRunning = $this->isDbAlreadyRunning($this->config['database']['connection']['host']);
+			$dbIsRunning = $this->isDbAlreadyRunning($dbHost);
 			$progressBar->advance();
 		}
 		$counter = 0;
@@ -422,18 +432,21 @@ abstract class DeployAbstract implements DeployInterface
 	}
 
 	/**
+	 * @param string $dbHost
 	 * @param string $dbName
+	 * @param string $dbUser
+	 * @param string $dbPassword
 	 * @throws Exception
 	 */
-	protected function createDatabase(string $dbName)
+	protected function createDatabase(string $dbHost, string $dbName, string $dbUser, string $dbPassword)
 	{
 		$step = 'CreateDatabase';
-		$this->setStep($step, function () use ($dbName) {
+		$this->setStep($step, function () use ($dbName, $dbUser, $dbPassword, $dbHost) {
 			$command = sprintf(
 				'mysql --user=%s --host=%s --password=%s --execute "drop database %s;"',
-				$this->config['database']['connection']['user'],
-				$this->config['database']['connection']['host'],
-				$this->config['database']['connection']['password'],
+				$dbUser,
+				$dbHost,
+				$dbPassword,
 				$dbName
 			);
 			$this->appRunCommand(
@@ -445,9 +458,9 @@ abstract class DeployAbstract implements DeployInterface
 
 		$command = sprintf(
 			'mysql --user=%s --host=%s --password=%s --execute "create database %s;"',
-			$this->config['database']['connection']['user'],
-			$this->config['database']['connection']['host'],
-			$this->config['database']['connection']['password'],
+			$dbUser,
+			$dbHost,
+			$dbPassword,
 			$dbName
 		);
 		$this->appRunCommand(

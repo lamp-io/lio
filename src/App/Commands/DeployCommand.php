@@ -10,16 +10,15 @@ use Console\App\Commands\Apps\AppsDescribeCommand;
 use Console\App\Commands\Apps\AppsListCommand;
 use Console\App\Commands\Apps\AppsNewCommand;
 use Console\App\Commands\Databases\DatabasesDescribeCommand;
+use Console\App\Commands\Databases\DatabasesListCommand;
 use Console\App\Deploy\DeployInterface;
 use Console\App\Deploy\Laravel;
 use Console\App\Deploy\Symfony;
 use Console\App\Helpers\ConfigHelper;
 use Console\App\Helpers\DeployHelper;
-use Console\App\Helpers\PasswordHelper;
 use GuzzleHttp\ClientInterface;
 use InvalidArgumentException;
 use Exception;
-use RuntimeException;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -29,7 +28,6 @@ use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Console\App\Commands\Databases\DatabasesNewCommand;
-use Symfony\Component\Console\Question\Question;
 
 class DeployCommand extends Command
 {
@@ -56,6 +54,8 @@ class DeployCommand extends Command
 	protected $isAppAlreadyExists = true;
 
 	protected $httpClient;
+
+	protected $databaseData;
 
 	public function __construct(ClientInterface $httpClient, $name = null)
 	{
@@ -105,9 +105,8 @@ class DeployCommand extends Command
 			if ($this->configHelper->get('type') == 'symfony') {
 				$this->configHelper->set('database.system', 'sqlite');
 				$this->configHelper->set('database.type', 'internal');
-				$this->configHelper->set('database.connection.host', DeployHelper::SQLITE_ABSOLUTE_REMOTE_PATH);
 			} else {
-				$this->createDatabase($output, $input);
+				$this->createDatabase($output, $input, $appId);
 			}
 
 			$this->configHelper->save();
@@ -184,10 +183,11 @@ class DeployCommand extends Command
 	/**
 	 * @param OutputInterface $output
 	 * @param InputInterface $input
+	 * @param string $appId
 	 * @return void|string
 	 * @throws Exception
 	 */
-	protected function createDatabase(OutputInterface $output, InputInterface $input)
+	protected function createDatabase(OutputInterface $output, InputInterface $input, string $appId)
 	{
 		if ($this->configHelper->get('database.type') == 'external') {
 			if (!$this->isDbCredentialsSet($this->configHelper->get('database.connection'))) {
@@ -198,11 +198,12 @@ class DeployCommand extends Command
 		}
 		if ($this->configHelper->get('database.system') == 'sqlite') {
 			$this->configHelper->set('database.type', 'internal');
-			$this->configHelper->set('database.connection.host', DeployHelper::SQLITE_ABSOLUTE_REMOTE_PATH);
 			return;
 		}
-
-		$this->createLampIoDatabase($output, $input);
+		$dbId =  $this->getLampIoDatabaseId($appId);
+		if (empty($dbId)) {
+			$this->createLampIoDatabase($output, $input, $appId);
+		}
 	}
 
 	/**
@@ -215,20 +216,51 @@ class DeployCommand extends Command
 	}
 
 	/**
-	 * @param OutputInterface $output
-	 * @param InputInterface $input
-	 * @return array|mixed|string
+	 * @return array
 	 * @throws Exception
 	 */
-	protected function createLampIoDatabase(OutputInterface $output, InputInterface $input)
+	protected function getDbList()
 	{
-		if (!empty($this->configHelper->get('database.id'))) {
-			if (!$this->isDatabaseExists($this->configHelper->get('database.id'))) {
-				throw new Exception('db-id(<db_id>) specified in lamp.io.yaml does not exist');
-			}
-			return $this->configHelper->get('database.id');
+		$appRunsNewCommand = $this->getApplication()->find(DatabasesListCommand::getDefaultName());
+		$args = [
+			'command' => DatabasesListCommand::getDefaultName(),
+			'--json'  => true,
+		];
+		$bufferOutput = new BufferedOutput();
+		if ($appRunsNewCommand->run(new ArrayInput($args), $bufferOutput) == '0') {
+			/** @var Document $document */
+			$document = Parser::parseResponseString($bufferOutput->fetch());
+			return (new ArraySerializer(['recursive' => true]))->serialize($document->get('data'));
+		} else {
+			throw new Exception('Cant get apps list. ' . $bufferOutput->fetch());
 		}
+	}
 
+	/**
+	 * @param string $appId
+	 * @return mixed|string
+	 * @throws Exception
+	 */
+	protected function getLampIoDatabaseId(string $appId)
+	{
+		$dbList = $this->getDbList();
+		foreach ($dbList as $db) {
+			if (strpos($db['attributes']['description'], 'app_id:<' . $appId . '>') !== false) {
+				$dbId = $db['id'];
+				break;
+			}
+		}
+		return $dbId ?? '';
+	}
+
+	/**
+	 * @param OutputInterface $output
+	 * @param InputInterface $input
+	 * @param string $appId
+	 * @throws Exception
+	 */
+	protected function createLampIoDatabase(OutputInterface $output, InputInterface $input, string $appId)
+	{
 		$questionHelper = $this->getHelper('question');
 		$question = new ConfirmationQuestion('<info>This looks like a new app, shall we create a lamp.io database for it? (Y/n):</info>');
 		if (!$questionHelper->ask($input, $output, $question)) {
@@ -247,6 +279,8 @@ class DeployCommand extends Command
 			}
 			$args = array_merge($args, $attributes);
 		}
+		$descriptionPostfix = ' app_id:<' . $appId . '>';
+		$args['--description'] = !empty($args['--description']) ? $args['--description'] . $descriptionPostfix : $descriptionPostfix;
 		$bufferOutput = new BufferedOutput();
 		if ($databasesNewCommand->run(new ArrayInput($args), $bufferOutput) == '0') {
 			/** @var Document $document */
@@ -254,11 +288,9 @@ class DeployCommand extends Command
 			$databaseId = $document->get('data.id');
 			$output->writeln('<info>' . $databaseId . ' created!</info>');
 			$this->configHelper->set('database.id', $databaseId);
-			$this->configHelper->set('database.connection.host', $this->configHelper->get('database.id'));
 			$this->configHelper->set('database.root_password', $document->get('data.attributes.mysql_root_password'));
 			$this->configHelper->set('database.system', 'mysql');
 			$this->configHelper->set('database.type', 'internal');
-			$this->setDatabaseCredentials($input, $output);
 		} else {
 			throw new Exception($bufferOutput->fetch());
 		}
@@ -272,38 +304,6 @@ class DeployCommand extends Command
 	protected function isFirstDeploy(): bool
 	{
 		return !($this->isAppAlreadyExists && DeployHelper::isReleasesFolderExists($this->configHelper->get('app.id'), $this->getApplication()));
-	}
-
-	/**
-	 * @param InputInterface $input
-	 * @param OutputInterface $output
-	 */
-	protected function setDatabaseCredentials(InputInterface $input, OutputInterface $output)
-	{
-		if (empty($this->configHelper->get('database.connection.user'))) {
-			$question = new Question('<info>Please enter database user name that will be created for your application:</info>');
-			$question->setValidator(function ($value) {
-				if (empty($value)) {
-					throw new RuntimeException('User name can not be empty');
-				}
-				return $value;
-			});
-			$user = $this->getHelper('question')->ask($input, $output, $question);
-			$this->configHelper->set('database.connection.user', $user);
-			$question = PasswordHelper::getPasswordQuestion(
-				'<info>Please enter database password for <above_user>:</info>',
-				'',
-				$output
-			);
-			$question->setValidator(function ($value) {
-				if (empty($value)) {
-					throw new RuntimeException('Password can not be empty');
-				}
-				return $value;
-			});
-			$password = $this->getHelper('question')->ask($input, $output, $question);
-			$this->configHelper->set('database.connection.password', $password);
-		}
 	}
 
 	/**

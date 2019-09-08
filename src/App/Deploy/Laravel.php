@@ -4,6 +4,7 @@ namespace Console\App\Deploy;
 
 use Console\App\Commands\Files\FilesDeleteCommand;
 use Console\App\Commands\Files\FilesUpdateCommand;
+use Console\App\Helpers\DeployHelper;
 use Dotenv\Dotenv;
 use Exception;
 use GuzzleHttp\Exception\ClientException;
@@ -29,7 +30,12 @@ class Laravel extends DeployAbstract
 	{
 		parent::deployApp($appPath, $isFirstDeploy);
 		(Dotenv::create($this->appPath))->load();
+		if (!empty(getenv('DB_USERNAME')) && getenv('DB_USERNAME') == 'root') {
+			throw new Exception('Please set non root `DB_USERNAME` in .env file, and restart deploy');
+		}
 		$this->updateEnvFileToUpload($_ENV, $this->prepareEnvFile($_ENV));
+		/** Need again load all ENV after updating .env file */
+		(Dotenv::create($this->appPath))->overload();
 		$zip = $this->getZipApp();
 		$this->restoreLocalEnvFile($_ENV);
 		$this->uploadToApp($zip, $this->releaseFolder . self::ARCHIVE_NAME);
@@ -38,26 +44,39 @@ class Laravel extends DeployAbstract
 		$this->createSharedStorage($this->getSharedStorageCommands($this->getSharedDirs()));
 		$this->setUpPermissions();
 		if ($this->isFirstDeploy) {
-			if ($this->config['database']['type'] == 'external') {
-				$this->createDatabase(getenv('DB_DATABASE'));
-				if (!empty($this->config['database']['sql_dump'])) {
-					$this->importSqlDump(getenv('DB_DATABASE'));
-				}
-			} elseif ($this->config['database']['system'] == 'sqlite') {
+			if ($this->config['database']['system'] == 'sqlite') {
 				$this->initSqliteDatabase();
 			} else {
-				$this->initDatabase();
-				$this->createDatabaseUser();
-				$this->createDatabase(getenv('DB_DATABASE'));
+				if ($this->config['database']['type'] == 'internal') {
+					$this->initDatabase(getenv('DB_HOST'));
+					$this->createDatabaseUser(
+						getenv('DB_HOST'),
+						getenv('DB_USERNAME'),
+						getenv('DB_PASSWORD'),
+						$this->config['database']['root_password']
+					);
+				}
+
+				$this->createDatabase(
+					getenv('DB_HOST'),
+					getenv('DB_DATABASE'),
+					getenv('DB_USERNAME'),
+					getenv('DB_PASSWORD')
+				);
 				if (!empty($this->config['database']['sql_dump'])) {
-					$this->importSqlDump(getenv('DB_DATABASE'));
+					$this->importSqlDump(
+						getenv('DB_HOST'),
+						getenv('DB_DATABASE'),
+						getenv('DB_USERNAME'),
+						getenv('DB_PASSWORD')
+					);
 				}
 			}
 		}
 		$dbBackupId = $this->backupDatabase();
-		$this->runCommands(self::SKIP_COMMANDS);
 		$this->deleteArchiveLocal();
 		$this->runMigrations('artisan migrate --force', $dbBackupId);
+		$this->runCommands(self::SKIP_COMMANDS);
 		$this->symlinkRelease($this->releaseFolder . 'public', 'Linking your current release', $this->isFirstDeploy);
 	}
 
@@ -135,7 +154,7 @@ class Laravel extends DeployAbstract
 				},
 			],
 			'symlink_shared_to_release'        => [
-				'message' => 'Symlink shared storage to release',
+				'message' => 'Symlink shared %s to release',
 				'execute' => function (string $message) use ($dirs) {
 					foreach ($dirs as $dir) {
 						if (file_exists($this->appPath . $dir)) {
@@ -210,17 +229,13 @@ class Laravel extends DeployAbstract
 	{
 		if ($this->config['database']['system'] == 'sqlite') {
 			$env = [
-				'APP_URL'       => $this->config['app']['url'],
-				'DB_HOST'       => 'localhost',
-				'DB_DATABASE'   => $this->config['database']['connection']['host'],
-				'DB_CONNECTION' => 'sqlite',
+				'APP_URL'     => $this->config['app']['url'],
+				'DB_DATABASE' => DeployHelper::SQLITE_ABSOLUTE_REMOTE_PATH,
 			];
 		} else {
 			$env = [
-				'APP_URL'     => $this->config['app']['url'],
-				'DB_HOST'     => $this->config['database']['connection']['host'],
-				'DB_USERNAME' => $this->config['database']['connection']['user'],
-				'DB_PASSWORD' => $this->config['database']['connection']['password'],
+				'APP_URL' => $this->config['app']['url'],
+				'DB_HOST' => $this->config['database']['id'],
 			];
 		}
 		$envFromConfig = !empty($this->config['environment']) ? $this->config['environment'] : [];
