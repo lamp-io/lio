@@ -124,24 +124,26 @@ class Symfony extends DeployAbstract
 				'message' => 'Apache can write in shared/%s',
 				'execute' => function (string $message) use ($dirs) {
 					foreach ($dirs as $dir) {
-						$dirName = explode('/', $dir);
-						$dirName = $dirName[count($dirName) - 1];
-						$fileUpdateUrl = sprintf(
-							sprintf(
-								FilesUpdateCommand::API_ENDPOINT . '?recur=true',
-								$this->config['app']['id'],
-								'shared/' . rtrim($dirName, '/')
-							)
-						);
-						$this->sendRequest($fileUpdateUrl, 'PATCH', sprintf($message, $dir), json_encode([
-							'data' => [
-								'attributes' => [
-									'apache_writable' => true,
+						if (file_exists($this->appPath . $dir)) {
+							$dirName = explode('/', $dir);
+							$dirName = $dirName[count($dirName) - 1];
+							$fileUpdateUrl = sprintf(
+								sprintf(
+									FilesUpdateCommand::API_ENDPOINT . '?recur=true',
+									$this->config['app']['id'],
+									'shared/' . rtrim($dirName, '/')
+								)
+							);
+							$this->sendRequest($fileUpdateUrl, 'PATCH', sprintf($message, $dir), json_encode([
+								'data' => [
+									'attributes' => [
+										'apache_writable' => true,
+									],
+									'id'         => 'shared/' . rtrim($dirName, '/'),
+									'type'       => 'files',
 								],
-								'id'         => 'shared/' . rtrim($dirName, '/'),
-								'type'       => 'files',
-							],
-						]));
+							]));
+						}
 					}
 				},
 			],
