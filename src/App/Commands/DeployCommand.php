@@ -326,7 +326,7 @@ class DeployCommand extends Command
 			$this->isAppAlreadyExists = true;
 			$appId = $this->configHelper->get('app.id');
 		} elseif (DeployHelper::isRemoteDeploy()) {
-			$pattern = 'autodeploy:<' . basename($input->getArgument('dir')) . '>:<' . $this->getGitBranchName($input->getArgument('dir')) . '>';
+			$pattern = 'autodeploy:<' . basename($input->getArgument('dir')) . '>:<' . $this->getGitBranchName() . '>';
 			$appId = $this->getAutoDeployAppId($pattern);
 			$this->isAppAlreadyExists = true;
 			if (empty($appId)) {
@@ -359,17 +359,11 @@ class DeployCommand extends Command
 	}
 
 	/**
-	 * @param string $appPath
 	 * @return string
 	 */
-	protected function getGitBranchName(string $appPath): string
+	protected function getGitBranchName(): string
 	{
-		$gitPath = $appPath . '/.git';
-		if (!file_exists($gitPath)) {
-			return '';
-		}
-		$gitStr = file_get_contents($gitPath . '/HEAD');
-		return rtrim(preg_replace("/(.*?\/){2}/", '', $gitStr));
+		return getenv('TRAVIS_BRANCH') . getenv('CIRCLE_BRANCH') . getenv('GIT_BRANCH') . getenv('teamcity.build.branch');
 	}
 
 	/**
