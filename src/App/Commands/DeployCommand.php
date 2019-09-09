@@ -188,7 +188,7 @@ class DeployCommand extends Command
 		}
 		$dbId = $this->getLampIoDatabaseId($appId);
 		if (empty($dbId)) {
-			$dbId =  $this->createLampIoDatabase($output, $input, $appId);
+			$dbId = $this->createLampIoDatabase($output, $input, $appId);
 		}
 		$this->configHelper->set('database.id', $dbId);
 		$this->configHelper->set('database.system', 'mysql');
@@ -397,7 +397,6 @@ class DeployCommand extends Command
 		$args = [
 			'command'       => AppsNewCommand::getDefaultName(),
 			'--json'        => true,
-			'--description' => basename($input->getArgument('dir')),
 		];
 		if (!empty($this->configHelper->get('app.attributes'))) {
 			$attributes = [];
@@ -407,7 +406,10 @@ class DeployCommand extends Command
 			$args = array_merge($args, $attributes);
 		}
 		if (!empty($autoDeployDescription)) {
-			$args['--description'] = $args['--description'] . ' ' . $autoDeployDescription;
+			$description = !empty($args['--description']) ? $args['--description'] : '';
+			$args['--description'] = $description . ' ' . $autoDeployDescription;
+		} elseif (empty($args['--description'])) {
+			$args['--description'] = basename($input->getArgument('dir'));
 		}
 		if (empty($this->configHelper->get('app.attributes.description'))) {
 			$this->configHelper->set('app.attributes.description', basename($input->getArgument('dir')));
