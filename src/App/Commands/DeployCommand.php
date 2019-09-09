@@ -188,8 +188,11 @@ class DeployCommand extends Command
 		}
 		$dbId = $this->getLampIoDatabaseId($appId);
 		if (empty($dbId)) {
-			$this->createLampIoDatabase($output, $input, $appId);
+			$dbId =  $this->createLampIoDatabase($output, $input, $appId);
 		}
+		$this->configHelper->set('database.id', $dbId);
+		$this->configHelper->set('database.system', 'mysql');
+		$this->configHelper->set('database.type', 'internal');
 	}
 
 	/**
@@ -244,8 +247,9 @@ class DeployCommand extends Command
 	 * @param InputInterface $input
 	 * @param string $appId
 	 * @throws Exception
+	 * @return string
 	 */
-	protected function createLampIoDatabase(OutputInterface $output, InputInterface $input, string $appId)
+	protected function createLampIoDatabase(OutputInterface $output, InputInterface $input, string $appId): string
 	{
 		$questionHelper = $this->getHelper('question');
 		$question = new ConfirmationQuestion('<info>This looks like a new app, shall we create a lamp.io database for it? (Y/n):</info>');
@@ -273,10 +277,8 @@ class DeployCommand extends Command
 			$document = Parser::parseResponseString($bufferOutput->fetch());
 			$databaseId = $document->get('data.id');
 			$output->writeln('<info>' . $databaseId . ' created!</info>');
-			$this->configHelper->set('database.id', $databaseId);
 			$this->configHelper->set('database.root_password', $document->get('data.attributes.mysql_root_password'));
-			$this->configHelper->set('database.system', 'mysql');
-			$this->configHelper->set('database.type', 'internal');
+			return $databaseId;
 		} else {
 			throw new Exception($bufferOutput->fetch());
 		}
