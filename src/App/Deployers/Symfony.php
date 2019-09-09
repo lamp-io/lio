@@ -42,7 +42,7 @@ class Symfony extends DeployerAbstract
 		$this->unarchiveApp($this->releaseFolder . self::ARCHIVE_NAME);
 		$this->deleteArchiveRemote($this->releaseFolder . self::ARCHIVE_NAME);
 		$this->createSharedStorage($this->getSharedStorageCommands($this->getSharedDirs()));
-		$this->setUpPermissions([$this->releaseFolder . 'var'], true);
+		$this->setUpPermissions(['var'], true);
 		if ($this->isFirstDeploy) {
 			$this->initSqliteDatabase();
 		}
@@ -73,7 +73,7 @@ class Symfony extends DeployerAbstract
 			);
 		} catch (Exception $exception) {
 			if (strpos($exception->getMessage(), 'There are no commands defined in the "doctrine:migrations" namespace.')) {
-				$this->consoleOutput->writeln(PHP_EOL . '<warning>Migration not runt as its not installed on your Symfony application</warning>');
+				$this->consoleOutput->writeln(PHP_EOL . '<warning>Migration not run as its not installed on your Symfony application</warning>');
 			} else {
 				throw new Exception($exception->getMessage());
 			}
