@@ -53,6 +53,34 @@ class Symfony extends DeployerAbstract
 		$this->symlinkRelease($this->releaseFolder . 'public', 'Linking your current release', $this->isFirstDeploy);
 	}
 
+	protected function runMigrations(string $migrationCommand, string $dbBackupId = '')
+	{
+		if (!empty($this->config['no_migrations'])) {
+			return;
+		}
+		$step = 'runMigrations';
+		$this->setStep($step, function () use ($dbBackupId) {
+			if (!empty($dbBackupId)) {
+				$this->restoreDatabase($dbBackupId);
+			}
+		});
+		/** Need it to allow users make deploys without installed doctrine  */
+		try {
+			$this->appRunCommand(
+				$this->config['app']['id'],
+				'php ' . $this->releaseFolder . $migrationCommand,
+				'Migrating schema'
+			);
+		} catch (Exception $exception) {
+			if (strpos($exception->getMessage(), 'There are no commands defined in the "doctrine:migrations" namespace.')) {
+				$this->consoleOutput->writeln(PHP_EOL . '<warning>Migration not runt as its not installed on your Symfony application</warning>');
+			} else {
+				throw new Exception($exception->getMessage());
+			}
+		}
+		$this->updateStepToSuccess($step);
+	}
+
 	private function getSharedDirs(): array
 	{
 		return array_unique(
