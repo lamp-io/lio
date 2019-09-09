@@ -30,9 +30,6 @@ class Laravel extends DeployerAbstract
 	{
 		parent::deployApp($appPath, $isFirstDeploy);
 		(Dotenv::create($this->appPath))->load();
-		if (!empty(getenv('DB_USERNAME')) && getenv('DB_USERNAME') == 'root') {
-			throw new Exception('Please set non root `DB_USERNAME` in .env file, and restart deploy');
-		}
 		$this->updateEnvFileToUpload($_ENV, $this->prepareEnvFile($_ENV));
 		/** Need again load all ENV after updating .env file */
 		(Dotenv::create($this->appPath))->overload();

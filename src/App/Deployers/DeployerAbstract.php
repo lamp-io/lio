@@ -7,6 +7,7 @@ use Console\App\Commands\AppRuns\AppRunsDescribeCommand;
 use Console\App\Commands\AppRuns\AppRunsNewCommand;
 use Console\App\Commands\Command;
 use Console\App\Commands\Databases\DatabasesDescribeCommand;
+use Console\App\Commands\Databases\DatabasesUpdateCommand;
 use Console\App\Commands\DbBackups\DbBackupsDescribeCommand;
 use Console\App\Commands\DbBackups\DbBackupsNewCommand;
 use Console\App\Commands\DbRestores\DbRestoresDescribeCommand;
@@ -349,6 +350,7 @@ abstract class DeployerAbstract implements DeployInterface
 	 * @param string $dbHost
 	 * @param string $rootPassword
 	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function createDatabaseUser(string $dbHost, string $dbUser, string $dbPassword, string $rootPassword)
 	{
@@ -366,20 +368,43 @@ abstract class DeployerAbstract implements DeployInterface
 				'Drop database user ' . $dbUser
 			);
 		});
-		$command = sprintf(
-			'mysql --user=root --host=%s --password=%s --execute "CREATE USER \'%s\'@\'%%\' IDENTIFIED WITH mysql_native_password BY \'%s\';GRANT ALL PRIVILEGES ON * . * TO \'%s\'@\'%%\';FLUSH PRIVILEGES;"',
-			$dbHost,
-			$rootPassword,
-			$dbUser,
-			$dbPassword,
-			$dbUser
-		);
-		$this->appRunCommand(
-			$this->config['app']['id'],
-			$command,
-			'Creating database user ' . $dbUser
-		);
+		if ($dbUser == 'root') {
+			$this->updateDbRootPassword($dbHost, $dbPassword);
+		} else {
+			$command = sprintf(
+				'mysql --user=root --host=%s --password=%s --execute "CREATE USER \'%s\'@\'%%\' IDENTIFIED WITH mysql_native_password BY \'%s\';GRANT ALL PRIVILEGES ON * . * TO \'%s\'@\'%%\';FLUSH PRIVILEGES;"',
+				$dbHost,
+				$rootPassword,
+				$dbUser,
+				$dbPassword,
+				$dbUser
+			);
+			$this->appRunCommand(
+				$this->config['app']['id'],
+				$command,
+				'Creating database user ' . $dbUser
+			);
+		}
 		$this->updateStepToSuccess($step);
+	}
+
+	/**
+	 * @param string $dbId
+	 * @param string $password
+	 * @throws GuzzleException
+	 */
+	protected function updateDbRootPassword(string $dbId, string $password)
+	{
+		$url = sprintf(DatabasesUpdateCommand::API_ENDPOINT, $dbId);
+		$this->sendRequest($url,'UPDATE', 'Updating root password', json_encode([
+			'data' => [
+				'attributes' => [
+					'mysql_root_password' => $password,
+				],
+				'id' => $dbId,
+				'type' => 'databases'
+			]
+		]));
 	}
 
 	/**
