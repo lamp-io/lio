@@ -245,6 +245,7 @@ abstract class DeployerAbstract implements DeployInterface
 
 	/**
 	 * @throws GuzzleException
+	 * @throws Exception
 	 */
 	protected function clearApp()
 	{
@@ -252,16 +253,19 @@ abstract class DeployerAbstract implements DeployInterface
 		$this->setStep($step, function () {
 			return;
 		});
-		try {
-			$deleteFileUrl = sprintf(
-				FilesDeleteCommand::API_ENDPOINT,
-				$this->config['app']['id'],
-				'public'
-			);
-			$this->sendRequest($deleteFileUrl, 'DELETE', 'Removing default files');
-		} catch (ClientException $clientException) {
-			$this->consoleOutput->write(PHP_EOL);
-		}
+		/** TODO uncomment it */
+//		try {
+//			$deleteFileUrl = sprintf(
+//				FilesDeleteCommand::API_ENDPOINT,
+//				$this->config['app']['id'],
+//				'public'
+//			);
+//			$this->sendRequest($deleteFileUrl, 'DELETE', 'Removing default files');
+//		} catch (ClientException $clientException) {
+//			$this->consoleOutput->write(PHP_EOL);
+//		}
+		/** TODO remove it */
+		$this->appRunCommand($this->config['app']['id'], 'rm -rf *', 'Removing default files');
 		$this->updateStepToSuccess($step);
 	}
 
