@@ -9,7 +9,6 @@ use Console\App\Commands\AppRuns\AppRunsNewCommand;
 use Console\App\Commands\Apps\AppsDescribeCommand;
 use Console\App\Commands\Apps\AppsListCommand;
 use Console\App\Commands\Apps\AppsNewCommand;
-use Console\App\Commands\Databases\DatabasesDescribeCommand;
 use Console\App\Commands\Databases\DatabasesListCommand;
 use Console\App\Deployers\DeployInterface;
 use Console\App\Deployers\Laravel;
@@ -54,8 +53,6 @@ class DeployCommand extends Command
 	protected $isAppAlreadyExists = true;
 
 	protected $httpClient;
-
-	protected $databaseData;
 
 	public function __construct(ClientInterface $httpClient, $name = null)
 	{
@@ -150,22 +147,6 @@ class DeployCommand extends Command
 				DeployHelper::deleteRelease($this->configHelper->get('app.id'), $release['id'], $this->getApplication(), $output);
 			}
 		}
-	}
-
-	/**
-	 * @param string $dbId
-	 * @return bool
-	 * @throws Exception
-	 */
-	protected function isDatabaseExists(string $dbId)
-	{
-		$databasesDescribe = $this->getApplication()->find(DatabasesDescribeCommand::getDefaultName());
-		$args = [
-			'command'     => DatabasesDescribeCommand::getDefaultName(),
-			'database_id' => $dbId,
-			'--json'      => true,
-		];
-		return $databasesDescribe->run(new ArrayInput($args), new NullOutput()) === 0;
 	}
 
 	/**
