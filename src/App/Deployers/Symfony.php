@@ -46,39 +46,20 @@ class Symfony extends DeployerAbstract
 		if ($this->isFirstDeploy) {
 			$this->initSqliteDatabase();
 		}
-		$this->runCommands();
 		$this->deleteArchiveLocal();
 		$dbBackupId = $this->backupDatabase();
 		$this->runMigrations('bin/console doctrine:migrations:migrate --no-interaction', $dbBackupId);
+		$this->runCommands(['doctrine:migrations:migrate']);
 		$this->symlinkRelease($this->releaseFolder . 'public', 'Linking your current release', $this->isFirstDeploy);
 	}
 
 	protected function runMigrations(string $migrationCommand, string $dbBackupId = '')
 	{
-		if (!empty($this->config['no_migrations'])) {
+		if (!$this->isDoctrineInstalled()) {
 			return;
 		}
-		$step = 'runMigrations';
-		$this->setStep($step, function () use ($dbBackupId) {
-			if (!empty($dbBackupId)) {
-				$this->restoreDatabase($dbBackupId);
-			}
-		});
-		/** Need it to allow users make deploys without installed doctrine  */
-		try {
-			$this->appRunCommand(
-				$this->config['app']['id'],
-				'php ' . $this->releaseFolder . $migrationCommand,
-				'Migrating schema'
-			);
-		} catch (Exception $exception) {
-			if (strpos($exception->getMessage(), 'There are no commands defined in the "doctrine:migrations" namespace.')) {
-				$this->consoleOutput->writeln(PHP_EOL . '<warning>Migration not run as its not installed on your Symfony application</warning>');
-			} else {
-				throw new Exception($exception->getMessage());
-			}
-		}
-		$this->updateStepToSuccess($step);
+
+		parent::runMigrations($migrationCommand, $dbBackupId);
 	}
 
 	private function getSharedDirs(): array
@@ -88,6 +69,12 @@ class Symfony extends DeployerAbstract
 				self::SHARED_DIRS,
 				!empty($this->config['shared']) ? $this->config['shared'] : []
 			));
+	}
+
+	private function isDoctrineInstalled(): bool
+	{
+		$composerJson = json_decode(file_get_contents($this->appPath . 'composer.json'), true);
+		return array_key_exists('symfony/orm-pack', $composerJson['require']);
 	}
 
 	/**
