@@ -23,7 +23,7 @@ class DeployHelper
 
 	const SQLITE_RELATIVE_REMOTE_PATH = 'sqlite/db.sqlite';
 
-	const CI_ENV_VARS = ['CI', 'JENKINS_URL', 'TEAMCITY_VERSION'];
+	const CI_ENV_VARS = ['CI', 'JENKINS_URL', 'TEAMCITY_VERSION', 'GITHUB_ACTION'];
 
 	/**
 	 * @param string $appType
