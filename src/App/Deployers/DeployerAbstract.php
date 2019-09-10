@@ -5,6 +5,7 @@ namespace Console\App\Deployers;
 use Closure;
 use Console\App\Commands\AppRuns\AppRunsDescribeCommand;
 use Console\App\Commands\AppRuns\AppRunsNewCommand;
+use Console\App\Commands\Apps\AppsDescribeCommand;
 use Console\App\Commands\Command;
 use Console\App\Commands\Databases\DatabasesDescribeCommand;
 use Console\App\Commands\Databases\DatabasesUpdateCommand;
@@ -86,6 +87,7 @@ abstract class DeployerAbstract implements DeployInterface
 	/**
 	 * @param string $appPath
 	 * @param bool $isFirstDeploy
+	 * @throws Exception
 	 * @throws GuzzleException
 	 */
 	public function deployApp(string $appPath, bool $isFirstDeploy)
@@ -93,6 +95,9 @@ abstract class DeployerAbstract implements DeployInterface
 		$this->appPath = $appPath;
 		$this->isFirstDeploy = $isFirstDeploy;
 		$this->releaseFolder = DeployHelper::RELEASE_FOLDER . '/' . $this->config['release'] . '/';
+		if ($this->isFirstDeploy) {
+			$this->initApp($this->config['app']['id']);
+		}
 		if ($this->isFirstDeploy) {
 			$this->clearApp();
 		}
@@ -244,6 +249,43 @@ abstract class DeployerAbstract implements DeployInterface
 	}
 
 	/**
+	 * @param string $appId
+	 * @throws Exception
+	 */
+	protected function initApp(string $appId)
+	{
+		$progressBar = Command::getProgressBar('Initializing app', $this->consoleOutput);
+		$progressBar->start();
+		while (!$this->isAppRunning($appId)) {
+			$progressBar->advance();
+		}
+		$this->consoleOutput->write(PHP_EOL);
+	}
+
+	/**
+	 * @param string $appId
+	 * @return bool
+	 * @throws Exception
+	 */
+	protected function isAppRunning(string $appId): bool
+	{
+		$appsDescribeCommand = $this->application->find(AppsDescribeCommand::getDefaultName());
+		$args = [
+			'command' => AppsDescribeCommand::getDefaultName(),
+			'app_id'  => $appId,
+			'--json'  => true,
+		];
+		$bufferOutput = new BufferedOutput();
+		if ($appsDescribeCommand->run(new ArrayInput($args), $bufferOutput) == '0') {
+			/** @var Document $document */
+			$document = Parser::parseResponseString($bufferOutput->fetch());
+			return $document->get('data.attributes.status') === 'running';
+		} else {
+			throw new Exception($bufferOutput->fetch());
+		}
+	}
+
+	/**
 	 * @throws GuzzleException
 	 * @throws Exception
 	 */
@@ -253,20 +295,16 @@ abstract class DeployerAbstract implements DeployInterface
 		$this->setStep($step, function () {
 			return;
 		});
-		/** TODO uncomment it */
-//		try {
-//			$deleteFileUrl = sprintf(
-//				FilesDeleteCommand::API_ENDPOINT,
-//				$this->config['app']['id'],
-//				'public'
-//			);
-//			$this->sendRequest($deleteFileUrl, 'DELETE', 'Removing default files');
-//		} catch (ClientException $clientException) {
-//			$this->consoleOutput->write(PHP_EOL);
-//		}
-		/** TODO remove it */
-		$this->appRunCommand($this->config['app']['id'], 'rm -rf *', 'Removing default files');
-		$this->updateStepToSuccess($step);
+		try {
+			$deleteFileUrl = sprintf(
+				FilesDeleteCommand::API_ENDPOINT,
+				$this->config['app']['id'],
+				'public'
+			);
+			$this->sendRequest($deleteFileUrl, 'DELETE', 'Removing default files');
+		} catch (ClientException $clientException) {
+			$this->consoleOutput->write(PHP_EOL);
+		}
 	}
 
 	/**
@@ -400,14 +438,14 @@ abstract class DeployerAbstract implements DeployInterface
 	protected function updateDbRootPassword(string $dbId, string $password)
 	{
 		$url = sprintf(DatabasesUpdateCommand::API_ENDPOINT, $dbId);
-		$this->sendRequest($url,'UPDATE', 'Updating root password', json_encode([
+		$this->sendRequest($url, 'UPDATE', 'Updating root password', json_encode([
 			'data' => [
 				'attributes' => [
 					'mysql_root_password' => $password,
 				],
-				'id' => $dbId,
-				'type' => 'databases'
-			]
+				'id'         => $dbId,
+				'type'       => 'databases',
+			],
 		]));
 	}
 
