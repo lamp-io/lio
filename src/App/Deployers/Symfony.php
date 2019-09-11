@@ -1,6 +1,6 @@
 <?php
 
-namespace Console\App\Deploy;
+namespace Console\App\Deployers;
 
 use Console\App\Commands\Files\FilesUpdateCommand;
 use Console\App\Helpers\DeployHelper;
@@ -8,7 +8,7 @@ use Dotenv\Dotenv;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 
-class Symfony extends DeployAbstract
+class Symfony extends DeployerAbstract
 {
 	const SHARED_DIRS = ['var/log', 'var/sessions'];
 
@@ -42,15 +42,24 @@ class Symfony extends DeployAbstract
 		$this->unarchiveApp($this->releaseFolder . self::ARCHIVE_NAME);
 		$this->deleteArchiveRemote($this->releaseFolder . self::ARCHIVE_NAME);
 		$this->createSharedStorage($this->getSharedStorageCommands($this->getSharedDirs()));
-		$this->setUpPermissions([$this->releaseFolder . 'var'], true);
+		$this->setUpPermissions(['var'], true);
 		if ($this->isFirstDeploy) {
 			$this->initSqliteDatabase();
 		}
-		$this->runCommands();
 		$this->deleteArchiveLocal();
 		$dbBackupId = $this->backupDatabase();
 		$this->runMigrations('bin/console doctrine:migrations:migrate --no-interaction', $dbBackupId);
+		$this->runCommands(['doctrine:migrations:migrate']);
 		$this->symlinkRelease($this->releaseFolder . 'public', 'Linking your current release', $this->isFirstDeploy);
+	}
+
+	protected function runMigrations(string $migrationCommand, string $dbBackupId = '')
+	{
+		if (!$this->isDoctrineInstalled()) {
+			return;
+		}
+
+		parent::runMigrations($migrationCommand, $dbBackupId);
 	}
 
 	private function getSharedDirs(): array
@@ -60,6 +69,12 @@ class Symfony extends DeployAbstract
 				self::SHARED_DIRS,
 				!empty($this->config['shared']) ? $this->config['shared'] : []
 			));
+	}
+
+	private function isDoctrineInstalled(): bool
+	{
+		$composerJson = json_decode(file_get_contents($this->appPath . 'composer.json'), true);
+		return array_key_exists('symfony/orm-pack', $composerJson['require']);
 	}
 
 	/**
@@ -124,24 +139,26 @@ class Symfony extends DeployAbstract
 				'message' => 'Apache can write in shared/%s',
 				'execute' => function (string $message) use ($dirs) {
 					foreach ($dirs as $dir) {
-						$dirName = explode('/', $dir);
-						$dirName = $dirName[count($dirName) - 1];
-						$fileUpdateUrl = sprintf(
-							sprintf(
-								FilesUpdateCommand::API_ENDPOINT . '?recur=true',
-								$this->config['app']['id'],
-								'shared/' . rtrim($dirName, '/')
-							)
-						);
-						$this->sendRequest($fileUpdateUrl, 'PATCH', sprintf($message, $dir), json_encode([
-							'data' => [
-								'attributes' => [
-									'apache_writable' => true,
+						if (file_exists($this->appPath . $dir)) {
+							$dirName = explode('/', $dir);
+							$dirName = $dirName[count($dirName) - 1];
+							$fileUpdateUrl = sprintf(
+								sprintf(
+									FilesUpdateCommand::API_ENDPOINT . '?recur=true',
+									$this->config['app']['id'],
+									'shared/' . rtrim($dirName, '/')
+								)
+							);
+							$this->sendRequest($fileUpdateUrl, 'PATCH', sprintf($message, $dir), json_encode([
+								'data' => [
+									'attributes' => [
+										'apache_writable' => true,
+									],
+									'id'         => 'shared/' . rtrim($dirName, '/'),
+									'type'       => 'files',
 								],
-								'id'         => 'shared/' . rtrim($dirName, '/'),
-								'type'       => 'files',
-							],
-						]));
+							]));
+						}
 					}
 				},
 			],

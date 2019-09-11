@@ -23,6 +23,8 @@ class DeployHelper
 
 	const SQLITE_RELATIVE_REMOTE_PATH = 'sqlite/db.sqlite';
 
+	const CI_ENV_VARS = ['CI', 'JENKINS_URL', 'TEAMCITY_VERSION', 'GITHUB_ACTION'];
+
 	/**
 	 * @param string $appType
 	 * @param string $appPath
@@ -81,7 +83,7 @@ class DeployHelper
 		$args = [
 			'command'     => FilesDeleteCommand::getDefaultName(),
 			'app_id'      => $appId,
-			'remote_path' => $releasePath,
+			'file_id' => $releasePath,
 			'--yes'       => true,
 			'--json'      => true,
 		];
@@ -133,63 +135,13 @@ class DeployHelper
 		return $filesListCommand->run(new ArrayInput($args), $bufferOutput) == '0';
 	}
 
-	/**
-	 * @param string $appId
-	 * @param string $release
-	 * @param Application $application
-	 * @return string
-	 * @throws Exception
-	 */
-	public static function getReleaseConfigContent(string $appId, string $release, Application $application): string
+	static public function isRemoteDeploy(): bool
 	{
-		$filesListCommand = $application->find(FilesListCommand::getDefaultName());
-		$args = [
-			'command' => FilesListCommand::getDefaultName(),
-			'app_id'  => $appId,
-			'file_id' => $release . '/' . ConfigHelper::LAMP_IO_CONFIG,
-			'--json'  => true,
-		];
-		$bufferOutput = new BufferedOutput();
-		if ($filesListCommand->run(new ArrayInput($args), $bufferOutput) != '0') {
-			throw new Exception($bufferOutput->fetch());
-		}
-		/** @var Document $document */
-		$document = Parser::parseResponseString(trim($bufferOutput->fetch()));
-		return !empty($document->has('data.attributes.contents')) ? $document->get('data.attributes.contents') : '';
+		$isRemote = array_filter(self::CI_ENV_VARS, function ($value) {
+			return !empty(getenv($value));
+		});
+
+		return !empty($isRemote);
 	}
 
-	/**
-	 * @param string $appId
-	 * @param string $releaseMigrationFolder
-	 * @param Application $application
-	 * @return array
-	 * @throws Exception
-	 */
-	public static function getReleaseMigrations(string $appId, string $releaseMigrationFolder, Application $application): array
-	{
-		$filesListCommand = $application->find(FilesListCommand::getDefaultName());
-		$args = [
-			'command' => FilesListCommand::getDefaultName(),
-			'app_id'  => $appId,
-			'file_id' => $releaseMigrationFolder,
-			'--json'  => true,
-		];
-		$bufferOutput = new BufferedOutput();
-		if ($filesListCommand->run(new ArrayInput($args), $bufferOutput) != '0') {
-			throw new Exception($bufferOutput->fetch());
-		}
-		/** @var Document $document */
-		$document = Parser::parseResponseString(trim($bufferOutput->fetch()));
-		if (empty($document->has('data.relationships.children.data'))) {
-			return [];
-		} else {
-			$serializer = new ArraySerializer(['recursive' => true]);
-			$migrations = [];
-			foreach ($serializer->serialize($document->get('data.relationships.children.data')) as $value) {
-				preg_match('/((\/[0-9]*)_([a-zA-Z]*)).*$/', $value['id'], $matched);
-				$migrations[] = ltrim(rtrim($matched[0], '.php'), '/');
-			}
-			return $migrations;
-		}
-	}
 }

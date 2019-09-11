@@ -1,6 +1,6 @@
 <?php
 
-namespace Console\App\Deploy;
+namespace Console\App\Deployers;
 
 interface DeployInterface
 {

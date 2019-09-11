@@ -22,8 +22,7 @@ class DeployListCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Get list of available deploys')
-			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->setHelp('try rebooting');
+			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app');
 	}
 
 	/**

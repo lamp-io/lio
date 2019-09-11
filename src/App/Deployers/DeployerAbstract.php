@@ -1,12 +1,14 @@
 <?php
 
-namespace Console\App\Deploy;
+namespace Console\App\Deployers;
 
 use Closure;
 use Console\App\Commands\AppRuns\AppRunsDescribeCommand;
 use Console\App\Commands\AppRuns\AppRunsNewCommand;
+use Console\App\Commands\Apps\AppsDescribeCommand;
 use Console\App\Commands\Command;
 use Console\App\Commands\Databases\DatabasesDescribeCommand;
+use Console\App\Commands\Databases\DatabasesUpdateCommand;
 use Console\App\Commands\DbBackups\DbBackupsDescribeCommand;
 use Console\App\Commands\DbBackups\DbBackupsNewCommand;
 use Console\App\Commands\DbRestores\DbRestoresDescribeCommand;
@@ -31,7 +33,7 @@ use Art4\JsonApiClient\V1\Document;
 use ZipArchive;
 use GuzzleHttp\Exception\GuzzleException;
 
-abstract class DeployAbstract implements DeployInterface
+abstract class DeployerAbstract implements DeployInterface
 {
 	const ARCHIVE_NAME = 'lamp-io.zip';
 
@@ -85,6 +87,7 @@ abstract class DeployAbstract implements DeployInterface
 	/**
 	 * @param string $appPath
 	 * @param bool $isFirstDeploy
+	 * @throws Exception
 	 * @throws GuzzleException
 	 */
 	public function deployApp(string $appPath, bool $isFirstDeploy)
@@ -92,9 +95,14 @@ abstract class DeployAbstract implements DeployInterface
 		$this->appPath = $appPath;
 		$this->isFirstDeploy = $isFirstDeploy;
 		$this->releaseFolder = DeployHelper::RELEASE_FOLDER . '/' . $this->config['release'] . '/';
-
+		if ($this->isFirstDeploy) {
+			$this->initApp($this->config['app']['id']);
+		}
 		if ($this->isFirstDeploy) {
 			$this->clearApp();
+		}
+		if (!file_exists($appPath . DIRECTORY_SEPARATOR . '.env')) {
+			file_put_contents($appPath . DIRECTORY_SEPARATOR . '.env', '');
 		}
 	}
 
@@ -241,7 +249,45 @@ abstract class DeployAbstract implements DeployInterface
 	}
 
 	/**
+	 * @param string $appId
+	 * @throws Exception
+	 */
+	protected function initApp(string $appId)
+	{
+		$progressBar = Command::getProgressBar('Initializing app', $this->consoleOutput);
+		$progressBar->start();
+		while (!$this->isAppRunning($appId)) {
+			$progressBar->advance();
+		}
+		$this->consoleOutput->write(PHP_EOL);
+	}
+
+	/**
+	 * @param string $appId
+	 * @return bool
+	 * @throws Exception
+	 */
+	protected function isAppRunning(string $appId): bool
+	{
+		$appsDescribeCommand = $this->application->find(AppsDescribeCommand::getDefaultName());
+		$args = [
+			'command' => AppsDescribeCommand::getDefaultName(),
+			'app_id'  => $appId,
+			'--json'  => true,
+		];
+		$bufferOutput = new BufferedOutput();
+		if ($appsDescribeCommand->run(new ArrayInput($args), $bufferOutput) == '0') {
+			/** @var Document $document */
+			$document = Parser::parseResponseString($bufferOutput->fetch());
+			return $document->get('data.attributes.status') === 'running';
+		} else {
+			throw new Exception($bufferOutput->fetch());
+		}
+	}
+
+	/**
 	 * @throws GuzzleException
+	 * @throws Exception
 	 */
 	protected function clearApp()
 	{
@@ -259,7 +305,6 @@ abstract class DeployAbstract implements DeployInterface
 		} catch (ClientException $clientException) {
 			$this->consoleOutput->write(PHP_EOL);
 		}
-		$this->updateStepToSuccess($step);
 	}
 
 	/**
@@ -301,10 +346,13 @@ abstract class DeployAbstract implements DeployInterface
 	}
 
 	/**
+	 * @param string $dbHost
 	 * @param string $dbName
+	 * @param string $dbUser
+	 * @param string $dbPassword
 	 * @throws Exception
 	 */
-	protected function importSqlDump(string $dbName)
+	protected function importSqlDump(string $dbHost, string $dbName, string $dbUser, string $dbPassword)
 	{
 		$step = 'ImportSqlDump';
 		$this->setStep($step, function () {
@@ -312,18 +360,18 @@ abstract class DeployAbstract implements DeployInterface
 		});
 		$filesUploadCommand = $this->application->find(FilesUploadCommand::getDefaultName());
 		$args = [
-			'command'     => FilesUploadCommand::getDefaultName(),
-			'file'        => $this->config['database']['sql_dump'],
-			'app_id'      => $this->config['app']['id'],
-			'remote_path' => $this->releaseFolder . self::SQL_DUMP_NAME,
-			'--json'      => true,
+			'command' => FilesUploadCommand::getDefaultName(),
+			'file'    => $this->config['database']['sql_dump'],
+			'app_id'  => $this->config['app']['id'],
+			'file_id' => $this->releaseFolder . self::SQL_DUMP_NAME,
+			'--json'  => true,
 		];
 		if ($filesUploadCommand->run(new ArrayInput($args), $this->consoleOutput) == '0') {
 			$command = sprintf(
 				'mysql -u %s --host=%s --password=%s  %s < %s',
-				$this->config['database']['connection']['user'],
-				$this->config['database']['connection']['host'],
-				$this->config['database']['connection']['password'],
+				$dbUser,
+				$dbHost,
+				$dbPassword,
 				$dbName,
 				$this->releaseFolder . self::SQL_DUMP_NAME
 			);
@@ -339,38 +387,66 @@ abstract class DeployAbstract implements DeployInterface
 	}
 
 	/**
+	 * @param string $dbUser
+	 * @param string $dbPassword
+	 * @param string $dbHost
+	 * @param string $rootPassword
 	 * @throws Exception
+	 * @throws GuzzleException
 	 */
-	protected function createDatabaseUser()
+	protected function createDatabaseUser(string $dbHost, string $dbUser, string $dbPassword, string $rootPassword)
 	{
 		$step = 'createDatabaseUser';
-		$this->setStep($step, function () {
+		$this->setStep($step, function () use ($dbUser, $rootPassword, $dbHost) {
 			$command = sprintf(
 				'mysql --user=root --host=%s --password=%s --execute "DROP USER \'%s\'"',
-				$this->config['database']['connection']['host'],
-				$this->config['database']['root_password'],
-				$this->config['database']['connection']['user']
+				$dbHost,
+				$rootPassword,
+				$dbUser
 			);
 			$this->appRunCommand(
 				$this->config['app']['id'],
 				$command,
-				'Drop database user ' . $this->config['database']['connection']['user']
+				'Drop database user ' . $dbUser
 			);
 		});
-		$command = sprintf(
-			'mysql --user=root --host=%s --password=%s --execute "CREATE USER \'%s\'@\'%%\' IDENTIFIED WITH mysql_native_password BY \'%s\';GRANT ALL PRIVILEGES ON * . * TO \'%s\'@\'%%\';FLUSH PRIVILEGES;"',
-			$this->config['database']['connection']['host'],
-			$this->config['database']['root_password'],
-			$this->config['database']['connection']['user'],
-			$this->config['database']['connection']['password'],
-			$this->config['database']['connection']['user']
-		);
-		$this->appRunCommand(
-			$this->config['app']['id'],
-			$command,
-			'Creating database user ' . $this->config['database']['connection']['user']
-		);
+		if ($dbUser == 'root') {
+			$this->updateDbRootPassword($dbHost, $dbPassword);
+		} else {
+			$command = sprintf(
+				'mysql --user=root --host=%s --password=%s --execute "CREATE USER \'%s\'@\'%%\' IDENTIFIED WITH mysql_native_password BY \'%s\';GRANT ALL PRIVILEGES ON * . * TO \'%s\'@\'%%\';FLUSH PRIVILEGES;"',
+				$dbHost,
+				$rootPassword,
+				$dbUser,
+				$dbPassword,
+				$dbUser
+			);
+			$this->appRunCommand(
+				$this->config['app']['id'],
+				$command,
+				'Creating database user ' . $dbUser
+			);
+		}
 		$this->updateStepToSuccess($step);
+	}
+
+	/**
+	 * @param string $dbId
+	 * @param string $password
+	 * @throws GuzzleException
+	 */
+	protected function updateDbRootPassword(string $dbId, string $password)
+	{
+		$url = sprintf(DatabasesUpdateCommand::API_ENDPOINT, $dbId);
+		$this->sendRequest($url, 'UPDATE', 'Updating root password', json_encode([
+			'data' => [
+				'attributes' => [
+					'mysql_root_password' => $password,
+				],
+				'id'         => $dbId,
+				'type'       => 'databases',
+			],
+		]));
 	}
 
 	/**
@@ -397,15 +473,16 @@ abstract class DeployAbstract implements DeployInterface
 	}
 
 	/**
+	 * @param string $dbHost
 	 * @throws Exception
 	 */
-	protected function initDatabase()
+	protected function initDatabase(string $dbHost)
 	{
 		$progressBar = Command::getProgressBar('Initializing database', $this->consoleOutput);
 		$progressBar->start();
 		$dbIsRunning = false;
 		while (!$dbIsRunning) {
-			$dbIsRunning = $this->isDbAlreadyRunning($this->config['database']['connection']['host']);
+			$dbIsRunning = $this->isDbAlreadyRunning($dbHost);
 			$progressBar->advance();
 		}
 		$counter = 0;
@@ -422,18 +499,21 @@ abstract class DeployAbstract implements DeployInterface
 	}
 
 	/**
+	 * @param string $dbHost
 	 * @param string $dbName
+	 * @param string $dbUser
+	 * @param string $dbPassword
 	 * @throws Exception
 	 */
-	protected function createDatabase(string $dbName)
+	protected function createDatabase(string $dbHost, string $dbName, string $dbUser, string $dbPassword)
 	{
 		$step = 'CreateDatabase';
-		$this->setStep($step, function () use ($dbName) {
+		$this->setStep($step, function () use ($dbName, $dbUser, $dbPassword, $dbHost) {
 			$command = sprintf(
 				'mysql --user=%s --host=%s --password=%s --execute "drop database %s;"',
-				$this->config['database']['connection']['user'],
-				$this->config['database']['connection']['host'],
-				$this->config['database']['connection']['password'],
+				$dbUser,
+				$dbHost,
+				$dbPassword,
 				$dbName
 			);
 			$this->appRunCommand(
@@ -445,9 +525,9 @@ abstract class DeployAbstract implements DeployInterface
 
 		$command = sprintf(
 			'mysql --user=%s --host=%s --password=%s --execute "create database %s;"',
-			$this->config['database']['connection']['user'],
-			$this->config['database']['connection']['host'],
-			$this->config['database']['connection']['password'],
+			$dbUser,
+			$dbHost,
+			$dbPassword,
 			$dbName
 		);
 		$this->appRunCommand(
@@ -460,13 +540,13 @@ abstract class DeployAbstract implements DeployInterface
 
 	/**
 	 * @param string $localFile
-	 * @param string $remotePath
+	 * @param string $fileId
 	 * @throws Exception
 	 */
-	protected function uploadToApp(string $localFile, string $remotePath)
+	protected function uploadToApp(string $localFile, string $fileId)
 	{
 		$step = 'uploadToApp';
-		$this->setStep($step, function () use ($remotePath) {
+		$this->setStep($step, function () use ($fileId) {
 			if ($this->isFirstDeploy) {
 				$deleteFileUrl = sprintf(
 					FilesDeleteCommand::API_ENDPOINT,
@@ -478,22 +558,22 @@ abstract class DeployAbstract implements DeployInterface
 				$this->consoleOutput->writeln('Deleting failed release');
 				$filesDeleteCommand = $this->application->find(FilesDeleteCommand::getDefaultName());
 				$args = [
-					'command'     => FilesDeleteCommand::getDefaultName(),
-					'remote_path' => str_replace(self::ARCHIVE_NAME, '', $remotePath),
-					'app_id'      => $this->config['app']['id'],
-					'--json'      => true,
-					'--yes'       => true,
+					'command' => FilesDeleteCommand::getDefaultName(),
+					'file_id' => str_replace(self::ARCHIVE_NAME, '', $fileId),
+					'app_id'  => $this->config['app']['id'],
+					'--json'  => true,
+					'--yes'   => true,
 				];
 				$filesDeleteCommand->run(new ArrayInput($args), $this->consoleOutput);
 			}
 		});
 		$filesUploadCommand = $this->application->find(FilesUploadCommand::getDefaultName());
 		$args = [
-			'command'     => FilesUploadCommand::getDefaultName(),
-			'file'        => $localFile,
-			'app_id'      => $this->config['app']['id'],
-			'remote_path' => $remotePath,
-			'--json'      => true,
+			'command' => FilesUploadCommand::getDefaultName(),
+			'file'    => $localFile,
+			'app_id'  => $this->config['app']['id'],
+			'file_id' => $fileId,
+			'--json'  => true,
 		];
 		if ($filesUploadCommand->run(new ArrayInput($args), $this->consoleOutput) == '0') {
 			$this->consoleOutput->write(PHP_EOL);
@@ -504,10 +584,10 @@ abstract class DeployAbstract implements DeployInterface
 	}
 
 	/**
-	 * @param string $remotePath
+	 * @param string $fileId
 	 * @throws Exception
 	 */
-	protected function unarchiveApp(string $remotePath)
+	protected function unarchiveApp(string $fileId)
 	{
 		$step = 'unarchiveApp';
 		$this->setStep($step, function () {
@@ -516,10 +596,10 @@ abstract class DeployAbstract implements DeployInterface
 
 		$appRunsDescribeCommand = $this->application->find(FilesUpdateUnarchiveCommand::getDefaultName());
 		$args = [
-			'command'     => FilesUpdateUnarchiveCommand::getDefaultName(),
-			'remote_path' => $remotePath,
-			'app_id'      => $this->config['app']['id'],
-			'--json'      => true,
+			'command' => FilesUpdateUnarchiveCommand::getDefaultName(),
+			'file_id' => $fileId,
+			'app_id'  => $this->config['app']['id'],
+			'--json'  => true,
 		];
 		if ($appRunsDescribeCommand->run(new ArrayInput($args), $this->consoleOutput) == '0') {
 			$this->consoleOutput->write(PHP_EOL);
@@ -543,10 +623,10 @@ abstract class DeployAbstract implements DeployInterface
 	}
 
 	/**
-	 * @param string $remotePath
+	 * @param string $fileId
 	 * @throws Exception
 	 */
-	protected function deleteArchiveRemote(string $remotePath)
+	protected function deleteArchiveRemote(string $fileId)
 	{
 		$step = 'deleteArchiveRemote';
 		$this->setStep($step, function () {
@@ -554,11 +634,11 @@ abstract class DeployAbstract implements DeployInterface
 		});
 		$deleteFileCommand = $this->application->find(FilesDeleteCommand::getDefaultName());
 		$args = [
-			'command'     => FilesDeleteCommand::getDefaultName(),
-			'remote_path' => $remotePath,
-			'app_id'      => $this->config['app']['id'],
-			'--json'      => true,
-			'--yes'       => true,
+			'command' => FilesDeleteCommand::getDefaultName(),
+			'file_id' => $fileId,
+			'app_id'  => $this->config['app']['id'],
+			'--json'  => true,
+			'--yes'   => true,
 		];
 		if ($deleteFileCommand->run(new ArrayInput($args), new NullOutput()) == '0') {
 			$this->updateStepToSuccess($step);
@@ -663,11 +743,11 @@ abstract class DeployAbstract implements DeployInterface
 		if (!empty($this->config['database']['sql_dump'])) {
 			$filesUploadCommand = $this->application->find(FilesUploadCommand::getDefaultName());
 			$args = [
-				'command'     => FilesUploadCommand::getDefaultName(),
-				'file'        => $this->config['database']['sql_dump'],
-				'app_id'      => $this->config['app']['id'],
-				'remote_path' => DeployHelper::SQLITE_RELATIVE_REMOTE_PATH,
-				'--json'      => true,
+				'command' => FilesUploadCommand::getDefaultName(),
+				'file'    => $this->config['database']['sql_dump'],
+				'app_id'  => $this->config['app']['id'],
+				'file_id' => DeployHelper::SQLITE_RELATIVE_REMOTE_PATH,
+				'--json'  => true,
 			];
 			if ($filesUploadCommand->run(new ArrayInput($args), $this->consoleOutput) != '0') {
 				throw new Exception('Cant up load mysqli dump');

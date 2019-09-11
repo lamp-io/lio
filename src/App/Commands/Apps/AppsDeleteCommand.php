@@ -23,7 +23,7 @@ class AppsDeleteCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Delete an app')
-			->setHelp('https://www.lamp.io/api#/apps/appsDestroy')
+			->setHelp('Delete app, api reference' . PHP_EOL . 'https://www.lamp.io/api#/apps/appsDestroy')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
 			->addOption('yes', 'y', InputOption::VALUE_NONE, 'Skip confirm delete question');
 	}

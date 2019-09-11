@@ -7,12 +7,10 @@ use Console\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use InvalidArgumentException;
-use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 class DatabasesDeleteCommand extends Command
 {
@@ -27,7 +25,7 @@ class DatabasesDeleteCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Delete a database')
-			->setHelp('https://www.lamp.io/api#/databases/databasesDelete')
+			->setHelp('Delete a database, api reference' . PHP_EOL . 'https://www.lamp.io/api#/databases/databasesDelete')
 			->addArgument('database_id', InputArgument::REQUIRED, 'The id of database')
 			->addOption('yes', 'y', InputOption::VALUE_NONE, 'Skip confirm delete question');
 	}
