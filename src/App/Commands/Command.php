@@ -24,12 +24,24 @@ class Command extends BaseCommand
 
 	protected $httpHelper;
 
-	public function __construct(ClientInterface $httpClient, $name = null)
+	private $skipAuth;
+
+	/**
+	 * Command constructor.
+	 * @param ClientInterface $httpClient
+	 * @param null $name
+	 * @param bool $skipAuth
+	 */
+	public function __construct(ClientInterface $httpClient, $name = null, bool $skipAuth = false)
 	{
 		parent::__construct($name);
 		$this->httpHelper = new HttpHelper($httpClient);
+		$this->skipAuth = $skipAuth;
 	}
 
+	/**
+	 *
+	 */
 	protected function configure()
 	{
 		$this->addOption('json', 'j', InputOption::VALUE_NONE, 'Output as a raw json');
@@ -45,11 +57,14 @@ class Command extends BaseCommand
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		$output->getFormatter()->setStyle('warning', new OutputFormatterStyle('black', 'yellow'));
-		if (!AuthHelper::isTokenExist()) {
+		if (!AuthHelper::isTokenExist() && !$this->skipAuth) {
 			$this->callAuthCommand();
+			$token = AuthHelper::getToken();
+		} else {
+			$token = '';
 		}
 
-		$this->httpHelper->setHeader('Authorization', 'Bearer ' . AuthHelper::getToken());
+		$this->httpHelper->setHeader('Authorization', 'Bearer ' . $token);
 	}
 
 	/**
