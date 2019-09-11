@@ -7,7 +7,6 @@ use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Helper\TableSeparator;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Art4\JsonApiClient\Exception\ValidationException;
 use Art4\JsonApiClient\Helper\Parser;
@@ -27,7 +26,7 @@ class AppsListCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Returns the apps for an organization')
-			->setHelp('try rebooting');
+			->setHelp('Get list all allowed apps, api reference' . PHP_EOL . 'https://www.lamp.io/api#/apps/appsList');
 	}
 
 	/**

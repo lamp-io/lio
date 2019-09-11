@@ -23,9 +23,9 @@ class FilesDeleteCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Remove file/directory from your app')
-			->setHelp('https://www.lamp.io/api#/files/filesDestroy')
+			->setHelp('Delete files, api reference' . PHP_EOL . 'https://www.lamp.io/api#/files/filesDestroy')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addArgument('remote_path', InputArgument::REQUIRED, 'File ID of file to delete')
+			->addArgument('file_id', InputArgument::REQUIRED, 'File ID of file to delete')
 			->addOption('yes', 'y', InputOption::VALUE_NONE, 'Skip confirm delete question');
 	}
 
@@ -42,14 +42,14 @@ class FilesDeleteCommand extends Command
 		if (!$this->askConfirm('<info>Are you sure you want to file? (y/N)</info>', $output, $input)) {
 			return 0;
 		}
-		$progressBar = self::getProgressBar('Deleting ' . $input->getArgument('remote_path'), $output);
+		$progressBar = self::getProgressBar('Deleting ' . $input->getArgument('file_id'), $output);
 		try {
 			$this->httpHelper->getClient()->request(
 				'DELETE',
 				sprintf(
 					self::API_ENDPOINT,
 					$input->getArgument('app_id'),
-					ltrim($input->getArgument('remote_path'), '/')
+					ltrim($input->getArgument('file_id'), '/')
 
 				),
 				[
@@ -64,7 +64,7 @@ class FilesDeleteCommand extends Command
 			$progressBar->finish();
 			$output->write(PHP_EOL);
 			if (empty($input->getOption('json'))) {
-				$output->writeln('<info>Success, ' . $input->getArgument('remote_path') . ' has been deleted</info>');
+				$output->writeln('<info>Success, ' . $input->getArgument('file_id') . ' has been deleted</info>');
 			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());

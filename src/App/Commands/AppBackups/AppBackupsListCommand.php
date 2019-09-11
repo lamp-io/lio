@@ -35,7 +35,7 @@ class AppBackupsListCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Return app backups')
-			->setHelp('https://www.lamp.io/api#/app_backups/appBackupsList')
+			->setHelp('Get all app backups, api reference' . PHP_EOL . 'https://www.lamp.io/api#/app_backups/appBackupsList')
 			->addOption('organization_id', 'o', InputOption::VALUE_REQUIRED, 'Comma-separated list of requested organization_ids. If omitted defaults to user\'s default organization');
 	}
 

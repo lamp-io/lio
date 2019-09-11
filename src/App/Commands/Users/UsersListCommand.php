@@ -32,8 +32,9 @@ class UsersListCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('Get all users from your account')
-			->setHelp('try rebooting')
+		$this->setDescription('Returns users')
+			->setHelp('https://www.lamp.io/api#/users/usersList')
+			->setHelp('Get all users, api reference' . PHP_EOL . 'https://www.lamp.io/api#/users/usersList')
 			->addOption('organization_id', 'o', InputOption::VALUE_REQUIRED, 'Comma-separated list of requested organization_ids. If omitted defaults to user\'s default organization')
 			->addOption('email', 'e', InputOption::VALUE_REQUIRED, 'Email address to filter for');
 	}

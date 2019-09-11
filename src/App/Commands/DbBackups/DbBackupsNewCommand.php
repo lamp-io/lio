@@ -20,8 +20,8 @@ class DbBackupsNewCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('Back up files in database')
-			->setHelp('https://www.lamp.io/api#/db_backups/dbBackupsCreate')
+		$this->setDescription('Back up database')
+			->setHelp('Backup database, api reference' . PHP_EOL . 'https://www.lamp.io/api#/db_backups/dbBackupsCreate')
 			->addArgument('database_id', InputArgument::REQUIRED, 'The id of database');
 	}
 

@@ -32,7 +32,7 @@ class OrganizationsListCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Returns this user\'s organizations')
-			->setHelp('https://www.lamp.io/api#/organizations/organizationsList');
+			->setHelp('Get an this user\'s organizations, api reference' . PHP_EOL . 'https://www.lamp.io/api#/organizations/organizationsList');
 	}
 
 	/**

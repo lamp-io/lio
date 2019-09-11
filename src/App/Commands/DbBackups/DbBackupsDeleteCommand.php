@@ -5,12 +5,10 @@ namespace Console\App\Commands\DbBackups;
 use Console\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
-use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 class DbBackupsDeleteCommand extends Command
 {
@@ -25,7 +23,7 @@ class DbBackupsDeleteCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Delete a db backup')
-			->setHelp('https://www.lamp.io/api#/db_backups/dbBackupsDelete')
+			->setHelp('Delete a db backup, api reference' . PHP_EOL . 'https://www.lamp.io/api#/db_backups/dbBackupsDelete')
 			->addArgument('db_backup_id', InputArgument::REQUIRED, 'The ID of the db backup')
 			->addOption('yes', 'y', InputOption::VALUE_NONE, 'Skip confirm delete question');
 	}

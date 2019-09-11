@@ -33,8 +33,8 @@ class DatabasesListCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('Returns all allowed databases')
-			->setHelp('https://www.lamp.io/api#/databases/databasesList')
+		$this->setDescription('Returns all databases')
+			->setHelp('Get all databases, api reference' . PHP_EOL . 'https://www.lamp.io/api#/databases/databasesList')
 			->addOption('organization_id', null, InputOption::VALUE_REQUIRED, 'Filter output by organization id value');
 	}
 
