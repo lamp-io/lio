@@ -22,9 +22,9 @@ class FilesUpdateCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Update file at file_id(file path including file name, relative to app root)')
-			->setHelp('https://www.lamp.io/api#/files/filesUpdateID')
+			->setHelp('Update files, api reference' . PHP_EOL . 'https://www.lamp.io/api#/files/filesUpdateID')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addArgument('remote_path', InputArgument::OPTIONAL, 'File ID of file to update.  If omitted, update app root directory', '')
+			->addArgument('file_id', InputArgument::OPTIONAL, 'File ID of file to update. If omitted, update app root directory', '')
 			->addArgument('file', InputArgument::OPTIONAL, 'Path to a local file; this is uploaded to remote_path', '');
 	}
 
@@ -46,17 +46,17 @@ class FilesUpdateCommand extends Command
 				sprintf(
 					self::API_ENDPOINT,
 					$input->getArgument('app_id'),
-					$input->getArgument('remote_path')
+					$input->getArgument('file_id')
 				),
 				[
 					'headers' => $this->httpHelper->getHeaders(),
 					'body'    => $this->getRequestBody(
 						$input->getArgument('file'),
-						$input->getArgument('remote_path')
+						$input->getArgument('file_id')
 					),
 				]);
 			if (empty($input->getOption('json'))) {
-				$output->writeln('<info>Success, file ' . $input->getArgument('remote_path') . ' has been updated</info>');
+				$output->writeln('<info>Success, file ' . $input->getArgument('file_id') . ' has been updated</info>');
 			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());

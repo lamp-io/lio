@@ -32,8 +32,8 @@ class TokensDescribeCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Returns a token')
-			->setHelp('https://www.lamp.io/api#/tokens/tokensShow')
-			->addArgument('token_id', InputArgument::REQUIRED, 'The ID of the token.');
+			->setHelp('Get token, api reference' . PHP_EOL . 'https://www.lamp.io/api#/tokens/tokensShow')
+			->addArgument('token_id', InputArgument::REQUIRED, 'The ID of the token');
 	}
 
 	/**

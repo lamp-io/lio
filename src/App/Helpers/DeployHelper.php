@@ -83,7 +83,7 @@ class DeployHelper
 		$args = [
 			'command'     => FilesDeleteCommand::getDefaultName(),
 			'app_id'      => $appId,
-			'remote_path' => $releasePath,
+			'file_id' => $releasePath,
 			'--yes'       => true,
 			'--json'      => true,
 		];

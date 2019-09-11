@@ -24,9 +24,9 @@ class FilesUpdateUnarchiveCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Extract archive file')
-			->setHelp('https://www.lamp.io/api#/files/filesUpdateID')
+			->setHelp('Extract archive file, api reference' . PHP_EOL . 'https://www.lamp.io/api#/files/filesUpdateID')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addArgument('remote_path', InputArgument::REQUIRED, 'File ID of file to unarchive');
+			->addArgument('file_id', InputArgument::REQUIRED, 'File ID of file to unarchive');
 	}
 
 	/**
@@ -39,26 +39,26 @@ class FilesUpdateUnarchiveCommand extends Command
 	{
 		parent::execute($input, $output);
 		try {
-			$progressBar = self::getProgressBar('Extracting ' . $input->getArgument('remote_path'), $output);
+			$progressBar = self::getProgressBar('Extracting ' . $input->getArgument('file_id'), $output);
 			$this->httpHelper->getClient()->request(
 				'PATCH',
 				sprintf(
 					self::API_ENDPOINT,
 					$input->getArgument('app_id'),
-					ltrim($input->getArgument('remote_path'), '/'),
+					ltrim($input->getArgument('file_id'), '/'),
 					http_build_query($this->subCommand)
 				),
 				[
 					'headers'  => $this->httpHelper->getHeaders(),
 					'body'     => $this->getRequestBody(
-						$input->getArgument('remote_path')
+						$input->getArgument('file_id')
 					),
 					'progress' => function () use ($progressBar) {
 						$progressBar->advance();
 					},
 				]);
 			if (empty($input->getOption('json'))) {
-				$output->writeln('<info>Success, file ' . $input->getArgument('remote_path') . ' has been updated</info>');
+				$output->writeln('<info>Success, file ' . $input->getArgument('file_id') . ' has been updated</info>');
 			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());

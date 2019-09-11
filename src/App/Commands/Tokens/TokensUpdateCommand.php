@@ -33,7 +33,7 @@ class TokensUpdateCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Update a token')
-			->setHelp('https://www.lamp.io/api#/tokens/tokensList')
+			->setHelp('Update a token, api reference' . PHP_EOL . 'https://www.lamp.io/api#/tokens/tokensList')
 			->addArgument('token_id', InputArgument::REQUIRED, 'The ID of the token')
 			->addOption('enable', null, InputOption::VALUE_NONE, 'Enable token')
 			->addOption('disable', null, InputOption::VALUE_NONE, 'Disable token');

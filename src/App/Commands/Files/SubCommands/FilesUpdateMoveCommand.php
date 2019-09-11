@@ -26,9 +26,9 @@ class FilesUpdateMoveCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Move file to another directory')
-			->setHelp('https://www.lamp.io/api#/files/filesUpdateID')
+			->setHelp('Move file to another directory, api reference' . PHP_EOL . 'https://www.lamp.io/api#/files/filesUpdateID')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addArgument('remote_path', InputArgument::REQUIRED, 'File ID of file to move')
+			->addArgument('file_id', InputArgument::REQUIRED, 'File ID of file to move')
 			->addArgument('move_path', InputArgument::REQUIRED, 'The target File ID to move to. NOTE: The target directory must exist');
 	}
 
@@ -43,7 +43,7 @@ class FilesUpdateMoveCommand extends Command
 		parent::execute($input, $output);
 		try {
 			$progressBar = self::getProgressBar(
-				'Moving ' . $input->getArgument('remote_path') . ' to ' . $input->getArgument('move_path'),
+				'Moving ' . $input->getArgument('file_id') . ' to ' . $input->getArgument('move_path'),
 				$output
 			);
 			$response = $this->httpHelper->getClient()->request(
@@ -51,13 +51,13 @@ class FilesUpdateMoveCommand extends Command
 				sprintf(
 					self::API_ENDPOINT,
 					$input->getArgument('app_id'),
-					ltrim($input->getArgument('remote_path'), '/'),
+					ltrim($input->getArgument('file_id'), '/'),
 					http_build_query($this->subCommand)
 				),
 				[
 					'headers'  => $this->httpHelper->getHeaders(),
 					'body'     => $this->getRequestBody(
-						$input->getArgument('remote_path'),
+						$input->getArgument('file_id'),
 						$input->getArgument('move_path')
 					),
 					'progress' => function () use ($progressBar) {
@@ -67,7 +67,7 @@ class FilesUpdateMoveCommand extends Command
 			if (!empty($input->getOption('json'))) {
 				$output->writeln($response->getBody()->getContents());
 			} else {
-				$output->writeln('<info>Success, file ' . $input->getArgument('remote_path') . ' has been moved</info>');
+				$output->writeln('<info>Success, file ' . $input->getArgument('file_id') . ' has been moved</info>');
 			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());

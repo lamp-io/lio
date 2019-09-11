@@ -22,7 +22,7 @@ class DbRestoresDeleteCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Delete a db restore job')
-			->setHelp('https://www.lamp.io/api#/db_restores/dbRestoresDelete')
+			->setHelp('Db restore job, api reference' . PHP_EOL . 'https://www.lamp.io/api#/db_restores/dbRestoresDelete')
 			->addArgument('db_restore_id', InputArgument::REQUIRED, 'The ID of the db restore');
 	}
 
