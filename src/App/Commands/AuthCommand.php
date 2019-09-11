@@ -46,7 +46,7 @@ class AuthCommand extends Command
 				$output->writeln(' <info>Token already exist, if you want to update it, please add [-u][--update_token] option </info>');
 				return 1;
 			} else {
-				$question = new Question('Please write your auth token' . PHP_EOL);
+				$question = new Question('Tokens can be generated at https://www.lamp.io/tokens' . PHP_EOL . PHP_EOL . 'Enter token:' . PHP_EOL);
 				$question->setValidator(function ($answer) {
 					if (empty($answer) || strlen($answer) < self::TOKEN_LENGTH) {
 						throw new RuntimeException(
