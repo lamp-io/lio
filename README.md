@@ -1,6 +1,9 @@
 # Command line interface, [Lamp-io](https://www.lamp.io/) platform
 
 [![Build Status](https://travis-ci.com/lamp-io/lio.svg?branch=master)](https://travis-ci.com/lamp-io/lio)
+[![Latest Stable Version](https://poser.pugx.org/lamp-io/lio/version)](https://packagist.org/packages/lamp-io/lio)
+[![License](https://poser.pugx.org/lamp-io/lio/license)](https://packagist.org/packages/lamp-io/lio)
+
 
 Installation
 ------------
