@@ -8,7 +8,6 @@ use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Helper\TableSeparator;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Art4\JsonApiClient\Exception\ValidationException;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Console\App\Commands\Command;
@@ -45,12 +44,6 @@ class AppsListCommand extends Command
 				self::API_ENDPOINT,
 				['headers' => $this->httpHelper->getHeaders()]
 			);
-		} catch (GuzzleException $guzzleException) {
-			$output->writeln($guzzleException->getMessage());
-			return 1;
-		}
-
-		try {
 			if (!empty($input->getOption('json'))) {
 				$output->writeln($response->getBody()->getContents());
 			} else {
@@ -59,8 +52,8 @@ class AppsListCommand extends Command
 				$table = $this->getOutputAsTable($document, new Table($output));
 				$table->render();
 			}
-		} catch (ValidationException $e) {
-			$output->writeln($e->getMessage());
+		} catch (GuzzleException $guzzleException) {
+			$output->writeln($guzzleException->getMessage());
 			return 1;
 		}
 	}
