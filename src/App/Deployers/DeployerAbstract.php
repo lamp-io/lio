@@ -16,6 +16,7 @@ use Console\App\Commands\DbRestores\DbRestoresNewCommand;
 use Console\App\Commands\Files\FilesDeleteCommand;
 use Console\App\Commands\Files\FilesUpdateCommand;
 use Console\App\Commands\Files\FilesUploadCommand;
+use Console\App\Commands\Files\SubCommands\FilesUpdateMoveCommand;
 use Console\App\Commands\Files\SubCommands\FilesUpdateUnarchiveCommand;
 use Console\App\Helpers\AuthHelper;
 use Console\App\Helpers\DeployHelper;
@@ -65,6 +66,8 @@ abstract class DeployerAbstract implements DeployInterface
 
 	protected $steps = [];
 
+	protected $isNewDbInstance;
+
 	/**
 	 * @var Client
 	 */
@@ -87,13 +90,15 @@ abstract class DeployerAbstract implements DeployInterface
 	/**
 	 * @param string $appPath
 	 * @param bool $isFirstDeploy
+	 * @param bool $isNewDbInstance
 	 * @throws Exception
 	 * @throws GuzzleException
 	 */
-	public function deployApp(string $appPath, bool $isFirstDeploy)
+	public function deployApp(string $appPath, bool $isFirstDeploy, bool $isNewDbInstance)
 	{
 		$this->appPath = $appPath;
 		$this->isFirstDeploy = $isFirstDeploy;
+		$this->isNewDbInstance = $isNewDbInstance;
 		$this->releaseFolder = DeployHelper::RELEASE_FOLDER . '/' . $this->config['release'] . '/';
 		if ($this->isFirstDeploy) {
 			$this->initApp($this->config['app']['id']);
@@ -539,6 +544,66 @@ abstract class DeployerAbstract implements DeployInterface
 	}
 
 	/**
+	 * @throws Exception
+	 * @throws GuzzleException
+	 */
+	protected function shareEnvFile()
+	{
+		$step = 'shareEnvFile';
+		$this->setStep($step, function () {
+			return;
+		});
+		if ($this->isFirstDeploy) {
+			$this->moveFile($this->releaseFolder . '.env', 'shared/.env');
+		} else {
+			$this->deleteFile($this->releaseFolder . '.env', 'Deleting .env file from release');
+		}
+		$this->makeSymlink(
+			'shared/.env',
+			$this->releaseFolder . '.env',
+			true,
+			'Symlink shared .env to release'
+		);
+		$this->updateStepToSuccess($step);
+	}
+
+	/**
+	 * @param string $fileId
+	 * @param string $message
+	 * @throws GuzzleException
+	 */
+	protected function deleteFile(string $fileId, string $message)
+	{
+		$deleteFileUrl = sprintf(
+			FilesDeleteCommand::API_ENDPOINT,
+			$this->config['app']['id'],
+			$fileId
+		);
+		$this->sendRequest($deleteFileUrl, 'DELETE', $message);
+	}
+
+	/**
+	 * @param string $fileId
+	 * @param string $target
+	 * @throws Exception
+	 */
+	protected function moveFile(string $fileId, string $target)
+	{
+		$filesDeleteCommand = $this->application->find(FilesUpdateMoveCommand::getDefaultName());
+		$args = [
+			'command'   => FilesUpdateMoveCommand::getDefaultName(),
+			'file_id'   => $fileId,
+			'app_id'    => $this->config['app']['id'],
+			'move_path' => $target,
+			'--json'    => true,
+		];
+		if ($filesDeleteCommand->run(new ArrayInput($args), $this->consoleOutput) != '0') {
+			throw new Exception('Failed to move file');
+		}
+	}
+
+
+	/**
 	 * @param string $localFile
 	 * @param string $fileId
 	 * @throws Exception
@@ -828,44 +893,57 @@ abstract class DeployerAbstract implements DeployInterface
 	}
 
 	/**
-	 * @param string $appPublic
+	 * @param string $fileId
+	 * @param string $target
+	 * @param bool $isFileExists
 	 * @param string $message
-	 * @param bool $isFirstDeploy
 	 * @throws GuzzleException
-	 * @throws Exception
 	 */
-	protected function symlinkRelease(string $appPublic, string $message, bool $isFirstDeploy = false)
+	protected function makeSymlink(string $fileId, string $target, bool $isFileExists, string $message)
 	{
-		$step = 'symlinkRelease';
-		$this->setStep($step, function () {
-			return;
-		});
-		if ($isFirstDeploy) {
-			$url = sprintf(
-				FilesUploadCommand::API_ENDPOINT,
-				$this->config['app']['id']
-			);
-			$httpType = 'POST';
-		} else {
+		if ($isFileExists) {
 			$url = sprintf(
 				FilesUpdateCommand::API_ENDPOINT,
 				$this->config['app']['id'],
 				'public'
 			);
 			$httpType = 'PATCH';
+		} else {
+			$url = sprintf(
+				FilesUploadCommand::API_ENDPOINT,
+				$this->config['app']['id']
+			);
+			$httpType = 'POST';
 		}
 
 		$this->sendRequest($url, $httpType, $message, json_encode([
 			'data' => [
 				'attributes' => [
-					'target'     => $appPublic,
+					'target'     => $target,
 					'is_dir'     => false,
 					'is_symlink' => true,
 				],
-				'id'         => 'public',
+				'id'         => $fileId,
 				'type'       => 'files',
 			],
 		]));
+	}
+
+	/**
+	 * @param string $releasePublic
+	 * @param string $message
+	 * @param bool $isFirstDeploy
+	 * @throws GuzzleException
+	 * @throws Exception
+	 */
+	protected function symlinkRelease(string $releasePublic, string $message, bool $isFirstDeploy = false)
+	{
+		$step = 'symlinkRelease';
+		$this->setStep($step, function () {
+			return;
+		});
+
+		$this->makeSymlink('public', $releasePublic, $isFirstDeploy, $message);
 		$this->updateStepToSuccess($step);
 	}
 

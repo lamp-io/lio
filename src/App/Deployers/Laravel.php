@@ -4,11 +4,13 @@ namespace Console\App\Deployers;
 
 use Console\App\Commands\Files\FilesDeleteCommand;
 use Console\App\Commands\Files\FilesUpdateCommand;
+use Console\App\Commands\Files\SubCommands\FilesUpdateMoveCommand;
 use Console\App\Helpers\DeployHelper;
 use Dotenv\Dotenv;
 use Exception;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
+use Symfony\Component\Console\Input\ArrayInput;
 
 class Laravel extends DeployerAbstract
 {
@@ -17,28 +19,26 @@ class Laravel extends DeployerAbstract
 		'artisan migrate',
 	];
 
-	const SHARED_DIR = 'storage';
+	const SHARED_DIR = ['storage'];
 
 	/**
 	 * @param string $appPath
 	 * @param bool $isFirstDeploy
+	 * @param bool $isNewDbInstance
 	 * @return void
 	 * @throws Exception
 	 * @throws GuzzleException
 	 */
-	public function deployApp(string $appPath, bool $isFirstDeploy)
+	public function deployApp(string $appPath, bool $isFirstDeploy, bool $isNewDbInstance)
 	{
-		parent::deployApp($appPath, $isFirstDeploy);
+		parent::deployApp($appPath, $isFirstDeploy, $isNewDbInstance);
 		(Dotenv::create($this->appPath))->load();
-		$this->updateEnvFileToUpload($_ENV, $this->prepareEnvFile($_ENV));
-		/** Need again load all ENV after updating .env file */
-		(Dotenv::create($this->appPath))->overload();
 		$zip = $this->getZipApp();
-		$this->restoreLocalEnvFile($_ENV);
 		$this->uploadToApp($zip, $this->releaseFolder . self::ARCHIVE_NAME);
 		$this->unarchiveApp($this->releaseFolder . self::ARCHIVE_NAME);
 		$this->deleteArchiveRemote($this->releaseFolder . self::ARCHIVE_NAME);
 		$this->createSharedStorage($this->getSharedStorageCommands($this->getSharedDirs()));
+		$this->shareEnvFile();
 		$this->setUpPermissions();
 		if ($this->isFirstDeploy) {
 			if ($this->config['database']['system'] == 'sqlite') {
@@ -79,15 +79,8 @@ class Laravel extends DeployerAbstract
 
 	private function getSharedDirs(): array
 	{
-		if (!empty($this->config['shared'])) {
-			foreach ($this->config['shared'] as $key => $value) {
-				if (preg_match('/' . self::SHARED_DIR . '/', $value)) {
-					unset($this->config['shared'][$key]);
-				}
-			}
-		}
 		return array_merge(
-			[self::SHARED_DIR],
+			self::SHARED_DIR,
 			!empty($this->config['shared']) ? $this->config['shared'] : []
 		);
 	}
