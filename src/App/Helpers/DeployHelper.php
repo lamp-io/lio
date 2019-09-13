@@ -25,6 +25,10 @@ class DeployHelper
 
 	const CI_ENV_VARS = ['CI', 'JENKINS_URL', 'TEAMCITY_VERSION', 'GITHUB_ACTION'];
 
+	const DB_PORT = '3306';
+
+	const DB_USER = 'root';
+
 	/**
 	 * @param string $appType
 	 * @param string $appPath

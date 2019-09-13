@@ -14,6 +14,7 @@ use Console\App\Commands\DbBackups\DbBackupsNewCommand;
 use Console\App\Commands\DbRestores\DbRestoresDescribeCommand;
 use Console\App\Commands\DbRestores\DbRestoresNewCommand;
 use Console\App\Commands\Files\FilesDeleteCommand;
+use Console\App\Commands\Files\FilesListCommand;
 use Console\App\Commands\Files\FilesUpdateCommand;
 use Console\App\Commands\Files\FilesUploadCommand;
 use Console\App\Commands\Files\SubCommands\FilesUpdateMoveCommand;
@@ -23,6 +24,7 @@ use Console\App\Helpers\DeployHelper;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Psr7\Response;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\NullOutput;
@@ -33,6 +35,7 @@ use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 use ZipArchive;
 use GuzzleHttp\Exception\GuzzleException;
+use function foo\func;
 
 abstract class DeployerAbstract implements DeployInterface
 {
@@ -191,6 +194,19 @@ abstract class DeployerAbstract implements DeployInterface
 		}
 	}
 
+	protected function getFile(string $fileId): string
+	{
+		$filesListUrl = sprintf(
+			FilesListCommand::API_ENDPOINT,
+			$this->config['app']['id'],
+			$fileId
+		);
+		$responseContent = $this->sendRequest($filesListUrl, 'GET', 'Get file from app ' . $fileId)->getBody()->getContents();
+		/** @var Document $document */
+		$document = Parser::parseResponseString($responseContent);
+		return $document->has('data.attributes.contents') ? $document->get('data.attributes.contents') : '';
+	}
+
 	/**
 	 * @param string $dbBackupId
 	 * @throws Exception
@@ -312,42 +328,46 @@ abstract class DeployerAbstract implements DeployInterface
 		}
 	}
 
-	/**
-	 * @param array $localEnv
-	 * @param array $remoteEnv
-	 */
-	protected function updateEnvFileToUpload(array $localEnv, array $remoteEnv)
-	{
-		$step = 'updateEnvFileToUpload';
-		$this->setStep($step, function () use ($localEnv) {
-			$this->updateEnvFile($localEnv);
-		});
-		$this->updateEnvFile($remoteEnv);
-		$this->updateStepToSuccess($step);
-	}
 
-	/**
-	 * @param array $localEnv
-	 */
-	protected function restoreLocalEnvFile(array $localEnv)
+	protected function updateEnvFile(array $updates)
 	{
-		$step = 'restoreLocalEnvFile';
+		$step = 'updateEnvFile';
 		$this->setStep($step, function () {
 			return;
 		});
-		$this->updateEnvFile($localEnv);
+		if (!empty($updates)) {
+			$currentEnv = file_get_contents($this->appPath . '.env');
+			foreach ($updates as $key => $item) {
+				if (preg_match('/' . $key . '=(.*?)\\n/', $currentEnv)) {
+					$currentEnv = preg_replace('/' . $key . '=(.*?)\\n/', $key . '=' . $item . PHP_EOL, $currentEnv);
+				} else {
+					$currentEnv .= $key . '=' . $item . PHP_EOL;
+				}
+			}
+			$this->updateFile('shared/.env', $this->config['app']['id'], $currentEnv);
+		}
 		$this->updateStepToSuccess($step);
 	}
 
-	/**
-	 * @param array $newEnvVars
-	 */
-	protected function updateEnvFile(array $newEnvVars)
+	protected function updateFile(string $fileId, string $appId, string $content)
 	{
-		file_put_contents($this->appPath . '.env', '');
-		foreach ($newEnvVars as $key => $val) {
-			file_put_contents($this->appPath . '.env', $key . '=' . $val . PHP_EOL, FILE_APPEND);
-		}
+		$this->sendRequest(
+			sprintf(
+				FilesUpdateCommand::API_ENDPOINT,
+				$appId,
+				$fileId
+			),
+			'PATCH',
+			'Updating ' . $fileId,
+			json_encode([
+				'data' => [
+					'attributes' => [
+						'contents' => $content,
+					],
+					'id'         => $fileId,
+					'type'       => 'files',
+				],
+			]));
 	}
 
 	/**
@@ -490,15 +510,6 @@ abstract class DeployerAbstract implements DeployInterface
 			$dbIsRunning = $this->isDbAlreadyRunning($dbHost);
 			$progressBar->advance();
 		}
-		$counter = 0;
-		/** We need this hack with sleep, because status of database is running,
-		 * but it still not ready for connections so ~30-40 secs need to wait
-		 */
-		while ($counter != 50) {
-			$progressBar->advance();
-			$counter++;
-			sleep(1);
-		}
 		$progressBar->finish();
 		$this->consoleOutput->write(PHP_EOL);
 	}
@@ -558,10 +569,12 @@ abstract class DeployerAbstract implements DeployInterface
 		} else {
 			$this->deleteFile($this->releaseFolder . '.env', 'Deleting .env file from release');
 		}
+
+		/** TODO add here creating symlink with APP_RUNS */
 		$this->makeSymlink(
-			'shared/.env',
 			$this->releaseFolder . '.env',
-			true,
+			'shared/.env',
+			false,
 			'Symlink shared .env to release'
 		);
 		$this->updateStepToSuccess($step);
@@ -585,21 +598,28 @@ abstract class DeployerAbstract implements DeployInterface
 	/**
 	 * @param string $fileId
 	 * @param string $target
-	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function moveFile(string $fileId, string $target)
 	{
-		$filesDeleteCommand = $this->application->find(FilesUpdateMoveCommand::getDefaultName());
-		$args = [
-			'command'   => FilesUpdateMoveCommand::getDefaultName(),
-			'file_id'   => $fileId,
-			'app_id'    => $this->config['app']['id'],
-			'move_path' => $target,
-			'--json'    => true,
-		];
-		if ($filesDeleteCommand->run(new ArrayInput($args), $this->consoleOutput) != '0') {
-			throw new Exception('Failed to move file');
-		}
+		$response = $this->sendRequest(
+			sprintf(
+				FilesUpdateMoveCommand::API_ENDPOINT,
+				$this->config['app']['id'],
+				$fileId,
+				'command=move'
+			),
+			'PATCH',
+			'Moving ' . $fileId . ' to ' . $target,
+			json_encode([
+				'data' => [
+					'attributes' => [
+						'target' => $target,
+					],
+					'id'         => $fileId,
+					'type'       => 'files',
+				],
+			]));
 	}
 
 
@@ -612,25 +632,25 @@ abstract class DeployerAbstract implements DeployInterface
 	{
 		$step = 'uploadToApp';
 		$this->setStep($step, function () use ($fileId) {
-			if ($this->isFirstDeploy) {
-				$deleteFileUrl = sprintf(
-					FilesDeleteCommand::API_ENDPOINT,
-					$this->config['app']['id'],
-					DeployHelper::RELEASE_FOLDER
-				);
-				$this->sendRequest($deleteFileUrl, 'DELETE', 'Clean up failed deploy');
-			} else {
-				$this->consoleOutput->writeln('Deleting failed release');
-				$filesDeleteCommand = $this->application->find(FilesDeleteCommand::getDefaultName());
-				$args = [
-					'command' => FilesDeleteCommand::getDefaultName(),
-					'file_id' => str_replace(self::ARCHIVE_NAME, '', $fileId),
-					'app_id'  => $this->config['app']['id'],
-					'--json'  => true,
-					'--yes'   => true,
-				];
-				$filesDeleteCommand->run(new ArrayInput($args), $this->consoleOutput);
-			}
+//			if ($this->isFirstDeploy) {
+//				$deleteFileUrl = sprintf(
+//					FilesDeleteCommand::API_ENDPOINT,
+//					$this->config['app']['id'],
+//					DeployHelper::RELEASE_FOLDER
+//				);
+//				$this->sendRequest($deleteFileUrl, 'DELETE', 'Clean up failed deploy');
+//			} else {
+//				$this->consoleOutput->writeln('Deleting failed release');
+//				$filesDeleteCommand = $this->application->find(FilesDeleteCommand::getDefaultName());
+//				$args = [
+//					'command' => FilesDeleteCommand::getDefaultName(),
+//					'file_id' => str_replace(self::ARCHIVE_NAME, '', $fileId),
+//					'app_id'  => $this->config['app']['id'],
+//					'--json'  => true,
+//					'--yes'   => true,
+//				];
+//				$filesDeleteCommand->run(new ArrayInput($args), $this->consoleOutput);
+//			}
 		});
 		$filesUploadCommand = $this->application->find(FilesUploadCommand::getDefaultName());
 		$args = [
@@ -718,11 +738,11 @@ abstract class DeployerAbstract implements DeployInterface
 	 * @param string $progressBarMessage
 	 * @param string $body
 	 * @param array $headers
-	 * @return array
+	 * @return Response
 	 * @throws GuzzleException
 	 * @throws Exception
 	 */
-	protected function sendRequest(string $url, string $httpType, string $progressBarMessage = '', string $body = '', array $headers = []): array
+	protected function sendRequest(string $url, string $httpType, string $progressBarMessage = '', string $body = '', array $headers = []): Response
 	{
 		$output = !empty($progressBarMessage) ? new ConsoleOutput() : new NullOutput();
 		if (empty($headers)) {
@@ -746,10 +766,7 @@ abstract class DeployerAbstract implements DeployInterface
 		);
 		$progressBar->finish();
 		$output->write(PHP_EOL);
-		return [
-			'http' => $response->getStatusCode(),
-			'body' => trim($response->getBody()->getContents()),
-		];
+		return $response;
 	}
 
 	/**

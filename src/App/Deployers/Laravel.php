@@ -39,36 +39,26 @@ class Laravel extends DeployerAbstract
 		$this->deleteArchiveRemote($this->releaseFolder . self::ARCHIVE_NAME);
 		$this->createSharedStorage($this->getSharedStorageCommands($this->getSharedDirs()));
 		$this->shareEnvFile();
+		$this->updateEnvFile($this->getEnvUpdates());
 		$this->setUpPermissions();
-		if ($this->isFirstDeploy) {
-			if ($this->config['database']['system'] == 'sqlite') {
-				$this->initSqliteDatabase();
-			} else {
-				if ($this->config['database']['type'] == 'internal') {
-					$this->initDatabase(getenv('DB_HOST'));
-					$this->createDatabaseUser(
-						getenv('DB_HOST'),
-						getenv('DB_USERNAME'),
-						getenv('DB_PASSWORD'),
-						$this->config['database']['root_password']
-					);
-				}
-
-				$this->createDatabase(
-					getenv('DB_HOST'),
-					getenv('DB_DATABASE'),
-					getenv('DB_USERNAME'),
-					getenv('DB_PASSWORD')
-				);
-				if (!empty($this->config['database']['sql_dump'])) {
-					$this->importSqlDump(
-						getenv('DB_HOST'),
-						getenv('DB_DATABASE'),
-						getenv('DB_USERNAME'),
-						getenv('DB_PASSWORD')
-					);
-				}
-			}
+		if ($this->isFirstDeploy && $this->config['database']['system'] == 'sqlite') {
+			$this->initSqliteDatabase();
+		} elseif ($this->isFirstDeploy && $this->isNewDbInstance) {
+			$this->initDatabase($this->config['database']['id']);
+			$this->createDatabase(
+				$this->config['database']['id'],
+				getenv('DB_DATABASE'),
+				DeployHelper::DB_USER,
+				$this->config['database']['root_password']
+			);
+		}
+		if (!empty($this->config['database']['sql_dump']) && ($this->isNewDbInstance || $this->config['database']['type'] == 'external' && $this->isFirstDeploy)) {
+			$this->importSqlDump(
+				$this->config['database']['type'] == 'external' ? getenv('DB_HOST') : $this->config['database']['id'],
+				getenv('DB_DATABASE'),
+				$this->config['database']['type'] == 'external' ? getenv('DB_USERNAME') : DeployHelper::DB_USER,
+				$this->config['database']['type'] == 'external' ? getenv('DB_PASSWORD') : $this->config['database']['root_password']
+			);
 		}
 		$dbBackupId = $this->backupDatabase();
 		$this->deleteArchiveLocal();
@@ -212,24 +202,36 @@ class Laravel extends DeployerAbstract
 	}
 
 	/**
-	 * @param array $localEnv
 	 * @return array
 	 */
-	private function prepareEnvFile(array $localEnv): array
+	private function getEnvUpdates(): array
 	{
-		if ($this->config['database']['system'] == 'sqlite') {
+		$env = [];
+		if ($this->isNewDbInstance && $this->isFirstDeploy && $this->config['database']['type'] != 'external') {
 			$env = [
-				'APP_URL'     => $this->config['app']['url'],
+				'DB_HOST'     => $this->config['database']['id'],
+				'DB_PORT'     => DeployHelper::DB_PORT,
+				'DB_USERNAME' => DeployHelper::DB_USER,
+				'DB_PASSWORD' => $this->config['database']['root_password'],
+			];
+		} elseif ($this->isFirstDeploy && $this->config['database']['type'] == 'external') {
+			$env = [
+				'DB_HOST'     => getenv('DB_HOST'),
+				'DB_PORT'     => getenv('DB_PORT'),
+				'DB_USERNAME' => getenv('DB_USERNAME'),
+				'DB_PASSWORD' => getenv('DB_PASSWORD'),
+			];
+		} elseif ($this->isFirstDeploy && $this->config['database']['system'] == 'sqlite') {
+			$env = [
 				'DB_DATABASE' => DeployHelper::SQLITE_ABSOLUTE_REMOTE_PATH,
 			];
-		} else {
-			$env = [
-				'APP_URL' => $this->config['app']['url'],
-				'DB_HOST' => $this->config['database']['id'],
-			];
 		}
-		$envFromConfig = !empty($this->config['environment']) ? $this->config['environment'] : [];
-		$remoteEnv = array_merge($envFromConfig, $env);
-		return array_merge($localEnv, $remoteEnv);
+
+		if ($this->isFirstDeploy) {
+			$env = array_merge($env, [
+				'APP_URL' => !empty($this->config['app']['attributes']['hostname']) ? 'https://' . $this->config['app']['attributes']['hostname'] : 'https://' . $this->config['app']['id'] . '.lamp.app/',
+			]);
+		}
+		return $env;
 	}
 }
