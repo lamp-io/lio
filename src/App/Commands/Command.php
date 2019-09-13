@@ -59,11 +59,8 @@ class Command extends BaseCommand
 		$output->getFormatter()->setStyle('warning', new OutputFormatterStyle('black', 'yellow'));
 		if (!AuthHelper::isTokenExist() && !$this->skipAuth) {
 			$this->callAuthCommand();
-			$token = AuthHelper::getToken();
-		} else {
-			$token = '';
 		}
-
+		$token = AuthHelper::getToken();
 		$this->httpHelper->setHeader('Authorization', 'Bearer ' . $token);
 	}
 
