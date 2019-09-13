@@ -4,13 +4,11 @@ namespace Console\App\Deployers;
 
 use Console\App\Commands\Files\FilesDeleteCommand;
 use Console\App\Commands\Files\FilesUpdateCommand;
-use Console\App\Commands\Files\SubCommands\FilesUpdateMoveCommand;
 use Console\App\Helpers\DeployHelper;
 use Dotenv\Dotenv;
 use Exception;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
-use Symfony\Component\Console\Input\ArrayInput;
 
 class Laravel extends DeployerAbstract
 {
@@ -60,7 +58,7 @@ class Laravel extends DeployerAbstract
 				$this->config['database']['type'] == 'external' ? getenv('DB_PASSWORD') : $this->config['database']['root_password']
 			);
 		}
-		$dbBackupId = $this->backupDatabase();
+		$dbBackupId = ($this->isFirstDeploy) ? '' : $this->backupDatabase();
 		$this->deleteArchiveLocal();
 		$this->runMigrations('artisan migrate --force', $dbBackupId);
 		$this->runCommands(self::SKIP_COMMANDS);

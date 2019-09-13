@@ -14,7 +14,6 @@ use Console\App\Commands\DbBackups\DbBackupsNewCommand;
 use Console\App\Commands\DbRestores\DbRestoresDescribeCommand;
 use Console\App\Commands\DbRestores\DbRestoresNewCommand;
 use Console\App\Commands\Files\FilesDeleteCommand;
-use Console\App\Commands\Files\FilesListCommand;
 use Console\App\Commands\Files\FilesUpdateCommand;
 use Console\App\Commands\Files\FilesUploadCommand;
 use Console\App\Commands\Files\SubCommands\FilesUpdateMoveCommand;
@@ -35,7 +34,6 @@ use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 use ZipArchive;
 use GuzzleHttp\Exception\GuzzleException;
-use function foo\func;
 
 abstract class DeployerAbstract implements DeployInterface
 {
@@ -194,19 +192,6 @@ abstract class DeployerAbstract implements DeployInterface
 		}
 	}
 
-	protected function getFile(string $fileId): string
-	{
-		$filesListUrl = sprintf(
-			FilesListCommand::API_ENDPOINT,
-			$this->config['app']['id'],
-			$fileId
-		);
-		$responseContent = $this->sendRequest($filesListUrl, 'GET', 'Get file from app ' . $fileId)->getBody()->getContents();
-		/** @var Document $document */
-		$document = Parser::parseResponseString($responseContent);
-		return $document->has('data.attributes.contents') ? $document->get('data.attributes.contents') : '';
-	}
-
 	/**
 	 * @param string $dbBackupId
 	 * @throws Exception
@@ -328,7 +313,10 @@ abstract class DeployerAbstract implements DeployInterface
 		}
 	}
 
-
+	/**
+	 * @param array $updates
+	 * @throws GuzzleException
+	 */
 	protected function updateEnvFile(array $updates)
 	{
 		$step = 'updateEnvFile';
@@ -349,6 +337,12 @@ abstract class DeployerAbstract implements DeployInterface
 		$this->updateStepToSuccess($step);
 	}
 
+	/**
+	 * @param string $fileId
+	 * @param string $appId
+	 * @param string $content
+	 * @throws GuzzleException
+	 */
 	protected function updateFile(string $fileId, string $appId, string $content)
 	{
 		$this->sendRequest(
@@ -409,50 +403,6 @@ abstract class DeployerAbstract implements DeployInterface
 		} else {
 			throw new Exception('Uploading sql dump to app failed');
 		}
-	}
-
-	/**
-	 * @param string $dbUser
-	 * @param string $dbPassword
-	 * @param string $dbHost
-	 * @param string $rootPassword
-	 * @throws Exception
-	 * @throws GuzzleException
-	 */
-	protected function createDatabaseUser(string $dbHost, string $dbUser, string $dbPassword, string $rootPassword)
-	{
-		$step = 'createDatabaseUser';
-		$this->setStep($step, function () use ($dbUser, $rootPassword, $dbHost) {
-			$command = sprintf(
-				'mysql --user=root --host=%s --password=%s --execute "DROP USER \'%s\'"',
-				$dbHost,
-				$rootPassword,
-				$dbUser
-			);
-			$this->appRunCommand(
-				$this->config['app']['id'],
-				$command,
-				'Drop database user ' . $dbUser
-			);
-		});
-		if ($dbUser == 'root') {
-			$this->updateDbRootPassword($dbHost, $dbPassword);
-		} else {
-			$command = sprintf(
-				'mysql --user=root --host=%s --password=%s --execute "CREATE USER \'%s\'@\'%%\' IDENTIFIED WITH mysql_native_password BY \'%s\';GRANT ALL PRIVILEGES ON * . * TO \'%s\'@\'%%\';FLUSH PRIVILEGES;"',
-				$dbHost,
-				$rootPassword,
-				$dbUser,
-				$dbPassword,
-				$dbUser
-			);
-			$this->appRunCommand(
-				$this->config['app']['id'],
-				$command,
-				'Creating database user ' . $dbUser
-			);
-		}
-		$this->updateStepToSuccess($step);
 	}
 
 	/**
@@ -570,11 +520,9 @@ abstract class DeployerAbstract implements DeployInterface
 			$this->deleteFile($this->releaseFolder . '.env', 'Deleting .env file from release');
 		}
 
-		/** TODO add here creating symlink with APP_RUNS */
-		$this->makeSymlink(
-			$this->releaseFolder . '.env',
-			'shared/.env',
-			false,
+		$this->appRunCommand(
+			$this->config['app']['id'],
+			'ln -s /var/www/shared/.env ' . $this->releaseFolder . '.env',
 			'Symlink shared .env to release'
 		);
 		$this->updateStepToSuccess($step);
@@ -602,7 +550,7 @@ abstract class DeployerAbstract implements DeployInterface
 	 */
 	protected function moveFile(string $fileId, string $target)
 	{
-		$response = $this->sendRequest(
+		$this->sendRequest(
 			sprintf(
 				FilesUpdateMoveCommand::API_ENDPOINT,
 				$this->config['app']['id'],
@@ -632,25 +580,25 @@ abstract class DeployerAbstract implements DeployInterface
 	{
 		$step = 'uploadToApp';
 		$this->setStep($step, function () use ($fileId) {
-//			if ($this->isFirstDeploy) {
-//				$deleteFileUrl = sprintf(
-//					FilesDeleteCommand::API_ENDPOINT,
-//					$this->config['app']['id'],
-//					DeployHelper::RELEASE_FOLDER
-//				);
-//				$this->sendRequest($deleteFileUrl, 'DELETE', 'Clean up failed deploy');
-//			} else {
-//				$this->consoleOutput->writeln('Deleting failed release');
-//				$filesDeleteCommand = $this->application->find(FilesDeleteCommand::getDefaultName());
-//				$args = [
-//					'command' => FilesDeleteCommand::getDefaultName(),
-//					'file_id' => str_replace(self::ARCHIVE_NAME, '', $fileId),
-//					'app_id'  => $this->config['app']['id'],
-//					'--json'  => true,
-//					'--yes'   => true,
-//				];
-//				$filesDeleteCommand->run(new ArrayInput($args), $this->consoleOutput);
-//			}
+			if ($this->isFirstDeploy) {
+				$deleteFileUrl = sprintf(
+					FilesDeleteCommand::API_ENDPOINT,
+					$this->config['app']['id'],
+					DeployHelper::RELEASE_FOLDER
+				);
+				$this->sendRequest($deleteFileUrl, 'DELETE', 'Clean up failed deploy');
+			} else {
+				$this->consoleOutput->writeln('Deleting failed release');
+				$filesDeleteCommand = $this->application->find(FilesDeleteCommand::getDefaultName());
+				$args = [
+					'command' => FilesDeleteCommand::getDefaultName(),
+					'file_id' => str_replace(self::ARCHIVE_NAME, '', $fileId),
+					'app_id'  => $this->config['app']['id'],
+					'--json'  => true,
+					'--yes'   => true,
+				];
+				$filesDeleteCommand->run(new ArrayInput($args), $this->consoleOutput);
+			}
 		});
 		$filesUploadCommand = $this->application->find(FilesUploadCommand::getDefaultName());
 		$args = [
@@ -960,7 +908,7 @@ abstract class DeployerAbstract implements DeployInterface
 			return;
 		});
 
-		$this->makeSymlink('public', $releasePublic, $isFirstDeploy, $message);
+		$this->makeSymlink('public', $releasePublic, !$isFirstDeploy, $message);
 		$this->updateStepToSuccess($step);
 	}
 
