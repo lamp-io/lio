@@ -8,7 +8,6 @@ use Console\App\Commands\AppRuns\AppRunsNewCommand;
 use Console\App\Commands\Apps\AppsDescribeCommand;
 use Console\App\Commands\Command;
 use Console\App\Commands\Databases\DatabasesDescribeCommand;
-use Console\App\Commands\Databases\DatabasesUpdateCommand;
 use Console\App\Commands\DbBackups\DbBackupsDescribeCommand;
 use Console\App\Commands\DbBackups\DbBackupsNewCommand;
 use Console\App\Commands\DbRestores\DbRestoresDescribeCommand;
@@ -116,7 +115,7 @@ abstract class DeployerAbstract implements DeployInterface
 	 * @return string
 	 * @throws Exception
 	 */
-	protected function getZipApp()
+	protected function getArtifact()
 	{
 		$stepName = 'zip';
 		$this->setStep($stepName, function () {
@@ -130,7 +129,7 @@ abstract class DeployerAbstract implements DeployInterface
 		}
 		$zip = new ZipArchive();
 		$finder = new Finder();
-		$progressBar = Command::getProgressBar('Creating a zip', $this->consoleOutput);
+		$progressBar = Command::getProgressBar('Creating a artifact', $this->consoleOutput);
 		$finder->in($this->appPath)->ignoreDotFiles(false);
 		if (!$finder->hasResults()) {
 			throw new Exception('Empty app directory');
@@ -302,12 +301,7 @@ abstract class DeployerAbstract implements DeployInterface
 			return;
 		});
 		try {
-			$deleteFileUrl = sprintf(
-				FilesDeleteCommand::API_ENDPOINT,
-				$this->config['app']['id'],
-				'public'
-			);
-			$this->sendRequest($deleteFileUrl, 'DELETE', 'Removing default files');
+			$this->deleteFile('public', 'Removing default files');
 		} catch (ClientException $clientException) {
 			$this->consoleOutput->write(PHP_EOL);
 		}
@@ -377,15 +371,7 @@ abstract class DeployerAbstract implements DeployInterface
 		$this->setStep($step, function () {
 			return;
 		});
-		$filesUploadCommand = $this->application->find(FilesUploadCommand::getDefaultName());
-		$args = [
-			'command' => FilesUploadCommand::getDefaultName(),
-			'file'    => $this->config['database']['sql_dump'],
-			'app_id'  => $this->config['app']['id'],
-			'file_id' => $this->releaseFolder . self::SQL_DUMP_NAME,
-			'--json'  => true,
-		];
-		if ($filesUploadCommand->run(new ArrayInput($args), $this->consoleOutput) == '0') {
+		if ($this->uploadFile($this->config['database']['sql_dump'], $this->releaseFolder . self::SQL_DUMP_NAME) == '0') {
 			$command = sprintf(
 				'mysql -u %s --host=%s --password=%s  %s < %s',
 				$dbUser,
@@ -403,25 +389,6 @@ abstract class DeployerAbstract implements DeployInterface
 		} else {
 			throw new Exception('Uploading sql dump to app failed');
 		}
-	}
-
-	/**
-	 * @param string $dbId
-	 * @param string $password
-	 * @throws GuzzleException
-	 */
-	protected function updateDbRootPassword(string $dbId, string $password)
-	{
-		$url = sprintf(DatabasesUpdateCommand::API_ENDPOINT, $dbId);
-		$this->sendRequest($url, 'UPDATE', 'Updating root password', json_encode([
-			'data' => [
-				'attributes' => [
-					'mysql_root_password' => $password,
-				],
-				'id'         => $dbId,
-				'type'       => 'databases',
-			],
-		]));
 	}
 
 	/**
@@ -535,12 +502,35 @@ abstract class DeployerAbstract implements DeployInterface
 	 */
 	protected function deleteFile(string $fileId, string $message)
 	{
-		$deleteFileUrl = sprintf(
-			FilesDeleteCommand::API_ENDPOINT,
-			$this->config['app']['id'],
-			$fileId
+		$this->sendRequest(
+			sprintf(
+				FilesDeleteCommand::API_ENDPOINT,
+				$this->config['app']['id'],
+				$fileId
+			),
+			'DELETE',
+			$message
 		);
-		$this->sendRequest($deleteFileUrl, 'DELETE', $message);
+	}
+
+	/**
+	 * @param string $localFile
+	 * @param string $fileId
+	 * @return int
+	 * @throws Exception
+	 */
+	protected function uploadFile(string $localFile, string $fileId): int
+	{
+		$filesUploadCommand = $this->application->find(FilesUploadCommand::getDefaultName());
+		$args = [
+			'command' => FilesUploadCommand::getDefaultName(),
+			'file'    => $localFile,
+			'app_id'  => $this->config['app']['id'],
+			'file_id' => $fileId,
+			'--json'  => true,
+		];
+
+		return $filesUploadCommand->run(new ArrayInput($args), $this->consoleOutput);
 	}
 
 	/**
@@ -576,39 +566,14 @@ abstract class DeployerAbstract implements DeployInterface
 	 * @param string $fileId
 	 * @throws Exception
 	 */
-	protected function uploadToApp(string $localFile, string $fileId)
+	protected function uploadArtifact(string $localFile, string $fileId)
 	{
 		$step = 'uploadToApp';
-		$this->setStep($step, function () use ($fileId) {
-			if ($this->isFirstDeploy) {
-				$deleteFileUrl = sprintf(
-					FilesDeleteCommand::API_ENDPOINT,
-					$this->config['app']['id'],
-					DeployHelper::RELEASE_FOLDER
-				);
-				$this->sendRequest($deleteFileUrl, 'DELETE', 'Clean up failed deploy');
-			} else {
-				$this->consoleOutput->writeln('Deleting failed release');
-				$filesDeleteCommand = $this->application->find(FilesDeleteCommand::getDefaultName());
-				$args = [
-					'command' => FilesDeleteCommand::getDefaultName(),
-					'file_id' => str_replace(self::ARCHIVE_NAME, '', $fileId),
-					'app_id'  => $this->config['app']['id'],
-					'--json'  => true,
-					'--yes'   => true,
-				];
-				$filesDeleteCommand->run(new ArrayInput($args), $this->consoleOutput);
-			}
+		$this->setStep($step, function () {
+			$fileId = $this->isFirstDeploy ? DeployHelper::RELEASE_FOLDER : $this->releaseFolder;
+			$this->deleteFile($fileId, 'Clean up failed deploy');
 		});
-		$filesUploadCommand = $this->application->find(FilesUploadCommand::getDefaultName());
-		$args = [
-			'command' => FilesUploadCommand::getDefaultName(),
-			'file'    => $localFile,
-			'app_id'  => $this->config['app']['id'],
-			'file_id' => $fileId,
-			'--json'  => true,
-		];
-		if ($filesUploadCommand->run(new ArrayInput($args), $this->consoleOutput) == '0') {
+		if ($this->uploadFile($localFile, $fileId) == '0') {
 			$this->consoleOutput->write(PHP_EOL);
 			$this->updateStepToSuccess($step);
 		} else {
@@ -643,41 +608,21 @@ abstract class DeployerAbstract implements DeployInterface
 	}
 
 	/**
-	 *
-	 */
-	protected function deleteArchiveLocal()
-	{
-		$step = 'deleteArchiveLocal';
-		$this->setStep($step, function () {
-			return;
-		});
-		unlink($this->appPath . self::ARCHIVE_NAME);
-		$this->updateStepToSuccess($step);
-	}
-
-	/**
 	 * @param string $fileId
 	 * @throws Exception
+	 * @throws GuzzleException
 	 */
-	protected function deleteArchiveRemote(string $fileId)
+	protected function deleteArtifact(string $fileId)
 	{
 		$step = 'deleteArchiveRemote';
 		$this->setStep($step, function () {
 			return;
 		});
-		$deleteFileCommand = $this->application->find(FilesDeleteCommand::getDefaultName());
-		$args = [
-			'command' => FilesDeleteCommand::getDefaultName(),
-			'file_id' => $fileId,
-			'app_id'  => $this->config['app']['id'],
-			'--json'  => true,
-			'--yes'   => true,
-		];
-		if ($deleteFileCommand->run(new ArrayInput($args), new NullOutput()) == '0') {
-			$this->updateStepToSuccess($step);
-		} else {
-			throw new Exception('Deleting archive failed');
+		$this->deleteFile($fileId, 'Deleting an artifact');
+		if (file_exists($this->appPath . self::ARCHIVE_NAME)) {
+			unlink($this->appPath . self::ARCHIVE_NAME);
 		}
+		$this->updateStepToSuccess($step);
 	}
 
 	/**
@@ -771,15 +716,7 @@ abstract class DeployerAbstract implements DeployInterface
 			return;
 		});
 		if (!empty($this->config['database']['sql_dump'])) {
-			$filesUploadCommand = $this->application->find(FilesUploadCommand::getDefaultName());
-			$args = [
-				'command' => FilesUploadCommand::getDefaultName(),
-				'file'    => $this->config['database']['sql_dump'],
-				'app_id'  => $this->config['app']['id'],
-				'file_id' => DeployHelper::SQLITE_RELATIVE_REMOTE_PATH,
-				'--json'  => true,
-			];
-			if ($filesUploadCommand->run(new ArrayInput($args), $this->consoleOutput) != '0') {
+			if ($this->uploadFile($this->config['database']['sql_dump'], DeployHelper::SQLITE_RELATIVE_REMOTE_PATH) != '0') {
 				throw new Exception('Cant up load mysqli dump');
 			}
 			$this->consoleOutput->write(PHP_EOL);
@@ -928,9 +865,10 @@ abstract class DeployerAbstract implements DeployInterface
 	/**
 	 * @param string $name
 	 * @param string $message
+	 * @param bool $isDir
 	 * @throws GuzzleException
 	 */
-	protected function createRemoteIfFileNotExists(string $name, string $message)
+	protected function createFileIfNotExists(string $name, string $message, bool $isDir = false)
 	{
 		$postFileUrl = sprintf(
 			FilesUploadCommand::API_ENDPOINT,
@@ -939,7 +877,7 @@ abstract class DeployerAbstract implements DeployInterface
 		$postFileBody = json_encode([
 			'data' => [
 				'attributes' => [
-					'is_dir' => true,
+					'is_dir' => $isDir,
 				],
 				'id'         => $name,
 				'type'       => 'files',

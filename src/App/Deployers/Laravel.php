@@ -31,10 +31,10 @@ class Laravel extends DeployerAbstract
 	{
 		parent::deployApp($appPath, $isFirstDeploy, $isNewDbInstance);
 		(Dotenv::create($this->appPath))->load();
-		$zip = $this->getZipApp();
-		$this->uploadToApp($zip, $this->releaseFolder . self::ARCHIVE_NAME);
+		$zip = $this->getArtifact();
+		$this->uploadArtifact($zip, $this->releaseFolder . self::ARCHIVE_NAME);
 		$this->unarchiveApp($this->releaseFolder . self::ARCHIVE_NAME);
-		$this->deleteArchiveRemote($this->releaseFolder . self::ARCHIVE_NAME);
+		$this->deleteArtifact($this->releaseFolder . self::ARCHIVE_NAME);
 		$this->createSharedStorage($this->getSharedStorageCommands($this->getSharedDirs()));
 		$this->shareEnvFile();
 		$this->updateEnvFile($this->getEnvUpdates());
@@ -59,7 +59,6 @@ class Laravel extends DeployerAbstract
 			);
 		}
 		$dbBackupId = ($this->isFirstDeploy) ? '' : $this->backupDatabase();
-		$this->deleteArchiveLocal();
 		$this->runMigrations('artisan migrate --force', $dbBackupId);
 		$this->runCommands(self::SKIP_COMMANDS);
 		$this->symlinkRelease($this->releaseFolder . 'public', 'Linking your current release', $this->isFirstDeploy);
@@ -100,7 +99,7 @@ class Laravel extends DeployerAbstract
 			'create_shared'                    => [
 				'message' => 'Creating shared storage folder if not exists',
 				'execute' => function (string $message) {
-					$this->createRemoteIfFileNotExists('shared', $message);
+					$this->createFileIfNotExists('shared', $message, true);
 				},
 			],
 			'copy_storage_to_shared'           => [
