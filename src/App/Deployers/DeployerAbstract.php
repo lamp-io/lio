@@ -333,13 +333,43 @@ abstract class DeployerAbstract implements DeployInterface
 
 	/**
 	 * @param string $fileId
-	 * @param string $appId
-	 * @param string $content
+	 * @param bool $recur
+	 * @param string $message
+	 * @return Response
 	 * @throws GuzzleException
 	 */
-	protected function updateFile(string $fileId, string $appId, string $content)
+	protected function giveFileApachePermission(string $fileId, string $message, bool $recur): Response
 	{
-		$this->sendRequest(
+		return $this->sendRequest(
+			sprintf(
+				FilesUpdateCommand::API_ENDPOINT,
+				$this->config['app']['id'],
+				($recur) ? '?recur=true' : ''
+			),
+			'PATCH',
+			$message,
+			json_encode([
+				'data' => [
+					'attributes' => [
+						'apache_writable' => true,
+					],
+					'id'         => $fileId,
+					'type'       => 'files',
+				],
+			])
+		);
+	}
+
+	/**
+	 * @param string $fileId
+	 * @param string $appId
+	 * @param string $content
+	 * @return Response
+	 * @throws GuzzleException
+	 */
+	protected function updateFile(string $fileId, string $appId, string $content): Response
+	{
+		return $this->sendRequest(
 			sprintf(
 				FilesUpdateCommand::API_ENDPOINT,
 				$appId,
@@ -498,11 +528,12 @@ abstract class DeployerAbstract implements DeployInterface
 	/**
 	 * @param string $fileId
 	 * @param string $message
+	 * @return  Response
 	 * @throws GuzzleException
 	 */
-	protected function deleteFile(string $fileId, string $message)
+	protected function deleteFile(string $fileId, string $message): Response
 	{
-		$this->sendRequest(
+		return $this->sendRequest(
 			sprintf(
 				FilesDeleteCommand::API_ENDPOINT,
 				$this->config['app']['id'],
@@ -536,11 +567,12 @@ abstract class DeployerAbstract implements DeployInterface
 	/**
 	 * @param string $fileId
 	 * @param string $target
+	 * @return Response
 	 * @throws GuzzleException
 	 */
-	protected function moveFile(string $fileId, string $target)
+	protected function moveFile(string $fileId, string $target): Response
 	{
-		$this->sendRequest(
+		return $this->sendRequest(
 			sprintf(
 				FilesUpdateMoveCommand::API_ENDPOINT,
 				$this->config['app']['id'],
@@ -680,24 +712,10 @@ abstract class DeployerAbstract implements DeployInterface
 
 		foreach ($directories as $directory) {
 			try {
-				$this->sendRequest(
-					sprintf(
-						FilesUpdateCommand::API_ENDPOINT,
-						$this->config['app']['id'],
-						($recur) ? '?recur=true' : ''
-					),
-					'PATCH',
+				$this->giveFileApachePermission(
+					$this->releaseFolder . $directory,
 					'Setting apache writable ' . $directory,
-					json_encode([
-						'data' => [
-							'attributes' => [
-								'apache_writable' => true,
-							],
-							'id'         => $this->releaseFolder . $directory,
-							'type'       => 'files',
-						],
-					])
-				);
+					$recur);
 			} catch (ClientException $clientException) {
 				$this->consoleOutput->writeln(PHP_EOL . '<comment>Directory ' . $directory . '/ not exists</comment>');
 			}
@@ -799,9 +817,10 @@ abstract class DeployerAbstract implements DeployInterface
 	 * @param string $target
 	 * @param bool $isFileExists
 	 * @param string $message
+	 * @return Response
 	 * @throws GuzzleException
 	 */
-	protected function makeSymlink(string $fileId, string $target, bool $isFileExists, string $message)
+	protected function makeSymlink(string $fileId, string $target, bool $isFileExists, string $message): Response
 	{
 		if ($isFileExists) {
 			$url = sprintf(
@@ -818,7 +837,7 @@ abstract class DeployerAbstract implements DeployInterface
 			$httpType = 'POST';
 		}
 
-		$this->sendRequest($url, $httpType, $message, json_encode([
+		return $this->sendRequest($url, $httpType, $message, json_encode([
 			'data' => [
 				'attributes' => [
 					'target'     => $target,

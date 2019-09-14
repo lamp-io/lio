@@ -2,7 +2,6 @@
 
 namespace Console\App\Deployers;
 
-use Console\App\Commands\Files\FilesUpdateCommand;
 use Console\App\Helpers\DeployHelper;
 use Dotenv\Dotenv;
 use Exception;
@@ -158,22 +157,11 @@ class Symfony extends DeployerAbstract
 						if (file_exists($this->appPath . $dir)) {
 							$dirName = explode('/', $dir);
 							$dirName = $dirName[count($dirName) - 1];
-							$fileUpdateUrl = sprintf(
-								sprintf(
-									FilesUpdateCommand::API_ENDPOINT . '?recur=true',
-									$this->config['app']['id'],
-									'shared/' . rtrim($dirName, '/')
-								)
+							$this->giveFileApachePermission(
+								'shared/' . rtrim($dirName, '/'),
+								$message,
+								true
 							);
-							$this->sendRequest($fileUpdateUrl, 'PATCH', sprintf($message, $dir), json_encode([
-								'data' => [
-									'attributes' => [
-										'apache_writable' => true,
-									],
-									'id'         => 'shared/' . rtrim($dirName, '/'),
-									'type'       => 'files',
-								],
-							]));
 						}
 					}
 				},

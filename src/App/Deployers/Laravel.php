@@ -2,8 +2,6 @@
 
 namespace Console\App\Deployers;
 
-use Console\App\Commands\Files\FilesDeleteCommand;
-use Console\App\Commands\Files\FilesUpdateCommand;
 use Console\App\Helpers\DeployHelper;
 use Dotenv\Dotenv;
 use Exception;
@@ -83,13 +81,8 @@ class Laravel extends DeployerAbstract
 			'delete_public_storage'            => [
 				'message' => 'Removing release/public/storage',
 				'execute' => function (string $message) {
-					$deleteFileUrl = sprintf(
-						FilesDeleteCommand::API_ENDPOINT,
-						$this->config['app']['id'],
-						$this->releaseFolder . 'public/storage'
-					);
 					try {
-						$this->sendRequest($deleteFileUrl, 'DELETE', $message);
+						$this->deleteFile($this->releaseFolder . 'public/storage', $message);
 					} catch (ClientException $clientException) {
 						$this->consoleOutput->write(PHP_EOL);
 						return;
@@ -162,22 +155,11 @@ class Laravel extends DeployerAbstract
 					foreach ($dirs as $dir) {
 						$dirName = explode('/', $dir);
 						$dirName = $dirName[count($dirName) - 1];
-						$fileUpdateUrl = sprintf(
-							sprintf(
-								FilesUpdateCommand::API_ENDPOINT . '?recur=true',
-								$this->config['app']['id'],
-								'shared/' . rtrim($dirName, '/')
-							)
+						$this->giveFileApachePermission(
+							'shared/' . rtrim($dirName, '/'),
+							$message,
+							true
 						);
-						$this->sendRequest($fileUpdateUrl, 'PATCH', sprintf($message, $dir), json_encode([
-							'data' => [
-								'attributes' => [
-									'apache_writable' => true,
-								],
-								'id'         => 'shared/' . rtrim($dirName, '/'),
-								'type'       => 'files',
-							],
-						]));
 					}
 				},
 			],
