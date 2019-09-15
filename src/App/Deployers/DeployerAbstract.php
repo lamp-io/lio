@@ -129,7 +129,7 @@ abstract class DeployerAbstract implements DeployInterface
 		}
 		$zip = new ZipArchive();
 		$finder = new Finder();
-		$progressBar = Command::getProgressBar('Creating a artifact', $this->consoleOutput);
+		$progressBar = Command::getProgressBar('Creating an artifact', $this->consoleOutput);
 		$finder->in($this->appPath)->ignoreDotFiles(false);
 		if (!$finder->hasResults()) {
 			throw new Exception('Empty app directory');
