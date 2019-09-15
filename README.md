@@ -696,6 +696,8 @@ Composer scripts
 
 * `release` ***(int)*** Id of your release (this value will be set automatically)
 * `type` ***(string)*** Type of your application (e.g laravel, symfony)
+* `deploy-branches` ***(dictionary)*** Only for CI/CD system. You can set for which branches will be allowed deploy, for each branch will be created separate app (by default only for master)
+* `deploy-all-branches` ***(bool)*** Only for CI/CD system. Allow to make deploy from any branch, for each branch will be created separate app
 * `app` ***(dictionary)*** Settings related to your lamp-io app
     * `attributes` ***(dictionary)*** Lamp-io app attributes, it use same values has [apps:new](#appsnew-organization_id--d--description---httpd_conf---max_replicas--m--memory---min_replicas---php_ini--r--replicas---vcpu---github_webhook_secret---webhook_run_command---hostname---hostname_certificate_valid---public)
      command options
@@ -708,7 +710,6 @@ Composer scripts
     * `type` ***(enum)*** Internal(db hosted on lamp-io platform) or external(db hosted outside of lamp-io platform) DB
     * `system` ***(string)*** DB engine (e.g mysql, sqlite)
     * `root_password` ***(string)*** DB root password
-* `environment` ***(dictionary)*** Environment variables that will be added to .env file (e.g foo: bar)
 * `apache_permissions_dir` ***(list)*** Select a dir that need to has apache permissions to write on it. NOTE: all default files that required apache write permissions, will be updated automatically
 * `commands` ***(dictionary)*** Commands that should be runt before symlink release (Please note that you can not add here migrate commands, it will be runt by default)
 * `no_migrations` ***(bool)*** Is need to run migrations, default TRUE
@@ -728,6 +729,17 @@ database:
 database:
     type: external
     system: mysql
+```
+
+* Example of lamp.io.yaml config for CI/CD deploy, where will be allowed deploy from staging branch (it will create separate app for staging branch)
+```yaml
+deploy-branches:
+  - staging
+```
+
+* Example of lamp.io.yaml config for CI/CD deploy, where will be allowed deploy from any branch (it will create separate app for staging branch)
+```yaml
+deploy-all-branches: true
 ```
 
 ## License
