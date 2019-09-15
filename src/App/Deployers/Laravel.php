@@ -157,7 +157,7 @@ class Laravel extends DeployerAbstract
 						$dirName = $dirName[count($dirName) - 1];
 						$this->giveFileApachePermission(
 							'shared/' . rtrim($dirName, '/'),
-							$message,
+							sprintf($message, $dirName),
 							true
 						);
 					}
