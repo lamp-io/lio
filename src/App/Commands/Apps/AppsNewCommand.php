@@ -76,7 +76,7 @@ class AppsNewCommand extends Command
 			} else {
 				/** @var Document $document */
 				$document = Parser::parseResponseString($response->getBody()->getContents());
-				$output->writeln('Your new app successfully created, app id: ' . $document->get('data.id'));
+				$output->writeln('<info>Your new app successfully created, app id: ' . $document->get('data.id') . '</info>');
 			}
 		} catch (GuzzleException $guzzleException) {
 			$output->writeln($guzzleException->getMessage());
