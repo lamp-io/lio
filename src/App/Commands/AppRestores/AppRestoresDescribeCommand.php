@@ -85,10 +85,11 @@ class AppRestoresDescribeCommand extends Command
 		];
 		$bufferOutput = new BufferedOutput();
 		$appRunsDescribeCommand->run(new ArrayInput($args), $bufferOutput);
+		$commandResponse = $bufferOutput->fetch();
 		/** @var Document $document */
-		$document = Parser::parseResponseString($bufferOutput->fetch());
-		if ($document->get('data.attributes.status') === 'failed') {
-			throw new Exception($document->get('data.attributes.output'));
+		$document = Parser::parseResponseString($commandResponse);
+		if (!$document->has('data.attributes.status') || $document->get('data.attributes.status') === 'failed') {
+			throw new Exception('App restore job failed ' . PHP_EOL . $commandResponse);
 		}
 		return $document->get('data.attributes.complete');
 	}
