@@ -25,6 +25,12 @@ class DeployHelper
 
 	const CI_ENV_VARS = ['CI', 'JENKINS_URL', 'TEAMCITY_VERSION', 'GITHUB_ACTION'];
 
+	const DEFAULT_BRANCH_ALLOWED = 'master';
+
+	const DB_PORT = '3306';
+
+	const DB_USER = 'root';
+
 	/**
 	 * @param string $appType
 	 * @param string $appPath
@@ -81,11 +87,11 @@ class DeployHelper
 	{
 		$filesDeleteCommand = $application->find(FilesDeleteCommand::getDefaultName());
 		$args = [
-			'command'     => FilesDeleteCommand::getDefaultName(),
-			'app_id'      => $appId,
+			'command' => FilesDeleteCommand::getDefaultName(),
+			'app_id'  => $appId,
 			'file_id' => $releasePath,
-			'--yes'       => true,
-			'--json'      => true,
+			'--yes'   => true,
+			'--json'  => true,
 		];
 		$filesDeleteCommand->run(new ArrayInput($args), $output);
 	}
@@ -135,6 +141,20 @@ class DeployHelper
 		return $filesListCommand->run(new ArrayInput($args), $bufferOutput) == '0';
 	}
 
+	/**
+	 * @param string $branchName
+	 * @param array $branchesAllowed
+	 * @param bool $allowAll
+	 * @return bool
+	 */
+	static public function isMultiDeployAllowed(string $branchName, array $branchesAllowed, bool $allowAll): bool
+	{
+		return ($allowAll || in_array($branchName, $branchesAllowed) || $branchName == self::DEFAULT_BRANCH_ALLOWED);
+	}
+
+	/**
+	 * @return bool
+	 */
 	static public function isRemoteDeploy(): bool
 	{
 		$isRemote = array_filter(self::CI_ENV_VARS, function ($value) {

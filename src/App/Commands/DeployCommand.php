@@ -50,9 +50,17 @@ class DeployCommand extends Command
 	/**
 	 * @var bool
 	 */
-	protected $isAppAlreadyExists = true;
+	protected $isAppAlreadyExists;
 
+	/**
+	 * @var ClientInterface
+	 */
 	protected $httpClient;
+
+	/**
+	 * @var bool
+	 */
+	protected $isNewDbInstance = false;
 
 	public function __construct(ClientInterface $httpClient, $name = null)
 	{
@@ -114,7 +122,7 @@ class DeployCommand extends Command
 				);
 			}
 			$deployObject = $this->getDeployObject();
-			$deployObject->deployApp($appPath, $this->isFirstDeploy());
+			$deployObject->deployApp($appPath, $this->isFirstDeploy(), $this->isNewDbInstance);
 			if (!empty($this->configHelper->get('app.attributes.hostname'))) {
 				$url = 'https://' . $this->configHelper->get('app.attributes.hostname') . '/';
 			} else {
@@ -189,6 +197,7 @@ class DeployCommand extends Command
 		$dbId = $this->getLampIoDatabaseId($appId);
 		if (empty($dbId)) {
 			$dbId = $this->createLampIoDatabase($output, $input, $appId);
+			$this->isNewDbInstance = true;
 		}
 		$this->configHelper->set('database.id', $dbId);
 		$this->configHelper->set('database.system', 'mysql');
@@ -246,8 +255,8 @@ class DeployCommand extends Command
 	 * @param OutputInterface $output
 	 * @param InputInterface $input
 	 * @param string $appId
-	 * @throws Exception
 	 * @return string
+	 * @throws Exception
 	 */
 	protected function createLampIoDatabase(OutputInterface $output, InputInterface $input, string $appId): string
 	{
@@ -309,13 +318,21 @@ class DeployCommand extends Command
 			$this->isAppAlreadyExists = true;
 			$appId = $this->configHelper->get('app.id');
 		} elseif (DeployHelper::isRemoteDeploy()) {
-			$pattern = 'autodeploy:<' . basename($input->getArgument('dir')) . '>:<' . $this->getGitBranchName() . '>';
-			$appId = $this->getAutoDeployAppId($pattern);
-			$this->isAppAlreadyExists = true;
-			if (empty($appId)) {
-				$appId = $this->createNewApp($output, $input, $pattern);
-				$this->isAppAlreadyExists = false;
+			$branchName = $this->getGitBranchName();
+			$branchAllowed = !empty($this->configHelper->get('deploy-branches')) ? $this->configHelper->get('deploy-branches') : [];
+			$isAllowAll = !empty($this->configHelper->get('deploy-all-branches'));
+			if (DeployHelper::isMultiDeployAllowed($branchName, $branchAllowed, $isAllowAll)) {
+				$pattern = 'autodeploy:<' . basename($input->getArgument('dir')) . '>:<' . $branchName . '>';
+				$appId = $this->getAutoDeployAppId($pattern);
+				$this->isAppAlreadyExists = true;
+				if (empty($appId)) {
+					$appId = $this->createNewApp($output, $input, $pattern);
+					$this->isAppAlreadyExists = false;
+				}
+			} else {
+				throw new Exception('Branch ' . $branchName . ' not allowed for auto-deploy');
 			}
+
 		} else {
 			$appId = $this->createNewApp($output, $input);
 		}
@@ -396,8 +413,8 @@ class DeployCommand extends Command
 		}
 		$appsNewCommand = $this->getApplication()->find(AppsNewCommand::getDefaultName());
 		$args = [
-			'command'       => AppsNewCommand::getDefaultName(),
-			'--json'        => true,
+			'command' => AppsNewCommand::getDefaultName(),
+			'--json'  => true,
 		];
 		if (!empty($this->configHelper->get('app.attributes'))) {
 			$attributes = [];

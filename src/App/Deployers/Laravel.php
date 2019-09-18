@@ -2,8 +2,6 @@
 
 namespace Console\App\Deployers;
 
-use Console\App\Commands\Files\FilesDeleteCommand;
-use Console\App\Commands\Files\FilesUpdateCommand;
 use Console\App\Helpers\DeployHelper;
 use Dotenv\Dotenv;
 use Exception;
@@ -17,61 +15,48 @@ class Laravel extends DeployerAbstract
 		'artisan migrate',
 	];
 
-	const SHARED_DIR = 'storage';
+	const SHARED_DIR = ['storage'];
 
 	/**
 	 * @param string $appPath
 	 * @param bool $isFirstDeploy
+	 * @param bool $isNewDbInstance
 	 * @return void
 	 * @throws Exception
 	 * @throws GuzzleException
 	 */
-	public function deployApp(string $appPath, bool $isFirstDeploy)
+	public function deployApp(string $appPath, bool $isFirstDeploy, bool $isNewDbInstance)
 	{
-		parent::deployApp($appPath, $isFirstDeploy);
+		parent::deployApp($appPath, $isFirstDeploy, $isNewDbInstance);
 		(Dotenv::create($this->appPath))->load();
-		$this->updateEnvFileToUpload($_ENV, $this->prepareEnvFile($_ENV));
-		/** Need again load all ENV after updating .env file */
-		(Dotenv::create($this->appPath))->overload();
-		$zip = $this->getZipApp();
-		$this->restoreLocalEnvFile($_ENV);
-		$this->uploadToApp($zip, $this->releaseFolder . self::ARCHIVE_NAME);
+		$zip = $this->getArtifact();
+		$this->uploadArtifact($zip, $this->releaseFolder . self::ARCHIVE_NAME);
 		$this->unarchiveApp($this->releaseFolder . self::ARCHIVE_NAME);
-		$this->deleteArchiveRemote($this->releaseFolder . self::ARCHIVE_NAME);
+		$this->deleteArtifact($this->releaseFolder . self::ARCHIVE_NAME);
 		$this->createSharedStorage($this->getSharedStorageCommands($this->getSharedDirs()));
+		$this->shareEnvFile();
+		$this->updateEnvFile($this->getEnvUpdates());
 		$this->setUpPermissions();
-		if ($this->isFirstDeploy) {
-			if ($this->config['database']['system'] == 'sqlite') {
-				$this->initSqliteDatabase();
-			} else {
-				if ($this->config['database']['type'] == 'internal') {
-					$this->initDatabase(getenv('DB_HOST'));
-					$this->createDatabaseUser(
-						getenv('DB_HOST'),
-						getenv('DB_USERNAME'),
-						getenv('DB_PASSWORD'),
-						$this->config['database']['root_password']
-					);
-				}
-
-				$this->createDatabase(
-					getenv('DB_HOST'),
-					getenv('DB_DATABASE'),
-					getenv('DB_USERNAME'),
-					getenv('DB_PASSWORD')
-				);
-				if (!empty($this->config['database']['sql_dump'])) {
-					$this->importSqlDump(
-						getenv('DB_HOST'),
-						getenv('DB_DATABASE'),
-						getenv('DB_USERNAME'),
-						getenv('DB_PASSWORD')
-					);
-				}
-			}
+		if ($this->isFirstDeploy && $this->config['database']['system'] == 'sqlite') {
+			$this->initSqliteDatabase();
+		} elseif ($this->isFirstDeploy && $this->isNewDbInstance) {
+			$this->initDatabase($this->config['database']['id']);
+			$this->createDatabase(
+				$this->config['database']['id'],
+				getenv('DB_DATABASE'),
+				DeployHelper::DB_USER,
+				$this->config['database']['root_password']
+			);
 		}
-		$dbBackupId = $this->backupDatabase();
-		$this->deleteArchiveLocal();
+		if (!empty($this->config['database']['sql_dump']) && ($this->isNewDbInstance || $this->config['database']['type'] == 'external' && $this->isFirstDeploy)) {
+			$this->importSqlDump(
+				$this->config['database']['type'] == 'external' ? getenv('DB_HOST') : $this->config['database']['id'],
+				getenv('DB_DATABASE'),
+				$this->config['database']['type'] == 'external' ? getenv('DB_USERNAME') : DeployHelper::DB_USER,
+				$this->config['database']['type'] == 'external' ? getenv('DB_PASSWORD') : $this->config['database']['root_password']
+			);
+		}
+		$dbBackupId = ($this->isFirstDeploy) ? '' : $this->backupDatabase();
 		$this->runMigrations('artisan migrate --force', $dbBackupId);
 		$this->runCommands(self::SKIP_COMMANDS);
 		$this->symlinkRelease($this->releaseFolder . 'public', 'Linking your current release', $this->isFirstDeploy);
@@ -79,15 +64,8 @@ class Laravel extends DeployerAbstract
 
 	private function getSharedDirs(): array
 	{
-		if (!empty($this->config['shared'])) {
-			foreach ($this->config['shared'] as $key => $value) {
-				if (preg_match('/' . self::SHARED_DIR . '/', $value)) {
-					unset($this->config['shared'][$key]);
-				}
-			}
-		}
 		return array_merge(
-			[self::SHARED_DIR],
+			self::SHARED_DIR,
 			!empty($this->config['shared']) ? $this->config['shared'] : []
 		);
 	}
@@ -103,13 +81,8 @@ class Laravel extends DeployerAbstract
 			'delete_public_storage'            => [
 				'message' => 'Removing release/public/storage',
 				'execute' => function (string $message) {
-					$deleteFileUrl = sprintf(
-						FilesDeleteCommand::API_ENDPOINT,
-						$this->config['app']['id'],
-						$this->releaseFolder . 'public/storage'
-					);
 					try {
-						$this->sendRequest($deleteFileUrl, 'DELETE', $message);
+						$this->deleteFile($this->releaseFolder . 'public/storage', $message);
 					} catch (ClientException $clientException) {
 						$this->consoleOutput->write(PHP_EOL);
 						return;
@@ -119,7 +92,7 @@ class Laravel extends DeployerAbstract
 			'create_shared'                    => [
 				'message' => 'Creating shared storage folder if not exists',
 				'execute' => function (string $message) {
-					$this->createRemoteIfFileNotExists('shared', $message);
+					$this->createFileIfNotExists('shared', $message, true);
 				},
 			],
 			'copy_storage_to_shared'           => [
@@ -182,22 +155,11 @@ class Laravel extends DeployerAbstract
 					foreach ($dirs as $dir) {
 						$dirName = explode('/', $dir);
 						$dirName = $dirName[count($dirName) - 1];
-						$fileUpdateUrl = sprintf(
-							sprintf(
-								FilesUpdateCommand::API_ENDPOINT . '?recur=true',
-								$this->config['app']['id'],
-								'shared/' . rtrim($dirName, '/')
-							)
+						$this->giveFileApachePermission(
+							'shared/' . rtrim($dirName, '/'),
+							sprintf($message, $dirName),
+							true
 						);
-						$this->sendRequest($fileUpdateUrl, 'PATCH', sprintf($message, $dir), json_encode([
-							'data' => [
-								'attributes' => [
-									'apache_writable' => true,
-								],
-								'id'         => 'shared/' . rtrim($dirName, '/'),
-								'type'       => 'files',
-							],
-						]));
 					}
 				},
 			],
@@ -219,24 +181,36 @@ class Laravel extends DeployerAbstract
 	}
 
 	/**
-	 * @param array $localEnv
 	 * @return array
 	 */
-	private function prepareEnvFile(array $localEnv): array
+	private function getEnvUpdates(): array
 	{
-		if ($this->config['database']['system'] == 'sqlite') {
+		$env = [];
+		if ($this->isNewDbInstance && $this->isFirstDeploy && $this->config['database']['type'] != 'external') {
 			$env = [
-				'APP_URL'     => $this->config['app']['url'],
+				'DB_HOST'     => $this->config['database']['id'],
+				'DB_PORT'     => DeployHelper::DB_PORT,
+				'DB_USERNAME' => DeployHelper::DB_USER,
+				'DB_PASSWORD' => $this->config['database']['root_password'],
+			];
+		} elseif ($this->isFirstDeploy && $this->config['database']['type'] == 'external') {
+			$env = [
+				'DB_HOST'     => getenv('DB_HOST'),
+				'DB_PORT'     => getenv('DB_PORT'),
+				'DB_USERNAME' => getenv('DB_USERNAME'),
+				'DB_PASSWORD' => getenv('DB_PASSWORD'),
+			];
+		} elseif ($this->isFirstDeploy && $this->config['database']['system'] == 'sqlite') {
+			$env = [
 				'DB_DATABASE' => DeployHelper::SQLITE_ABSOLUTE_REMOTE_PATH,
 			];
-		} else {
-			$env = [
-				'APP_URL' => $this->config['app']['url'],
-				'DB_HOST' => $this->config['database']['id'],
-			];
 		}
-		$envFromConfig = !empty($this->config['environment']) ? $this->config['environment'] : [];
-		$remoteEnv = array_merge($envFromConfig, $env);
-		return array_merge($localEnv, $remoteEnv);
+
+		if ($this->isFirstDeploy) {
+			$env = array_merge($env, [
+				'APP_URL' => !empty($this->config['app']['attributes']['hostname']) ? 'https://' . $this->config['app']['attributes']['hostname'] : 'https://' . $this->config['app']['id'] . '.lamp.app/',
+			]);
+		}
+		return $env;
 	}
 }

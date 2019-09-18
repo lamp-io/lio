@@ -16,7 +16,8 @@ class AuthHelper
 		if (!file_exists(self::getPathToTokenFolder())) {
 			mkdir(
 				self::getPathToTokenFolder(),
-				0744
+				0744,
+				true
 			);
 		}
 		return file_put_contents(self::getPathToTokenFolder() . self::TOKEN_FILE_NAME, $token);

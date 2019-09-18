@@ -2,7 +2,6 @@
 
 namespace Console\App\Deployers;
 
-use Console\App\Commands\Files\FilesUpdateCommand;
 use Console\App\Helpers\DeployHelper;
 use Dotenv\Dotenv;
 use Exception;
@@ -28,25 +27,27 @@ class Symfony extends DeployerAbstract
 	/**
 	 * @param string $appPath
 	 * @param bool $isFirstDeploy
+	 * @param bool $isNewDbInstance
 	 * @throws GuzzleException
 	 * @throws Exception
 	 */
-	public function deployApp(string $appPath, bool $isFirstDeploy)
+	public function deployApp(string $appPath, bool $isFirstDeploy, bool $isNewDbInstance)
 	{
-		parent::deployApp($appPath, $isFirstDeploy);
+		parent::deployApp($appPath, $isFirstDeploy, $isNewDbInstance);
 		(Dotenv::create($this->appPath))->load();
-		$this->updateEnvFileToUpload($_ENV, $this->prepareEnvFile($_ENV));
-		$zip = $this->getZipApp();
-		$this->restoreLocalEnvFile($_ENV);
-		$this->uploadToApp($zip, $this->releaseFolder . self::ARCHIVE_NAME);
+//		$this->updateEnvFileToUpload($_ENV, $this->prepareEnvFile($_ENV));
+		$zip = $this->getArtifact();
+//		$this->restoreLocalEnvFile($_ENV);
+		$this->uploadArtifact($zip, $this->releaseFolder . self::ARCHIVE_NAME);
 		$this->unarchiveApp($this->releaseFolder . self::ARCHIVE_NAME);
-		$this->deleteArchiveRemote($this->releaseFolder . self::ARCHIVE_NAME);
+		$this->deleteArtifact($this->releaseFolder . self::ARCHIVE_NAME);
 		$this->createSharedStorage($this->getSharedStorageCommands($this->getSharedDirs()));
+		$this->shareEnvFile();
+		$this->updateEnvFile($this->getEnvUpdates());
 		$this->setUpPermissions(['var'], true);
 		if ($this->isFirstDeploy) {
 			$this->initSqliteDatabase();
 		}
-		$this->deleteArchiveLocal();
 		$dbBackupId = $this->backupDatabase();
 		$this->runMigrations('bin/console doctrine:migrations:migrate --no-interaction', $dbBackupId);
 		$this->runCommands(['doctrine:migrations:migrate']);
@@ -78,6 +79,20 @@ class Symfony extends DeployerAbstract
 	}
 
 	/**
+	 * @return array
+	 */
+	private function getEnvUpdates(): array
+	{
+		$env = [];
+		if ($this->config['database']['system'] == 'sqlite') {
+			$env = [
+				'DATABASE_URL' => 'sqlite:///' . DeployHelper::SQLITE_ABSOLUTE_REMOTE_PATH,
+			];
+		}
+		return $env;
+	}
+
+	/**
 	 * @param array $dirs ;
 	 * @return array
 	 * @throws Exception
@@ -88,7 +103,7 @@ class Symfony extends DeployerAbstract
 			'create_shared'             => [
 				'message' => 'Creating shared storage folder if not exists',
 				'execute' => function (string $message) {
-					$this->createRemoteIfFileNotExists('shared', $message);
+					$this->createFileIfNotExists('shared', $message, true);
 				},
 			],
 			'copy_storage_to_shared'    => [
@@ -142,43 +157,15 @@ class Symfony extends DeployerAbstract
 						if (file_exists($this->appPath . $dir)) {
 							$dirName = explode('/', $dir);
 							$dirName = $dirName[count($dirName) - 1];
-							$fileUpdateUrl = sprintf(
-								sprintf(
-									FilesUpdateCommand::API_ENDPOINT . '?recur=true',
-									$this->config['app']['id'],
-									'shared/' . rtrim($dirName, '/')
-								)
+							$this->giveFileApachePermission(
+								'shared/' . rtrim($dirName, '/'),
+								$message,
+								true
 							);
-							$this->sendRequest($fileUpdateUrl, 'PATCH', sprintf($message, $dir), json_encode([
-								'data' => [
-									'attributes' => [
-										'apache_writable' => true,
-									],
-									'id'         => 'shared/' . rtrim($dirName, '/'),
-									'type'       => 'files',
-								],
-							]));
 						}
 					}
 				},
 			],
 		];
 	}
-
-	/**
-	 * @param array $localEnv
-	 * @return array
-	 */
-	private function prepareEnvFile(array $localEnv): array
-	{
-		if ($this->config['database']['system'] == 'sqlite') {
-			$env = [
-				'DATABASE_URL' => 'sqlite:///' . DeployHelper::SQLITE_ABSOLUTE_REMOTE_PATH,
-			];
-		}
-		$envFromConfig = !empty($this->config['environment']) ? $this->config['environment'] : [];
-		$remoteEnv = array_merge($envFromConfig, $env);
-		return array_merge($localEnv, $remoteEnv);
-	}
-
 }
