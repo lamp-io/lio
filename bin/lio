@@ -6,6 +6,10 @@ if (file_exists(dirname(__DIR__, 3) . '/autoload.php')) {
     require_once dirname(__DIR__) . '/vendor/autoload.php';
 }
 
+use Console\App\Commands\AppRestores\AppRestoresDeleteCommand;
+use Console\App\Commands\AppRestores\AppRestoresDescribeCommand;
+use Console\App\Commands\AppRestores\AppRestoresListCommand;
+use Console\App\Commands\AppRestores\AppRestoresNewCommand;
 use Console\App\Commands\Apps\SubCommands\AppUpdatesStatusCommand;
 use Console\App\Commands\Deploy\DeployListCommand;
 use Console\App\Commands\Organizations\OrganizationsListCommand;
@@ -119,6 +123,10 @@ try {
     $app->add(new OrganizationUsersDescribeCommand(new Client()));
     $app->add(new OrganizationUsersUpdateCommand(new Client()));
     $app->add(new DeployListCommand(new Client()));
+    $app->add(new AppRestoresNewCommand(new Client()));
+    $app->add(new AppRestoresListCommand(new Client()));
+    $app->add(new AppRestoresDescribeCommand(new Client()));
+    $app->add(new AppRestoresDeleteCommand(new Client()));
     $app->run();
 } catch (Exception $exception) {
     echo $exception->getMessage() . PHP_EOL;

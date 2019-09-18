@@ -227,11 +227,60 @@ Commands
     
     Return an app backup
     
-    Allow you to get an app backup, api reference https://www.lamp.io/api#/app_backups/appBackupsShow
+    Get an app backup 
+    
+    Api reference https://www.lamp.io/api#/app_backups/appBackupsShow
 
     Arguments:
 
     * `<app_backup_id>` ***(string)*** The ID of the app backup
+
+### App restores
+
+1.  #### app_restores:new <app_id> <app_backup_id>
+
+    Restore files to an app
+    
+    Api reference https://www.lamp.io/api#/app_restores/appRestoresCreate
+
+    Arguments:
+
+    * `<app_id>` ***(string)*** The ID of the app
+    * `<app_backup_id>` ***(string)*** The ID of the app backup
+
+2. #### app_restores:delete <app_restore_id> [--yes][-y]
+
+    Delete an app backup
+    
+    Api reference https://www.lamp.io/api#/app_restores/appRestoresDelete
+
+    Arguments:
+
+    * `<app_restore_id>` ***(string)*** The ID of the app restore
+
+    Options:
+
+    * `[--yes][-y]` ***(bool)*** Skip confirm delete question
+
+3.  #### app_restores:list [-o][--organization_id]
+
+    Return app restores
+    
+    Api reference https://www.lamp.io/api#/app_restores/appRestoresList
+
+    Options:
+
+    * `[-o][--organization_id]` ***(string)*** Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
+    
+4. #### app_restores:describe <app_restore_id>
+    
+    Return an app restore
+    
+    Allow you to get an app backup, api reference https://www.lamp.io/api#/app_backups/appRestoresShow
+
+    Arguments:
+
+    * `<app_restore_id>` ***(string)*** The ID of the app restore
 
 ### App runs
 
