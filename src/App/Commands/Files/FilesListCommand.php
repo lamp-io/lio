@@ -5,6 +5,7 @@ namespace Console\App\Commands\Files;
 
 
 use Art4\JsonApiClient\Exception\ValidationException;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Helper\Table;
@@ -54,18 +55,23 @@ class FilesListCommand extends Command
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
 	 * @return int|null|void
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
 		try {
+			$response = $this->sendRequest($input->getArgument('app_id'), $input->getArgument('file_id'));
+			$responseBody = $response->getBody()->getContents();
 			if (!empty($input->getOption('json'))) {
-				$response = $this->sendRequest($input->getArgument('app_id'), $input->getArgument('file_id'));
 				$output->writeln($response->getBody()->getContents());
 			} else {
-				$this->prepareOutput($input, $input->getArgument('file_id'));
-				$table = $this->getOutputAsTable($this->dataToOutput, new Table($output));
+				if (!$this->isDirectory($responseBody)) {
+					$table = $this->getTableFileInfo($responseBody, new Table($output));
+				} else {
+					$this->prepareOutput($input, $responseBody);
+					$table = $this->getTableFilesList($this->dataToOutput, new Table($output));
+				}
 				$table->render();
 			}
 
@@ -77,6 +83,28 @@ class FilesListCommand extends Command
 			return 1;
 		}
 
+	}
+
+	protected function getTableFileInfo(string $responseBody, Table $table): Table
+	{
+		/** @var Document $document */
+		$document = Parser::parseResponseString($responseBody);
+		$table->setHeaderTitle($document->get('data.id'));
+		$table->setHeaders(['Metadata', 'Content']);
+		$table->addRow([
+			implode(PHP_EOL, [
+				'file_name: ' . $document->get('data.attributes.file_name'),
+				'size: ' . $this->formatBytes($document->get('data.attributes.size')),
+				'mime_type: ' . $document->get('data.attributes.mime_type'),
+				'modify_time: ' . $document->get('data.attributes.modify_time'),
+				$document->get('data.attributes.apache_writable') ? 'apache_writable: true' : 'apache_writable: false',
+				'file_mode: ' . $document->get('data.attributes.file_mode'),
+				$document->get('data.attributes.is_symlink') ? 'is_symlink: true' : 'is_symlink: false',
+				$document->get('data.attributes.is_symlink') ? 'target: ' . $document->get('data.attributes.target') : '',
+			]),
+			wordwrap(trim(preg_replace('/\t/', ' ', $document->get('data.attributes.contents'))), 80, PHP_EOL),
+		]);
+		return $table;
 	}
 
 	/**
@@ -104,7 +132,7 @@ class FilesListCommand extends Command
 	 * @param Table $table
 	 * @return Table
 	 */
-	protected function getOutputAsTable(array $data, Table $table): Table
+	protected function getTableFilesList(array $data, Table $table): Table
 	{
 		$table->setStyle('compact');
 		foreach ($this->sortData($data, 'fileName') as $val) {
@@ -119,21 +147,17 @@ class FilesListCommand extends Command
 
 	/**
 	 * @param InputInterface $input
-	 * @param string $filePath
+	 * @param string $responseBody
 	 * @throws GuzzleException
-	 * @throws  ValidationException
+	 * @throws ValidationException
 	 */
-	protected function prepareOutput(InputInterface $input, string $filePath)
+	protected function prepareOutput(InputInterface $input, string $responseBody)
 	{
 		if ($this->counter == $input->getOption('limit') || $this->counter == self::MAX_LIMIT) {
 			return;
 		}
-		$response = $this->sendRequest(
-			$input->getArgument('app_id'),
-			$filePath
-		);
 		/** @var Document $document */
-		$document = Parser::parseResponseString($response->getBody()->getContents());
+		$document = Parser::parseResponseString($responseBody);
 		$serializer = new ArraySerializer(['recursive' => true]);
 		$siblings = [];
 		if ($document->has('data.relationships.siblings')) {
@@ -155,7 +179,8 @@ class FilesListCommand extends Command
 
 			$this->counter += 1;
 			if ($val['attributes']['is_dir'] && !empty($input->getOption('recursive'))) {
-				$this->prepareOutput($input, $val['id']);
+				$responseBody = $this->sendRequest($input->getArgument('app_id'), $val['id'])->getBody()->getContents();
+				$this->prepareOutput($input, $responseBody);
 			}
 		}
 	}
@@ -197,6 +222,13 @@ class FilesListCommand extends Command
 			'size'      => $size,
 			'fileName'  => $fileName,
 		];
+	}
+
+	protected function isDirectory(string $responseBody): bool
+	{
+		/** @var Document $document */
+		$document = Parser::parseResponseString($responseBody);
+		return $document->get('data.attributes.is_dir');
 	}
 
 	/**
