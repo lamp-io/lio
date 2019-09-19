@@ -99,7 +99,7 @@ class DbRestoresDescribeCommand extends Command
 	protected function getOutputAsTable(Document $document, Table $table): Table
 	{
 		$table->setHeaderTitle('Db restore job ' . $document->get('data.id'));
-		$table->setHeaders(['Db restore ID', 'Database', 'Db backup', 'Complete', 'Created at', 'Organization id', 'Status', 'Updated at']);
+		$table->setHeaders(['Db restore ID', 'Database', 'Db backup', 'Complete', 'Created at', 'Organization id', 'Status']);
 		$table->addRow([
 			$document->get('data.id'),
 			$document->get('data.attributes.target_database_id'),
@@ -108,7 +108,6 @@ class DbRestoresDescribeCommand extends Command
 			$document->get('data.attributes.created_at'),
 			$document->get('data.attributes.organization_id'),
 			$document->get('data.attributes.status'),
-			$document->get('data.attributes.updated_at'),
 		]);
 		return $table;
 	}

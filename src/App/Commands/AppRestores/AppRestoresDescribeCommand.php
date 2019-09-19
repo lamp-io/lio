@@ -79,9 +79,9 @@ class AppRestoresDescribeCommand extends Command
 	{
 		$appRunsDescribeCommand = $application->find(self::getDefaultName());
 		$args = [
-			'command'    => self::getDefaultName(),
+			'command'        => self::getDefaultName(),
 			'app_restore_id' => $appRestoreId,
-			'--json'     => true,
+			'--json'         => true,
 		];
 		$bufferOutput = new BufferedOutput();
 		$appRunsDescribeCommand->run(new ArrayInput($args), $bufferOutput);
@@ -102,14 +102,13 @@ class AppRestoresDescribeCommand extends Command
 	protected function getOutputAsTable(Document $document, Table $table): Table
 	{
 		$table->setHeaderTitle('App Restore ' . $document->get('data.id'));
-		$table->setHeaders(['App backup Id', 'Complete', 'Created at', 'Organization id', 'Status', 'Updated at']);
+		$table->setHeaders(['App backup Id', 'Complete', 'Created at', 'Organization id', 'Status']);
 		$table->addRow([
 			$document->get('data.attributes.app_backup_id'),
 			$document->get('data.attributes.complete'),
 			$document->get('data.attributes.created_at'),
 			$document->get('data.attributes.organization_id'),
 			$document->get('data.attributes.status'),
-			$document->get('data.attributes.updated_at'),
 		]);
 		return $table;
 	}
