@@ -99,14 +99,13 @@ class DbBackupsDescribeCommand extends Command
 	protected function getOutputAsTable(Document $document, Table $table): Table
 	{
 		$table->setHeaderTitle('Db Backup ' . $document->get('data.id'));
-		$table->setHeaders(['Db id', 'Complete', 'Created at', 'Organization id', 'Status', 'Updated at']);
+		$table->setHeaders(['Db id', 'Complete', 'Created at', 'Organization id', 'Status']);
 		$table->addRow([
 			$document->get('data.attributes.database_id'),
 			$document->get('data.attributes.complete'),
 			$document->get('data.attributes.created_at'),
 			$document->get('data.attributes.organization_id'),
 			$document->get('data.attributes.status'),
-			$document->get('data.attributes.updated_at'),
 		]);
 		return $table;
 	}

@@ -87,11 +87,11 @@ class AppBackupsListCommand extends Command
 		$table->setHeaderTitle('Backups');
 		$table->setStyle('box');
 		$table->setHeaders([
-			'Id', 'App Id', 'Complete', 'Created at', 'Organization Id', 'Status', 'Updated at',
+			'Id', 'App Id', 'Complete', 'Created at', 'Organization Id', 'Status',
 		]);
 		$serializer = new ArraySerializer(['recursive' => true]);
 		$serializedDocument = $serializer->serialize($document);
-		$sortedData = $this->sortData($serializedDocument['data'], 'updated_at');
+		$sortedData = $this->sortData($serializedDocument['data'], 'created_at');
 		$lastElement = end($sortedData);
 		foreach ($sortedData as $key => $data) {
 			$table->addRow([
@@ -101,7 +101,6 @@ class AppBackupsListCommand extends Command
 				$data['attributes']['created_at'],
 				$data['attributes']['organization_id'],
 				$data['attributes']['status'],
-				$data['attributes']['updated_at'],
 			]);
 			if ($data != $lastElement) {
 				$table->addRow(new TableSeparator());

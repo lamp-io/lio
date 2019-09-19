@@ -87,11 +87,11 @@ class DbRestoresListCommand extends Command
 		$table->setHeaderTitle('Database Restore Jobs');
 		$table->setStyle('box');
 		$table->setHeaders([
-			'Id', 'Database', 'Db backup', 'Complete', 'Created at', 'Organization Id', 'Status', 'Updated at',
+			'Id', 'Database', 'Db backup', 'Complete', 'Created at', 'Organization Id', 'Status'
 		]);
 		$serializer = new ArraySerializer(['recursive' => true]);
 		$serializedDocument = $serializer->serialize($document);
-		$sortedData = $this->sortData($serializedDocument['data'], 'updated_at');
+		$sortedData = $this->sortData($serializedDocument['data'], 'created_at');
 		$lastElement = end($sortedData);
 		foreach ($sortedData as $key => $value) {
 			$table->addRow([
@@ -102,7 +102,6 @@ class DbRestoresListCommand extends Command
 				$value['attributes']['created_at'],
 				$value['attributes']['organization_id'],
 				$value['attributes']['status'],
-				$value['attributes']['updated_at'],
 			]);
 			if ($value != $lastElement) {
 				$table->addRow(new TableSeparator());

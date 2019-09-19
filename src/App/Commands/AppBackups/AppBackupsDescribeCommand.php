@@ -71,14 +71,13 @@ class AppBackupsDescribeCommand extends Command
 	protected function getOutputAsTable(Document $document, Table $table): Table
 	{
 		$table->setHeaderTitle('App Backup ' . $document->get('data.id'));
-		$table->setHeaders(['App id', 'Complete', 'Created at', 'Organization id', 'Status', 'Updated at']);
+		$table->setHeaders(['App id', 'Complete', 'Created at', 'Organization id', 'Status']);
 		$table->addRow([
 			$document->get('data.attributes.app_id'),
 			$document->get('data.attributes.complete'),
 			$document->get('data.attributes.created_at'),
 			$document->get('data.attributes.organization_id'),
 			$document->get('data.attributes.status'),
-			$document->get('data.attributes.updated_at'),
 		]);
 		return $table;
 	}
