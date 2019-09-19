@@ -74,6 +74,7 @@ Commands
     Options:
 
     * `[-u][--update_token]` ***(bool)*** Update existing token
+    * `[-t][--token]` ***(string)*** Set/Update auth token, in noninteractive mode
 
 ### Apps
 

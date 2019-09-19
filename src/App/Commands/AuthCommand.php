@@ -27,7 +27,7 @@ class AuthCommand extends Command
 		$this->setDescription('Set auth token')
 			->setHelp('Get your token at https://www.lamp.io/ on settings page')
 			->addOption('update_token', 'u', InputOption::VALUE_NONE, 'Update existing token')
-			->addOption('token', 't', InputOption::VALUE_REQUIRED, 'Set auth token, in noninteractive mode');
+			->addOption('token', 't', InputOption::VALUE_REQUIRED, 'Set/Update auth token, in noninteractive mode');
 	}
 
 	/**
@@ -46,8 +46,13 @@ class AuthCommand extends Command
 				$output->writeln(' <info>Token already exist, if you want to update it, please add [-u][--update_token] option </info>');
 				return 1;
 			} else {
-				$question = new Question('Tokens can be generated at https://www.lamp.io/tokens' . PHP_EOL . PHP_EOL . 'Enter token:' . PHP_EOL);
-				$question->setValidator(function ($answer) {
+				$question = new Question('Tokens can be generated at https://www.lamp.io/tokens' . PHP_EOL . PHP_EOL . 'Enter token:' . PHP_EOL, '');
+				$question->setValidator(function ($answer) use ($input) {
+					if (!empty($input->getOption('no-interaction'))) {
+						throw new RuntimeException(
+							'[--update_token][-u] Works only on interaction mode, you can set token directly using [--token][-t]'
+						);
+					}
 					if (empty($answer) || strlen($answer) < self::TOKEN_LENGTH) {
 						throw new RuntimeException(
 							'Invalid Token. Get your token at https://www.lamp.io/ on settings page'
