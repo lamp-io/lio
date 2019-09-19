@@ -114,11 +114,7 @@ class Laravel extends DeployerAbstract
 				'execute' => function (string $message) use ($dirs) {
 					foreach ($dirs as $dir) {
 						if (file_exists($this->appPath . $dir)) {
-							$this->appRunCommand(
-								$this->config['app']['id'],
-								'rm -rf ' . $this->releaseFolder . rtrim($dir, '/') . '/',
-								sprintf($message, $dir)
-							);
+							$this->deleteFile($this->releaseFolder . rtrim($dir, '/'), sprintf($message, $dir));
 						}
 					}
 				},
