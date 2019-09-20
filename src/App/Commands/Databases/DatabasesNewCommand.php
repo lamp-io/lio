@@ -47,7 +47,8 @@ class DatabasesNewCommand extends Command
 			->addOption('mysql_root_password', null, InputOption::VALUE_OPTIONAL, 'Root password', false)
 			->addOption('my_cnf', null, InputOption::VALUE_REQUIRED, 'Path to your database config file', '')
 			->addOption('ssd', null, InputOption::VALUE_REQUIRED, 'Size of ssd storage, default 1Gi', '1Gi')
-			->addOption('vcpu', null, InputOption::VALUE_REQUIRED, 'The number of virtual cpu cores available, default 0.25', '0.25');
+			->addOption('vcpu', null, InputOption::VALUE_REQUIRED, 'The number of virtual cpu cores available, default 0.25', '0.25')
+			->addOption('delete_protection', null, InputOption::VALUE_NONE, 'When enabled the database can not be deleted');
 	}
 
 	/**

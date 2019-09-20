@@ -56,7 +56,8 @@ class AppsUpdateCommand extends Command
 			->addOption('webhook_run_command', null, InputOption::VALUE_REQUIRED, 'Github web-hook command', '')
 			->addOption('hostname', null, InputOption::VALUE_REQUIRED, 'The hostname for the app', '')
 			->addOption('hostname_certificate_valid', null, InputOption::VALUE_NONE, 'Is hostname certificate valid')
-			->addOption('public', 'p', InputOption::VALUE_NONE, 'Public for read-only');
+			->addOption('public', 'p', InputOption::VALUE_NONE, 'Public for read-only')
+			->addOption('delete_protection', null, InputOption::VALUE_NONE, 'When enabled the app can not be deleted');
 	}
 
 	/**
@@ -132,13 +133,19 @@ class AppsUpdateCommand extends Command
 	 */
 	protected function getRequestBody(InputInterface $input): string
 	{
+		if (!empty($input->getOption(self::HTTPD_CONF_OPTION_NAME)) && !file_exists($input->getOption(self::HTTPD_CONF_OPTION_NAME))) {
+			throw new InvalidArgumentException('File ' . $input->getOption(self::HTTPD_CONF_OPTION_NAME) . ' not exist');
+		}
+		if (!empty($input->getOption(self::PHP_INI_OPTION_NAME)) && !file_exists($input->getOption(self::PHP_INI_OPTION_NAME))) {
+			throw new InvalidArgumentException('File ' . $input->getOption(self::PHP_INI_OPTION_NAME) . ' not exist');
+		}
 		$attributes = [
 			'description'                => (string)$input->getOption('description'),
-			'httpd_conf'                 => $this->validateConfigFilesOptions(self::HTTPD_CONF_OPTION_NAME, $input),
+			'httpd_conf'                 => !empty($input->getOption(self::HTTPD_CONF_OPTION_NAME)) ? file_get_contents($input->getOption(self::HTTPD_CONF_OPTION_NAME)) : '',
 			'max_replicas'               => (int)$input->getOption('max_replicas'),
 			'memory'                     => (string)$input->getOption('memory'),
 			'min_replicas'               => (int)$input->getOption('min_replicas'),
-			'php_ini'                    => $this->validateConfigFilesOptions(self::PHP_INI_OPTION_NAME, $input),
+			'php_ini'                    => !empty($input->getOption(self::PHP_INI_OPTION_NAME)) ? file_get_contents($input->getOption(self::PHP_INI_OPTION_NAME)) : '',
 			'replicas'                   => (int)$input->getOption('replicas'),
 			'vcpu'                       => (float)$input->getOption('vcpu'),
 			'github_webhook_secret'      => (string)$input->getOption('github_webhook_secret'),
@@ -146,6 +153,7 @@ class AppsUpdateCommand extends Command
 			'hostname'                   => (string)$input->getOption('hostname'),
 			'hostname_certificate_valid' => (bool)$input->getOption('hostname_certificate_valid'),
 			'public'                     => (bool)$input->getOption('public'),
+			'delete_protection'          => (bool)$input->getOption('delete_protection'),
 		];
 
 		$attributes = array_filter($attributes, function ($value, $key) {
@@ -166,16 +174,5 @@ class AppsUpdateCommand extends Command
 				'type'       => 'apps',
 			],
 		]);
-	}
-
-	/**
-	 * @param string $optionName
-	 * @param InputInterface $input
-	 */
-	protected function validateConfigFilesOptions(string $optionName, InputInterface $input)
-	{
-		if (!empty($input->getOption($optionName)) && !file_exists($input->getOption($optionName))) {
-			throw new InvalidArgumentException('File ' . $optionName . ' not exist, path: ' . $input->getOption($optionName));
-		}
 	}
 }
