@@ -322,7 +322,8 @@ class DeployCommand extends Command
 			$branchAllowed = !empty($this->configHelper->get('deploy-branches')) ? $this->configHelper->get('deploy-branches') : [];
 			$isAllowAll = !empty($this->configHelper->get('deploy-all-branches'));
 			if (DeployHelper::isMultiDeployAllowed($branchName, $branchAllowed, $isAllowAll)) {
-				$pattern = 'autodeploy:<' . basename($input->getArgument('dir')) . '>:<' . $branchName . '>';
+				$repoName = getenv('GITHUB_REPOSITORY') ?? $input->getArgument('dir');
+				$pattern = 'autodeploy:<' . basename($repoName) . '>:<' . $branchName . '>';
 				$appId = $this->getAutoDeployAppId($pattern);
 				$this->isAppAlreadyExists = true;
 				if (empty($appId)) {
