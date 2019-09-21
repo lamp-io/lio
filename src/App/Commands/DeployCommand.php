@@ -364,7 +364,8 @@ class DeployCommand extends Command
 	protected function getGitBranchName(): string
 	{
 		return getenv('TRAVIS_BRANCH') . getenv('CIRCLE_BRANCH') . getenv('GIT_BRANCH') .
-			getenv('teamcity.build.branch') . getenv('CI_COMMIT_REF_NAME') . getenv('GITHUB_REF');
+		getenv('teamcity.build.branch') . getenv('CI_COMMIT_REF_NAME') .
+		(!empty(getenv('GITHUB_REF'))) ? rtrim(preg_replace("/(.*?\/){2}/", '', getenv('GITHUB_REF'))) : '';
 	}
 
 	/**
