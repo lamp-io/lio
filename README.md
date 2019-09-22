@@ -736,6 +736,50 @@ Commands
 
 1. `self-update` Update your phar build to the latest release (will work only if you use phar build)
 
+# CI/CD systems integration examples
+
+## TravisCI
+
+.travis.yaml
+```yaml
+language: php
+sudo: false
+php:
+  - "7.3"
+jobs:
+  include:
+    - stage: deploy
+      before_script:
+        - composer install
+        - chmod +x build.sh
+      script: ./deploy.sh
+```
+deploy.sh
+```bash
+#!/bin/sh -l
+composer global require lamp-io/lio dev-master --update-with-dependencies
+echo "$HOME"/.config/composer/vendor/bin/lio auth -t "$AUTH_TOKEN" -n
+"$HOME"/.config/composer/vendor/bin/lio auth -t "$AUTH_TOKEN" -n
+"$HOME"/.config/composer/vendor/bin/lio deploy --laravel -n
+```
+
+## Github actions
+
+Basic workflow example:
+```yaml
+on: [push]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Lio deploy
+        uses: lamp-io/lio_deploy@master
+        with:
+          auth_token: ${{ secrets.lamp_io_token }}
+```
+
+You can get more details on [lamp-io/lio_deploy]() action, repository page
 
 Composer scripts
 ------------
