@@ -41,7 +41,7 @@ Commands
 
 ### Deploy
 
-1. #### deploy [--laravel] [\<dir>]
+1. #### deploy [--laravel] [--sqlite] [\<dir>]
 
     Deploy your app to lamp.io
 
@@ -52,6 +52,7 @@ Commands
     * `[<dir>]` ***(string)***  Path to a directory of your application, default value current working directory
 
     Options:
+    * `[--sqlite]` ***(bool)*** Use sqlite as a persistent storage
     * `[--laravel]` ***(bool)***  Deploy laravel app
     * `[--symfony]` ***(bool)*** Deploy symfony app
 

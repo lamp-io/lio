@@ -76,7 +76,8 @@ class DeployCommand extends Command
 		$this->setDescription('Deploy your app to lamp.io')
 			->addArgument('dir', InputArgument::OPTIONAL, 'Path to a directory of your application, default value current working directory', getcwd())
 			->addOption('laravel', null, InputOption::VALUE_NONE, 'Deploy laravel app')
-			->addOption('symfony', null, InputOption::VALUE_NONE, 'Deploy symfony app');
+			->addOption('symfony', null, InputOption::VALUE_NONE, 'Deploy symfony app')
+			->addOption('sqlite', null, InputOption::VALUE_NONE, 'Use sqlite as a persistent storage');
 	}
 
 	/**
@@ -190,7 +191,8 @@ class DeployCommand extends Command
 			$this->configHelper->set('database.system', 'mysql');
 			return;
 		}
-		if ($this->configHelper->get('database.system') == 'sqlite') {
+		if ($input->getOption('sqlite')) {
+			$this->configHelper->set('database.system', 'sqlite');
 			$this->configHelper->set('database.type', 'internal');
 			return;
 		}

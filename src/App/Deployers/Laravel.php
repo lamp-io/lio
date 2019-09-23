@@ -198,7 +198,8 @@ class Laravel extends DeployerAbstract
 			];
 		} elseif ($this->isFirstDeploy && $this->config['database']['system'] == 'sqlite') {
 			$env = [
-				'DB_DATABASE' => DeployHelper::SQLITE_ABSOLUTE_REMOTE_PATH,
+				'DB_DATABASE'   => DeployHelper::SQLITE_ABSOLUTE_REMOTE_PATH,
+				'DB_CONNECTION' => 'sqlite',
 			];
 		}
 
