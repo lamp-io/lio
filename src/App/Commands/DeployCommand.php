@@ -322,7 +322,8 @@ class DeployCommand extends Command
 			$branchAllowed = !empty($this->configHelper->get('deploy-branches')) ? $this->configHelper->get('deploy-branches') : [];
 			$isAllowAll = !empty($this->configHelper->get('deploy-all-branches'));
 			if (DeployHelper::isMultiDeployAllowed($branchName, $branchAllowed, $isAllowAll)) {
-				$pattern = 'autodeploy:<' . basename($input->getArgument('dir')) . '>:<' . $branchName . '>';
+				$repoName = !empty(getenv('GITHUB_REPOSITORY')) ? getenv('GITHUB_REPOSITORY') : $input->getArgument('dir');
+				$pattern = 'autodeploy:<' . basename($repoName) . '>:<' . $branchName . '>';
 				$appId = $this->getAutoDeployAppId($pattern);
 				$this->isAppAlreadyExists = true;
 				if (empty($appId)) {
@@ -363,8 +364,13 @@ class DeployCommand extends Command
 	 */
 	protected function getGitBranchName(): string
 	{
-		return getenv('TRAVIS_BRANCH') . getenv('CIRCLE_BRANCH') . getenv('GIT_BRANCH') .
-			getenv('teamcity.build.branch') . getenv('CI_COMMIT_REF_NAME') . getenv('GITHUB_REF');
+		if (!empty(getenv('GITHUB_REF'))) {
+			$branch = rtrim(preg_replace("/(.*?\/){2}/", '', getenv('GITHUB_REF')));
+		} else {
+			$branch = getenv('TRAVIS_BRANCH') . getenv('CIRCLE_BRANCH') . getenv('GIT_BRANCH') .
+				getenv('teamcity.build.branch') . getenv('CI_COMMIT_REF_NAME');
+		}
+		return $branch;
 	}
 
 	/**
