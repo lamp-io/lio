@@ -64,7 +64,7 @@ class FilesListCommand extends Command
 			$response = $this->sendRequest($input->getArgument('app_id'), $input->getArgument('file_id'));
 			$responseBody = $response->getBody()->getContents();
 			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
+				$output->writeln($responseBody);
 			} else {
 				if (!$this->isDirectory($responseBody)) {
 					$table = $this->getTableFileInfo($responseBody, new Table($output));
