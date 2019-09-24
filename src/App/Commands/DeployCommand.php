@@ -191,7 +191,7 @@ class DeployCommand extends Command
 			$this->configHelper->set('database.system', 'mysql');
 			return;
 		}
-		if ($input->getOption('sqlite')) {
+		if ($input->getOption('sqlite') || $this->configHelper->get('database.system') == 'sqlite') {
 			$this->configHelper->set('database.system', 'sqlite');
 			$this->configHelper->set('database.type', 'internal');
 			return;
