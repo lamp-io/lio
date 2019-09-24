@@ -812,13 +812,6 @@ Composer scripts
 
 # Examples
 
-* Example of lamp.io.yaml config for deploy with sqlite db (other values will be added during deploy process)
-```yaml
-database:
-    type: internal
-    system: sqlite
-```
-
 * Example of lamp.io.yaml config for deploy with external mysql db (other values will be added during deploy process)
 ```yaml
 database:
