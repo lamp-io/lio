@@ -90,6 +90,7 @@ class AppsDescribeCommand extends Command
 			$document->get('data.attributes.replicas'),
 			$hostNameCert,
 			$document->get('data.attributes.public') ? 'true' : 'false',
+			$document->get('data.attributes.delete_protection') ? 'true' : 'false',
 		]);
 
 		return $table;

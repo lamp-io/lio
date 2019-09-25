@@ -78,7 +78,7 @@ Commands
 
 ### Apps
 
-1. #### apps:new <organization_id> [-d][--description] [--httpd_conf] [--max_replicas] [-m][--memory] [--min_replicas] [--php_ini] [-r][--replicas] [--vcpu] [--github_webhook_secret] [--webhook_run_command] [--hostname] [--hostname_certificate_valid] [--public]
+1. #### apps:new <organization_id> [-d][--description] [--httpd_conf] [--max_replicas] [-m][--memory] [--min_replicas] [--php_ini] [-r][--replicas] [--vcpu] [--github_webhook_secret] [--webhook_run_command] [--hostname] [--hostname_certificate_valid] [--public] [--delete_protection]
 
     Creates a new app
     
@@ -103,8 +103,9 @@ Commands
     * `[--hostname]` ***(string)*** The hostname for the app
     * `[--hostname_certificate_valid]` ***(bool)*** Is hostname certificate valid
     * `[--public]` ***(bool)***  Public for read-only
+    * `[--delete_protection]` ***(bool)*** When enabled the app can not be deleted
 
-2. #### apps:update <app_id> <organization_id>  [-d][--description] [--httpd_conf] [--max_replicas] [-m][--memory] [--min_replicas] [--php_ini] [-r][--replicas] [--vcpu] [--vcpu] [--github_webhook_secret] [--webhook_run_command] [--hostname] [--hostname_certificate_valid] [--public]
+2. #### apps:update <app_id> <organization_id>  [-d][--description] [--httpd_conf] [--max_replicas] [-m][--memory] [--min_replicas] [--php_ini] [-r][--replicas] [--vcpu] [--vcpu] [--github_webhook_secret] [--webhook_run_command] [--hostname] [--hostname_certificate_valid] [--public] [--delete_protection]
 
     Update app
     
@@ -129,6 +130,7 @@ Commands
     * `[--hostname]` ***(string)*** The hostname for the app
     * `[--hostname_certificate_valid]` ***(bool)*** Is hostname certificate valid
     * `[--public]` ***(bool)***  Public for read-only
+    * `[--delete_protection]` ***(bool)*** When enabled the app can not be deleted
 
 3. #### apps:delete <app_id> [--yes][-y]
 
@@ -324,7 +326,7 @@ Commands
 
 ### Databases
 
-1. ### databases:new  [-d][--description] [-m][--memory] [--organization_id] [--mysql_root_password] [--my_cnf] [--ssd] [--vcpu]
+1. ### databases:new  [-d][--description] [-m][--memory] [--organization_id] [--mysql_root_password] [--my_cnf] [--ssd] [--vcpu] [--delete_protection]
 
    Create a new database
    
@@ -339,6 +341,7 @@ Commands
    * `[--my_cnf]` ***(string)*** Path to your database config file
    * `[--ssd]` ***(string)*** Size of ssd storage (default: 1Gi)
    * `[--vcpu]` ***(float)*** The number of virtual cpu cores available (default: 0.25)
+   * `[--delete_protection]` ***(bool)*** When enabled the database can not be deleted
 
 2. ### databases:delete <database_id> [--yes][-y]
 
@@ -354,7 +357,7 @@ Commands
 
     * `[--yes][-y]` ***(bool)*** Skip confirm delete question
 
-3. ### databases:update <database_id> [-d][--description] [-m][--memory] [--organization_id] [--my_cnf] [--mysql_root_password] [--ssd] [--vcpu]
+3. ### databases:update <database_id> [-d][--description] [-m][--memory] [--organization_id] [--my_cnf] [--mysql_root_password] [--ssd] [--vcpu] [--delete_protection]
 
     Update a database.
     
@@ -373,6 +376,7 @@ Commands
   * `[--my_cnf]` ***(string)*** Path to your database config file
   * `[--ssd]` ***(string)*** Size of ssd storage (default: 1Gi)
   * `[--vcpu]` ***(float)*** The number of virtual cpu cores available (default: 0.25)
+  * `[--delete_protection]` ***(bool)*** When enabled the database can not be deleted
 
 4. ### databases:list [--organization_id]
 
@@ -793,13 +797,13 @@ Composer scripts
 * `deploy-branches` ***(dictionary)*** Only for CI/CD system. You can set for which branches will be allowed deploy, for each branch will be created separate app (by default only for master)
 * `deploy-all-branches` ***(bool)*** Only for CI/CD system. Allow to make deploy from any branch, for each branch will be created separate app
 * `app` ***(dictionary)*** Settings related to your lamp-io app
-    * `attributes` ***(dictionary)*** Lamp-io app attributes, it use same values has [apps:new](#appsnew-organization_id--d--description---httpd_conf---max_replicas--m--memory---min_replicas---php_ini--r--replicas---vcpu---github_webhook_secret---webhook_run_command---hostname---hostname_certificate_valid---public)
+    * `attributes` ***(dictionary)*** Lamp-io app attributes, it use same values has [apps:new](#appsnew-organization_id--d--description---httpd_conf---max_replicas--m--memory---min_replicas---php_ini--r--replicas---vcpu---github_webhook_secret---webhook_run_command---hostname---hostname_certificate_valid---public--delete_protection)
      command options
     * `id` ***(string)*** Lamp-io app id
     * `url` ***(string)*** Web app url (this value will be set automatically)
 * `database` ***(dictionary)*** Settings related to your database
     * `id` ***(string)*** Lamp-io database id
-    * `attributes` ***(dictionary)*** Lamp-io database attributes, it use same values has [database:new](#databasesnew---d--description--m--memory---organization_id---mysql_root_password---my_cnf---ssd---vcpu) command options
+    * `attributes` ***(dictionary)*** Lamp-io database attributes, it use same values has [database:new](#databasesnew---d--description--m--memory---organization_id---mysql_root_password---my_cnf---ssd---vcpu--delete_protection) command options
     * `sql_dump` ***(string)*** Absolute path to your sql dump, that you need to have imported to remote database
     * `type` ***(enum)*** Internal(db hosted on lamp-io platform) or external(db hosted outside of lamp-io platform) DB
     * `system` ***(string)*** DB engine (e.g mysql, sqlite)
