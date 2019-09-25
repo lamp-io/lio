@@ -35,9 +35,7 @@ class Symfony extends DeployerAbstract
 	{
 		parent::deployApp($appPath, $isFirstDeploy, $isNewDbInstance);
 		(Dotenv::create($this->appPath))->load();
-//		$this->updateEnvFileToUpload($_ENV, $this->prepareEnvFile($_ENV));
 		$zip = $this->getArtifact();
-//		$this->restoreLocalEnvFile($_ENV);
 		$this->uploadArtifact($zip, $this->releaseFolder . self::ARCHIVE_NAME);
 		$this->unarchiveApp($this->releaseFolder . self::ARCHIVE_NAME);
 		$this->deleteArtifact($this->releaseFolder . self::ARCHIVE_NAME);

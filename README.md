@@ -41,7 +41,7 @@ Commands
 
 ### Deploy
 
-1. #### deploy [--laravel] [\<dir>]
+1. #### deploy [--laravel] [--sqlite] [\<dir>]
 
     Deploy your app to lamp.io
 
@@ -52,6 +52,7 @@ Commands
     * `[<dir>]` ***(string)***  Path to a directory of your application, default value current working directory
 
     Options:
+    * `[--sqlite]` ***(bool)*** Use sqlite as a persistent storage
     * `[--laravel]` ***(bool)***  Deploy laravel app
     * `[--symfony]` ***(bool)*** Deploy symfony app
 
@@ -814,13 +815,6 @@ Composer scripts
 * `retain` ***(int)*** How many old releases should be kept (Default value 10)
 
 # Examples
-
-* Example of lamp.io.yaml config for deploy with sqlite db (other values will be added during deploy process)
-```yaml
-database:
-    type: internal
-    system: sqlite
-```
 
 * Example of lamp.io.yaml config for deploy with external mysql db (other values will be added during deploy process)
 ```yaml
