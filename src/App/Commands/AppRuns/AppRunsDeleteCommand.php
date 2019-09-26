@@ -3,10 +3,10 @@
 
 namespace Console\App\Commands\AppRuns;
 
-
-use Art4\JsonApiClient\Exception\ValidationException;
 use Console\App\Commands\Command;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -32,7 +32,8 @@ class AppRunsDeleteCommand extends Command
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
 	 * @return int|void|null
-	 * @throws \Exception
+	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -44,7 +45,7 @@ class AppRunsDeleteCommand extends Command
 				sprintf(
 					self::API_ENDPOINT,
 					$input->getArgument('app_run_id')
-					),
+				),
 				[
 					'headers' => $this->httpHelper->getHeaders(),
 				]
@@ -52,11 +53,8 @@ class AppRunsDeleteCommand extends Command
 			if (empty($input->getOption('json'))) {
 				$output->writeln('<info>Command with id . ' . $input->getArgument('app_run_id') . ' successfully deleted</info>');
 			}
-		} catch (ValidationException $validationException) {
-			$output->writeln($validationException->getMessage());
-			return 1;
-		} catch (GuzzleException $guzzleException) {
-			$output->writeln($guzzleException->getMessage());
+		} catch (BadResponseException $badResponseException) {
+			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}
 	}

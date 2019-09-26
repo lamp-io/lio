@@ -5,6 +5,7 @@ namespace Console\App\Commands\DbRestores;
 use Console\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -31,6 +32,7 @@ class DbRestoresDeleteCommand extends Command
 	 * @param OutputInterface $output
 	 * @return int|void|null
 	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -53,8 +55,8 @@ class DbRestoresDeleteCommand extends Command
 					'<info>Db restore job deleted ' . $input->getArgument('db_restore_id') . '</info>'
 				);
 			}
-		} catch (GuzzleException $guzzleException) {
-			$output->writeln('<error>' . $guzzleException->getMessage() . '</error>');
+		} catch (BadResponseException $badResponseException) {
+			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}
 	}

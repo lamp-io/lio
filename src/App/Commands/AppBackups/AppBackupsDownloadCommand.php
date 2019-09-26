@@ -3,7 +3,9 @@
 namespace Console\App\Commands\AppBackups;
 
 use Console\App\Commands\Command;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -30,7 +32,8 @@ class AppBackupsDownloadCommand extends Command
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
 	 * @return int|void|null
-	 * @throws \Exception
+	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -49,7 +52,7 @@ class AppBackupsDownloadCommand extends Command
 						$this->httpHelper->getHeaders(),
 						['Accept' => 'application/x-gzip']
 					),
-					'sink'    => fopen($input->getArgument('dir') . DIRECTORY_SEPARATOR . $input->getArgument('app_backup_id') . '.tar.gz' , 'w+'),
+					'sink'    => fopen($input->getArgument('dir') . DIRECTORY_SEPARATOR . $input->getArgument('app_backup_id') . '.tar.gz', 'w+'),
 				]
 
 			);
@@ -57,8 +60,8 @@ class AppBackupsDownloadCommand extends Command
 				'<info>File received, ' . $input->getArgument('dir') . DIRECTORY_SEPARATOR . $input->getArgument('app_backup_id') . '.tar.gz' . '</info>'
 			);
 
-		} catch (GuzzleException $guzzleException) {
-			$output->writeln('<error>' . $guzzleException->getMessage() . '</error>');
+		} catch (BadResponseException $badResponseException) {
+			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}
 	}

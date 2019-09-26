@@ -13,6 +13,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Console\App\Commands\Command;
+use GuzzleHttp\Exception\BadResponseException;
 
 class AppsNewCommand extends Command
 {
@@ -58,6 +59,7 @@ class AppsNewCommand extends Command
 	 * @param OutputInterface $output
 	 * @return int|null|void
 	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -79,8 +81,8 @@ class AppsNewCommand extends Command
 				$document = Parser::parseResponseString($response->getBody()->getContents());
 				$output->writeln('<info>Your new app successfully created, app id: ' . $document->get('data.id') . '</info>');
 			}
-		} catch (GuzzleException $guzzleException) {
-			$output->writeln($guzzleException->getMessage());
+		} catch (BadResponseException $badResponseException) {
+			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}
 	}

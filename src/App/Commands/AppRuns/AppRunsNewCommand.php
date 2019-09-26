@@ -2,9 +2,9 @@
 
 namespace Console\App\Commands\AppRuns;
 
-use Art4\JsonApiClient\Exception\ValidationException;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -37,6 +37,7 @@ class AppRunsNewCommand extends Command
 	 * @param OutputInterface $output
 	 * @return int|void|null
 	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -69,11 +70,8 @@ class AppRunsNewCommand extends Command
 				$output->write(PHP_EOL);
 				$output->write('<info>' . $this->getCommandOutput($appRunId) . '</info>');
 			}
-		} catch (ValidationException $validationException) {
-			$output->writeln($validationException->getMessage());
-			return 1;
-		} catch (GuzzleException $guzzleException) {
-			$output->writeln($guzzleException->getMessage());
+		} catch (BadResponseException $badResponseException) {
+			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}
 	}
@@ -82,6 +80,7 @@ class AppRunsNewCommand extends Command
 	 * @param string $appRunId
 	 * @return string
 	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function getCommandOutput(string $appRunId): string
 	{
@@ -95,7 +94,7 @@ class AppRunsNewCommand extends Command
 		if ($appRunsNewCommand->run(new ArrayInput($args), $bufferOutput) == '0') {
 			/** @var Document $document */
 			$document = Parser::parseResponseString($bufferOutput->fetch());
-			$output =  $document->get('data.attributes.output');
+			$output = $document->get('data.attributes.output');
 		}
 
 		return !empty($output) ? $output : '';

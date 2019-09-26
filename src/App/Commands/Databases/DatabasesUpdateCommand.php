@@ -10,6 +10,7 @@ use Art4\JsonApiClient\V1\Document;
 use Console\App\Commands\Command;
 use Console\App\Helpers\PasswordHelper;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\BadResponseException;
 use InvalidArgumentException;
 use Symfony\Component\Console\Exception\InvalidArgumentException as CliInvalidArgumentException;
 use Symfony\Component\Console\Helper\Table;
@@ -55,6 +56,7 @@ class DatabasesUpdateCommand extends Command
 	 * @param OutputInterface $output
 	 * @return int|void|null
 	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -90,8 +92,8 @@ class DatabasesUpdateCommand extends Command
 				$table = $this->getOutputAsTable($document, new Table($output));
 				$table->render();
 			}
-		} catch (GuzzleException $guzzleException) {
-			$output->writeln($guzzleException->getMessage());
+		} catch (BadResponseException $badResponseException) {
+			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		} catch (InvalidArgumentException $invalidArgumentException) {
 			$output->writeln($invalidArgumentException->getMessage());
@@ -105,6 +107,7 @@ class DatabasesUpdateCommand extends Command
 	 * @param InputInterface $input
 	 * @return string
 	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function getRequestBody(InputInterface $input): string
 	{

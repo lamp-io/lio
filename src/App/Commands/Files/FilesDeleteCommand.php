@@ -5,6 +5,7 @@ namespace Console\App\Commands\Files;
 use Console\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -34,6 +35,7 @@ class FilesDeleteCommand extends Command
 	 * @param OutputInterface $output
 	 * @return int|null|void
 	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -53,11 +55,11 @@ class FilesDeleteCommand extends Command
 
 				),
 				[
-					'headers' => [
+					'headers'  => [
 						'Accept'        => 'application/json',
 						'Authorization' => $this->httpHelper->getHeader('Authorization'),
 					],
-					'progress'  => function () use ($progressBar) {
+					'progress' => function () use ($progressBar) {
 						$progressBar->advance();
 					},
 				]);
@@ -66,8 +68,8 @@ class FilesDeleteCommand extends Command
 			if (empty($input->getOption('json'))) {
 				$output->writeln('<info>Success, ' . $input->getArgument('file_id') . ' has been deleted</info>');
 			}
-		} catch (GuzzleException $guzzleException) {
-			$output->writeln($guzzleException->getMessage());
+		} catch (BadResponseException $badResponseException) {
+			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}
 	}
