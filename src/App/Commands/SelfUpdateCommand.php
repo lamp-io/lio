@@ -2,6 +2,7 @@
 
 namespace Console\App\Commands;
 
+use Phar;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -29,10 +30,11 @@ class SelfUpdateCommand extends Command
 	 *
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
+	 * @return int|void
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
-		if (!\Phar::running()) {
+		if (!Phar::running()) {
 			$output->writeln('<error>Cant execute command. This command works only under phar build</error>');
 			return 1;
 		}
