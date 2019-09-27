@@ -74,6 +74,11 @@ class FilesNewSymlinkCommand extends Command
 		}
 	}
 
+	/**
+	 * @param string $fileId
+	 * @param string $target
+	 * @return string
+	 */
 	protected function getRequestBody(string $fileId, string $target): string
 	{
 		return json_encode([

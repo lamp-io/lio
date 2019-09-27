@@ -69,6 +69,10 @@ class FilesNewDirCommand extends Command
 		}
 	}
 
+	/**
+	 * @param string $fileId
+	 * @return string
+	 */
 	protected function getRequestBody(string $fileId): string
 	{
 		return json_encode([
