@@ -63,6 +63,7 @@ class FilesNewDirCommand extends Command
 				$output->writeln('<info>Success, directory ' . $input->getArgument('file_id') . ' has been created</info>');
 			}
 		} catch (BadResponseException $badResponseException) {
+			$output->write(PHP_EOL);
 			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}
