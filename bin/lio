@@ -13,6 +13,7 @@ use Console\App\Commands\AppRestores\AppRestoresNewCommand;
 use Console\App\Commands\Apps\SubCommands\AppUpdatesStatusCommand;
 use Console\App\Commands\Deploy\DeployListCommand;
 use Console\App\Commands\Files\FilesNewDirCommand;
+use Console\App\Commands\Files\FilesNewSymlinkCommand;
 use Console\App\Commands\Organizations\OrganizationsListCommand;
 use Console\App\Commands\Organizations\OrganizationsUpdateCommand;
 use Console\App\Commands\OrganizationUsers\OrganizationUsersDescribeCommand;
@@ -85,6 +86,8 @@ try {
 	$app->add(new FilesUpdateFetchCommand(new Client()));
 	$app->add(new FilesUpdateMoveCommand(new Client()));
 	$app->add(new FilesNewDirCommand(new Client()));
+	$app->add(new FilesUpdateUnarchiveCommand(new Client()));
+	$app->add(new FilesNewSymlinkCommand(new Client()));
 	$app->add(new UsersListCommand(new Client()));
 	$app->add(new AppBackupsListCommand(new Client()));
 	$app->add(new AppBackupsDescribeCommand(new Client()));
@@ -93,7 +96,6 @@ try {
 	$app->add(new DeployCommand(new Client()));
 	$app->add(new AppRunsNewCommand(new Client()));
 	$app->add(new AppRunsDescribeCommand(new Client()));
-	$app->add(new FilesUpdateUnarchiveCommand(new Client()));
 	$app->add(new AppRunsListCommand(new Client()));
 	$app->add(new AppRunsDeleteCommand(new Client()));
 	$app->add(new DatabasesNewCommand(new Client()));
