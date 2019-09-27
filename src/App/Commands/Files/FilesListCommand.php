@@ -80,8 +80,8 @@ class FilesListCommand extends Command
 		} catch (BadResponseException $badResponseException) {
 			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
-		} catch (ValidationException $validationException) {
-			$output->writeln('<error>' . $validationException->getMessage() . '</error>');
+		} catch (Exception $exception) {
+			$output->writeln('' . $exception->getTraceAsString() . '');
 			return 1;
 		}
 
@@ -103,9 +103,14 @@ class FilesListCommand extends Command
 				'file_mode: ' . $document->get('data.attributes.file_mode'),
 				$document->get('data.attributes.is_symlink') ? 'is_symlink: true' : 'is_symlink: false',
 				$document->get('data.attributes.is_symlink') ? 'target: ' . $document->get('data.attributes.target') : '',
+				$document->has('data.attributes.contents') ? wordwrap(trim(
+					preg_replace('/\t/', ' ', $document->get('data.attributes.contents'))
+				), 80, PHP_EOL) : '',
 			]),
-			wordwrap(trim(preg_replace('/\t/', ' ', $document->get('data.attributes.contents'))), 80, PHP_EOL),
-		]);
+			$document->has('data.attributes.contents') ? wordwrap(trim(
+				preg_replace('/\t/', ' ', $document->get('data.attributes.contents'))
+			), 80, PHP_EOL) : '',
+			]);
 		return $table;
 	}
 
