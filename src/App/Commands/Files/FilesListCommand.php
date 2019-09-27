@@ -219,7 +219,12 @@ class FilesListCommand extends Command
 	{
 		$date = date('Y-m-d H:i:s', strtotime($fileAttributes['modify_time']));
 		$size = $isHumanReadable ? $this->formatBytes($fileAttributes['size']) : $fileAttributes['size'];
-		$fileName = $fileAttributes['is_dir'] ? $fileName . '/' : $fileName;
+		if ($fileAttributes['is_dir']) {
+			$fileName = $fileName . '/';
+		} elseif($fileAttributes['is_symlink']) {
+			$fileName = $fileName . ' -> ' . $fileAttributes['target'];
+		}
+		
 		return [
 			'isDir'     => $fileAttributes['is_dir'],
 			'timestamp' => $date,
