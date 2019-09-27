@@ -3,11 +3,12 @@
 namespace Console\App\Commands\Apps;
 
 use Art4\JsonApiClient\V1\Document;
+use Exception;
+use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
-use Art4\JsonApiClient\Exception\ValidationException;
 use Art4\JsonApiClient\Helper\Parser;
 use GuzzleHttp\Exception\GuzzleException;
 use Console\App\Commands\Command;
@@ -35,25 +36,19 @@ class AppsDescribeCommand extends Command
 	/**
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
-	 * @return int|null|void
-	 * @throws \Exception
+	 * @return int|void|null
+	 * @throws GuzzleException
+	 * @throws Exception
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
-
 		try {
 			$response = $this->httpHelper->getClient()->request(
 				'GET',
 				str_replace('{app_id}', $input->getArgument('app_id'), self::API_ENDPOINT),
 				['headers' => $this->httpHelper->getHeaders()]
 			);
-		} catch (GuzzleException $guzzleException) {
-			$output->writeln($guzzleException->getMessage());
-			return 1;
-		}
-
-		try {
 			if (!empty($input->getOption('json'))) {
 				$output->writeln($response->getBody()->getContents());
 			} else {
@@ -62,8 +57,8 @@ class AppsDescribeCommand extends Command
 				$table = $this->getOutputAsTable($document, new Table($output));
 				$table->render();
 			}
-		} catch (ValidationException $e) {
-			$output->writeln($e->getMessage());
+		} catch (BadResponseException $badResponseException) {
+			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}
 	}
@@ -79,7 +74,7 @@ class AppsDescribeCommand extends Command
 		$table->setHeaders([
 			'Name', 'Hostname', 'Description', 'Status', 'VCPU', 'Memory', 'Replicas', 'Certificate valid', 'Public',
 		]);
-		$hostNameCert = $document->has('data.attributes.hostname_certificate_valid') &&  $document->get('data.attributes.hostname_certificate_valid') ? 'true' : 'false';
+		$hostNameCert = $document->has('data.attributes.hostname_certificate_valid') && $document->get('data.attributes.hostname_certificate_valid') ? 'true' : 'false';
 		$table->addRow([
 			$document->get('data.id'),
 			$document->get('data.attributes.hostname'),

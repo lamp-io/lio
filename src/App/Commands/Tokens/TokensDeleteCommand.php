@@ -3,11 +3,10 @@
 
 namespace Console\App\Commands\Tokens;
 
-
-use Art4\JsonApiClient\Exception\ValidationException;
 use Console\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -39,6 +38,7 @@ class TokensDeleteCommand extends Command
 	 * @param OutputInterface $output
 	 * @return int|null|void
 	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -65,11 +65,8 @@ class TokensDeleteCommand extends Command
 					'<info>Token ' . $input->getArgument('token_id') . ' deleted</info>'
 				);
 			}
-		} catch (GuzzleException $guzzleException) {
-			$output->writeln($guzzleException->getMessage());
-			return 1;
-		} catch (ValidationException $e) {
-			$output->writeln($e->getMessage());
+		} catch (BadResponseException $badResponseException) {
+			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}
 	}

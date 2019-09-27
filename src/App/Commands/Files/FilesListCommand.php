@@ -7,6 +7,7 @@ namespace Console\App\Commands\Files;
 use Art4\JsonApiClient\Exception\ValidationException;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\BadResponseException;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputArgument;
@@ -56,6 +57,7 @@ class FilesListCommand extends Command
 	 * @param OutputInterface $output
 	 * @return int|null|void
 	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -75,8 +77,8 @@ class FilesListCommand extends Command
 				$table->render();
 			}
 
-		} catch (GuzzleException $guzzleException) {
-			$output->writeln($guzzleException->getMessage());
+		} catch (BadResponseException $badResponseException) {
+			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		} catch (ValidationException $validationException) {
 			$output->writeln('<error>' . $validationException->getMessage() . '</error>');

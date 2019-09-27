@@ -6,6 +6,7 @@ namespace Console\App\Commands\Databases;
 use Console\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\BadResponseException;
 use InvalidArgumentException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -35,6 +36,7 @@ class DatabasesDeleteCommand extends Command
 	 * @param OutputInterface $output
 	 * @return int|void|null
 	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -56,8 +58,8 @@ class DatabasesDeleteCommand extends Command
 			if (empty($input->getOption('json'))) {
 				$output->writeln('<info>Database ' . $input->getArgument('database_id') . ' successfully deleted</info>');
 			}
-		} catch (GuzzleException $guzzleException) {
-			$output->writeln($guzzleException->getMessage());
+		} catch (BadResponseException $badResponseException) {
+			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		} catch (InvalidArgumentException $invalidArgumentException) {
 			$output->writeln($invalidArgumentException->getMessage());

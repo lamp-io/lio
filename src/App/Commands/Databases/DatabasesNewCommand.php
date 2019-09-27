@@ -6,6 +6,7 @@ use Console\App\Commands\Command;
 use Console\App\Helpers\PasswordHelper;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\BadResponseException;
 use InvalidArgumentException;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputOption;
@@ -56,6 +57,7 @@ class DatabasesNewCommand extends Command
 	 * @param OutputInterface $output
 	 * @return int|void|null
 	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -88,8 +90,8 @@ class DatabasesNewCommand extends Command
 					);
 				}
 			}
-		} catch (GuzzleException $guzzleException) {
-			$output->writeln($guzzleException->getMessage());
+		} catch (BadResponseException $badResponseException) {
+			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		} catch (InvalidArgumentException $invalidArgumentException) {
 			$output->writeln($invalidArgumentException->getMessage());

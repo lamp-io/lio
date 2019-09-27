@@ -7,6 +7,7 @@ use Art4\JsonApiClient\V1\Document;
 use Console\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -36,7 +37,8 @@ class DbRestoresDescribeCommand extends Command
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
 	 * @return int|void|null
-	 * @throws \Exception
+	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -61,8 +63,8 @@ class DbRestoresDescribeCommand extends Command
 				$table = $this->getOutputAsTable($document, new Table($output));
 				$table->render();
 			}
-		} catch (GuzzleException $guzzleException) {
-			$output->writeln('<error>' . $guzzleException->getMessage() . '</error>');
+		} catch (BadResponseException $badResponseException) {
+			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}
 	}
@@ -72,6 +74,7 @@ class DbRestoresDescribeCommand extends Command
 	 * @param Application $application
 	 * @return bool
 	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	public static function isDbRestoreCompleted(string $dbRestoreId, Application $application): bool
 	{

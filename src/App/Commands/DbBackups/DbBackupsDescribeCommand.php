@@ -7,6 +7,7 @@ use Art4\JsonApiClient\V1\Document;
 use Console\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -36,7 +37,8 @@ class DbBackupsDescribeCommand extends Command
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
 	 * @return int|void|null
-	 * @throws \Exception
+	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -61,8 +63,8 @@ class DbBackupsDescribeCommand extends Command
 				$table = $this->getOutputAsTable($document, new Table($output));
 				$table->render();
 			}
-		} catch (GuzzleException $guzzleException) {
-			$output->writeln('<error>' . $guzzleException->getMessage() . '</error>');
+		} catch (BadResponseException $badResponseException) {
+			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}
 	}
@@ -72,14 +74,15 @@ class DbBackupsDescribeCommand extends Command
 	 * @param Application $application
 	 * @return bool
 	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	public static function isDbBackupCreated(string $dbBackupId, Application $application): bool
 	{
 		$dbBackupDescribeCommand = $application->find(self::getDefaultName());
 		$args = [
-			'command'     => self::getDefaultName(),
+			'command'      => self::getDefaultName(),
 			'db_backup_id' => $dbBackupId,
-			'--json'      => true,
+			'--json'       => true,
 		];
 		$bufferOutput = new BufferedOutput();
 		$dbBackupDescribeCommand->run(new ArrayInput($args), $bufferOutput);

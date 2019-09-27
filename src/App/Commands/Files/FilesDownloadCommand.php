@@ -3,8 +3,9 @@
 
 namespace Console\App\Commands\Files;
 
-use Art4\JsonApiClient\Exception\ValidationException;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\BadResponseException;
 use Psr\Http\Message\ResponseInterface;
 use RuntimeException;
 use Symfony\Component\Console\Input\InputArgument;
@@ -51,7 +52,8 @@ class FilesDownloadCommand extends Command
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
 	 * @return int|void|null
-	 * @throws \Exception
+	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -82,11 +84,8 @@ class FilesDownloadCommand extends Command
 			$output->writeln(
 				'<info>File received, ' . $fileName . $fileExtension . '</info>'
 			);
-		} catch (GuzzleException $exception) {
-			$output->writeln($exception->getMessage());
-			return 1;
-		} catch (ValidationException $validationException) {
-			$output->writeln($validationException->getMessage());
+		} catch (BadResponseException $badResponseException) {
+			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}
 	}
@@ -167,8 +166,8 @@ class FilesDownloadCommand extends Command
 	/**
 	 * @param string $appId
 	 * @param string $fileId
-	 * @throws GuzzleException
 	 * @return bool
+	 * @throws GuzzleException
 	 */
 	protected function isDirectory(string $appId, string $fileId): bool
 	{

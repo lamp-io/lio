@@ -5,6 +5,7 @@ namespace Console\App\Commands\Files\SubCommands;
 use Console\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -37,6 +38,7 @@ class FilesUpdateMoveCommand extends Command
 	 * @param OutputInterface $output
 	 * @return int|null|void
 	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -69,8 +71,8 @@ class FilesUpdateMoveCommand extends Command
 			} else {
 				$output->writeln('<info>Success, file ' . $input->getArgument('file_id') . ' has been moved</info>');
 			}
-		} catch (GuzzleException $guzzleException) {
-			$output->writeln($guzzleException->getMessage());
+		} catch (BadResponseException $badResponseException) {
+			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}
 	}

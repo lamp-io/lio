@@ -3,7 +3,9 @@
 namespace Console\App\Commands\Files;
 
 use Console\App\Commands\Command;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\BadResponseException;
 use InvalidArgumentException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -32,7 +34,8 @@ class FilesUpdateCommand extends Command
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
 	 * @return int|null|void
-	 * @throws \Exception
+	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -58,8 +61,8 @@ class FilesUpdateCommand extends Command
 			if (empty($input->getOption('json'))) {
 				$output->writeln('<info>Success, file ' . $input->getArgument('file_id') . ' has been updated</info>');
 			}
-		} catch (GuzzleException $guzzleException) {
-			$output->writeln($guzzleException->getMessage());
+		} catch (BadResponseException $badResponseException) {
+			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}
 	}

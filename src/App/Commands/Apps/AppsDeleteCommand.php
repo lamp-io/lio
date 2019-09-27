@@ -3,12 +3,14 @@
 
 namespace Console\App\Commands\Apps;
 
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Console\App\Commands\Command;
+use GuzzleHttp\Exception\BadResponseException;
 
 class AppsDeleteCommand extends Command
 {
@@ -32,7 +34,8 @@ class AppsDeleteCommand extends Command
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
 	 * @return int|void|null
-	 * @throws \Exception
+	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -51,8 +54,8 @@ class AppsDeleteCommand extends Command
 				]
 			);
 			$output->writeln('Delete Success, for ' . $input->getArgument('app_id'));
-		} catch (GuzzleException $guzzleException) {
-			$output->writeln($guzzleException->getMessage());
+		} catch (BadResponseException $badResponseException) {
+			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}
 	}

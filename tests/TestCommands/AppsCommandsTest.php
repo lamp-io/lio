@@ -25,16 +25,29 @@ class AppsCommandsTest extends TestCase
 
 	private $application;
 
+	/**
+	 *
+	 */
 	public function setUp(): void
 	{
 		$this->application = new Application();
 	}
 
+	/**
+	 * @param string $body
+	 * @param int $httpCode
+	 * @param array $headers
+	 * @return Response
+	 */
 	private function getMockResponse(string $body, int $httpCode = 200, array $headers = []): Response
 	{
 		return new Response($httpCode, $headers, $body);
 	}
 
+	/**
+	 * @param Response $response
+	 * @return Client
+	 */
 	private function getMockedClient(Response $response): Client
 	{
 		return new Client([
@@ -44,6 +57,11 @@ class AppsCommandsTest extends TestCase
 		]);
 	}
 
+	/**
+	 * @param Command $command
+	 * @param array $input
+	 * @return CommandTester
+	 */
 	private function getExecutedCommandTester(Command $command, array $input = []): CommandTester
 	{
 		$commandTester = new CommandTester($command);
@@ -51,6 +69,9 @@ class AppsCommandsTest extends TestCase
 		return $commandTester;
 	}
 
+	/**
+	 *
+	 */
 	public function testAppsDeleteCommand()
 	{
 		$client = $this->getMockedClient($this->getMockResponse(''));
@@ -59,6 +80,9 @@ class AppsCommandsTest extends TestCase
 		$this->assertEquals('0', $commandTester->getStatusCode());
 	}
 
+	/**
+	 *
+	 */
 	public function testAppsListCommand()
 	{
 		$client = $this->getMockedClient($this->getMockResponse(''));
@@ -67,6 +91,9 @@ class AppsCommandsTest extends TestCase
 		$this->assertEquals('0', $commandTester->getStatusCode());
 	}
 
+	/**
+	 *
+	 */
 	public function testAppsDescribeCommand()
 	{
 		$client = $this->getMockedClient($this->getMockResponse(''));
@@ -75,6 +102,9 @@ class AppsCommandsTest extends TestCase
 		$this->assertEquals('0', $commandTester->getStatusCode());
 	}
 
+	/**
+	 *
+	 */
 	public function testAppsUpdateCommand()
 	{
 		$client = $this->getMockedClient($this->getMockResponse(json_encode([
@@ -117,6 +147,9 @@ class AppsCommandsTest extends TestCase
 		$this->assertEquals('0', $status);
 	}
 
+	/**
+	 *
+	 */
 	public function testAppsNewCommand()
 	{
 		$client = $this->getMockedClient($this->getMockResponse(json_encode([

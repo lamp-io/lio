@@ -7,7 +7,9 @@ namespace Console\App\Commands\AppRestores;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 use Console\App\Commands\Command;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -40,7 +42,8 @@ class AppRestoresNewCommand extends Command
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
 	 * @return int|void|null
-	 * @throws \Exception
+	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -70,9 +73,10 @@ class AppRestoresNewCommand extends Command
 				$output->write(PHP_EOL);
 				$output->writeln('<info>App restore finished</info>');
 			}
-		} catch (GuzzleException $guzzleException) {
-			$output->writeln('<error>' . $guzzleException->getMessage() . '</error>');
+		} catch (BadResponseException $badResponseException) {
+			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
+
 		}
 	}
 
@@ -87,7 +91,7 @@ class AppRestoresNewCommand extends Command
 			'data' => [
 				'attributes' => [
 					'target_app_id' => $appId,
-					'app_backup_id' => $backupId
+					'app_backup_id' => $backupId,
 				],
 				'type'       => 'app_restores',
 			],

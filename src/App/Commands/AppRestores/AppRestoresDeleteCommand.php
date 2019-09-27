@@ -7,6 +7,7 @@ namespace Console\App\Commands\AppRestores;
 use Console\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -35,6 +36,7 @@ class AppRestoresDeleteCommand extends Command
 	 * @param OutputInterface $output
 	 * @return int|void|null
 	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -63,9 +65,10 @@ class AppRestoresDeleteCommand extends Command
 					'<info>App restore deleted ' . $input->getArgument('app_restore_id') . '</info>'
 				);
 			}
-		} catch (GuzzleException $guzzleException) {
-			$output->writeln('<error>' . $guzzleException->getMessage() . '</error>');
+		} catch (BadResponseException $badResponseException) {
+			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
+
 		}
 	}
 }
