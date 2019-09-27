@@ -557,6 +557,29 @@ Commands
     Options:
 
     * `[--yes][-y]` ***(bool)*** Skip confirm delete question
+    
+6. #### files:new:dir
+
+    Create a directory on your app
+    
+    Api reference https://www.lamp.io/api#/files/filesCreate
+    
+    Arguments:
+    
+    * `<app_id>` ***(string)*** The ID of the app
+    * `<file_id>` ***(string)*** File ID of directory to create
+    
+6. #### files:new:symlink
+
+    Create a symlink on your app
+    
+    Api reference https://www.lamp.io/api#/files/filesCreate
+    
+    Arguments:
+    
+    * `<app_id>` ***(string)*** The ID of the app
+    * `<file_id>` ***(string)*** File ID of file to delete
+    * `<target>` ***(string)*** Symlink target file ID
 
 ### Files sub commands:
 
