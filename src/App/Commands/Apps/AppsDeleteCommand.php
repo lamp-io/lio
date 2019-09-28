@@ -53,7 +53,7 @@ class AppsDeleteCommand extends Command
 					'headers' => $this->httpHelper->getHeaders(),
 				]
 			);
-			$output->writeln('Delete Success, for ' . $input->getArgument('app_id'));
+			$output->writeln('<info>Delete Success, for ' . $input->getArgument('app_id') . '</info>');
 		} catch (BadResponseException $badResponseException) {
 			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
