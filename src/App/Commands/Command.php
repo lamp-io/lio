@@ -4,7 +4,9 @@ namespace Console\App\Commands;
 
 use Console\App\Helpers\AuthHelper;
 use Console\App\Helpers\HttpHelper;
+use Exception;
 use GuzzleHttp\ClientInterface;
+use InvalidArgumentException;
 use Symfony\Component\Console\Command\Command as BaseCommand;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Symfony\Component\Console\Helper\QuestionHelper;
@@ -26,6 +28,8 @@ class Command extends BaseCommand
 
 	private $skipAuth;
 
+	protected $boolOptions = [];
+
 	/**
 	 * Command constructor.
 	 * @param ClientInterface $httpClient
@@ -40,6 +44,20 @@ class Command extends BaseCommand
 	}
 
 	/**
+	 * @param array $boolOptions
+	 * @param array $option
+	 */
+	protected function validateBoolOptions(array $boolOptions, array $option)
+	{
+		foreach ($boolOptions as $boolOption) {
+			if (!empty($option[$boolOption]) && !in_array($option[$boolOption], ['true', 'false'])) {
+				throw new InvalidArgumentException(
+					'Value for options: ' . PHP_EOL . implode(', ', $boolOptions) . PHP_EOL . 'Must be true or false');
+			}
+		}
+	}
+
+	/**
 	 *
 	 */
 	protected function configure()
@@ -47,12 +65,19 @@ class Command extends BaseCommand
 		$this->addOption('json', 'j', InputOption::VALUE_NONE, 'Output as a raw json');
 	}
 
+	/**
+	 * @param array $boolOptions
+	 */
+	protected function setBoolOptions(array $boolOptions)
+	{
+		$this->boolOptions = array_merge($this->boolOptions, $boolOptions);
+	}
 
 	/**
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
 	 * @return int|null|void
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -62,6 +87,7 @@ class Command extends BaseCommand
 		}
 		$token = AuthHelper::getToken();
 		$this->httpHelper->setHeader('Authorization', 'Bearer ' . $token);
+		$this->validateBoolOptions($this->boolOptions, $input->getOptions());
 	}
 
 	/**
@@ -83,7 +109,7 @@ class Command extends BaseCommand
 	}
 
 	/**
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	protected function callAuthCommand()
 	{
