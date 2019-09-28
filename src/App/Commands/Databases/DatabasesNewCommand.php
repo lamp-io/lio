@@ -49,7 +49,8 @@ class DatabasesNewCommand extends Command
 			->addOption('my_cnf', null, InputOption::VALUE_REQUIRED, 'Path to your database config file', '')
 			->addOption('ssd', null, InputOption::VALUE_REQUIRED, 'Size of ssd storage, default 1Gi', '1Gi')
 			->addOption('vcpu', null, InputOption::VALUE_REQUIRED, 'The number of virtual cpu cores available, default 0.25', '0.25')
-			->addOption('delete_protection', null, InputOption::VALUE_NONE, 'When enabled the database can not be deleted');
+			->addOption('delete_protection', null, InputOption::VALUE_REQUIRED, 'When enabled the database can not be deleted')
+			->setBoolOptions(['delete_protection']);
 	}
 
 	/**
@@ -148,7 +149,13 @@ class DatabasesNewCommand extends Command
 		$attributes = [];
 		foreach ($input->getOptions() as $optionKey => $option) {
 			if (!in_array($optionKey, self::DEFAULT_CLI_OPTIONS) && !empty($option)) {
-				$attributes[$optionKey] = ($optionKey == 'vcpu') ? (float)$option : $option;
+				if ($optionKey == 'delete_protection') {
+					$attributes[$optionKey] = $option == 'true';
+				} elseif ($optionKey == 'vcpu') {
+					$attributes[$optionKey] = (float)$option;
+				} else {
+					$attributes[$optionKey] = $option;
+				}
 			}
 		}
 

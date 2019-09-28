@@ -48,7 +48,8 @@ class DatabasesUpdateCommand extends Command
 			->addOption('mysql_root_password', null, InputOption::VALUE_NONE, 'Root password')
 			->addOption('ssd', null, InputOption::VALUE_REQUIRED, 'Size of ssd storage')
 			->addOption('vcpu', null, InputOption::VALUE_REQUIRED, 'The number of virtual cpu cores available')
-			->addOption('delete_protection', null, InputOption::VALUE_NONE, 'When enabled the database can not be deleted');
+			->addOption('delete_protection', null, InputOption::VALUE_REQUIRED, 'When enabled the database can not be deleted')
+			->setBoolOptions(['delete_protection']);
 	}
 
 	/**
@@ -121,6 +122,8 @@ class DatabasesUpdateCommand extends Command
 					$attributes[$key] = file_get_contents($val);
 				} elseif ($key == 'vcpu') {
 					$attributes[$key] = (float)$val;
+				} elseif ($key == 'delete_protection') {
+					$attributes[$key] = $val == 'true';
 				} else {
 					$attributes[$key] = $val;
 				}

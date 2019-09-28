@@ -49,9 +49,10 @@ class AppsNewCommand extends Command
 			->addOption('github_webhook_secret', null, InputOption::VALUE_REQUIRED, 'Github web-hook secret token', '')
 			->addOption('webhook_run_command', null, InputOption::VALUE_REQUIRED, 'Github web-hook command', '')
 			->addOption('hostname', null, InputOption::VALUE_REQUIRED, 'The hostname for the app', '')
-			->addOption('hostname_certificate_valid', null, InputOption::VALUE_NONE, 'Is hostname certificate valid')
-			->addOption('public', 'p', InputOption::VALUE_NONE, 'Public for read-only')
-			->addOption('delete_protection', null, InputOption::VALUE_NONE, 'When enabled the app can not be deleted');
+			->addOption('hostname_certificate_valid', null, InputOption::VALUE_REQUIRED, 'Is hostname certificate valid')
+			->addOption('public', 'p', InputOption::VALUE_REQUIRED, 'Public for read-only')
+			->addOption('delete_protection', null, InputOption::VALUE_REQUIRED, 'When enabled the app can not be deleted')
+			->setBoolOptions(['delete_protection', 'public', 'hostname_certificate_valid']);
 	}
 
 	/**
@@ -112,9 +113,9 @@ class AppsNewCommand extends Command
 							'github_webhook_secret'      => (string)$input->getOption('github_webhook_secret'),
 							'webhook_run_command'        => (string)$input->getOption('webhook_run_command'),
 							'hostname'                   => (string)$input->getOption('hostname'),
-							'hostname_certificate_valid' => (bool)$input->getOption('hostname_certificate_valid'),
-							'public'                     => (bool)$input->getOption('public'),
-							'delete_protection'          => (bool)$input->getOption('delete_protection'),
+							'hostname_certificate_valid' => $input->getOption('hostname_certificate_valid') == 'true',
+							'public'                     => $input->getOption('public') == 'true',
+							'delete_protection'          => $input->getOption('delete_protection') == 'true',
 						],
 						!empty($input->getArgument('organization_id')) ? ['organization_id' => (string)$input->getArgument('organization_id')] : []
 					),
