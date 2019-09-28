@@ -67,10 +67,12 @@ class Command extends BaseCommand
 
 	/**
 	 * @param array $boolOptions
+	 * @return $this
 	 */
 	protected function setBoolOptions(array $boolOptions)
 	{
 		$this->boolOptions = array_merge($this->boolOptions, $boolOptions);
+		return $this;
 	}
 
 	/**
