@@ -16,10 +16,6 @@ class FilesUpdateCommand extends Command
 {
 	const API_ENDPOINT = 'https://api.lamp.io/apps/%s/files/%s%s';
 
-	const BOOL_OPTIONS = [
-		'apache_writable',
-	];
-
 	protected static $defaultName = 'files:update';
 
 	/**
@@ -69,7 +65,7 @@ class FilesUpdateCommand extends Command
 					'body'     => $this->getRequestBody(
 						$input->getArgument('file'),
 						$input->getArgument('file_id'),
-						$input->getOption('apache_writable')
+						!empty($input->getOption('apache_writable')) && $input->getOption('apache_writable') != 'false'
 					),
 					'progress' => function () use ($progressBar) {
 						$progressBar->advance();
