@@ -135,8 +135,9 @@ class AppsCommandsTest extends TestCase
 				'--github_webhook_secret'      => 'phpunit',
 				'--webhook_run_command'        => 'phpunit',
 				'--hostname'                   => 'phpunit',
-				'--hostname_certificate_valid' => 'phpunit',
-				'--public'                     => true,
+				'--hostname_certificate_valid' => 'true',
+				'--public'                     => 'true',
+				'--delete_protection'          => 'true',
 			]);
 			$status = $commandTester->getStatusCode();
 		} catch (Exception $exception) {
@@ -180,8 +181,9 @@ class AppsCommandsTest extends TestCase
 				'--github_webhook_secret'      => 'phpunit',
 				'--webhook_run_command'        => 'phpunit',
 				'--hostname'                   => 'phpunit',
-				'--hostname_certificate_valid' => 'phpunit',
-				'--public'                     => true,
+				'--hostname_certificate_valid' => 'true',
+				'--public'                     => 'true',
+				'--delete_protection'          => 'true',
 			]);
 			$status = $commandTester->getStatusCode();
 		} catch (Exception $exception) {
