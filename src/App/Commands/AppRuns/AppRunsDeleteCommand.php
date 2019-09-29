@@ -38,9 +38,12 @@ class AppRunsDeleteCommand extends Command
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
-
+		$progressBar = self::getProgressBar(
+			'Deleting app run' . $input->getArgument('app_run_id'),
+			$output
+		);
 		try {
-			$this->httpHelper->getClient()->request(
+			$response = $this->httpHelper->getClient()->request(
 				'DELETE',
 				sprintf(
 					self::API_ENDPOINT,
@@ -48,12 +51,19 @@ class AppRunsDeleteCommand extends Command
 				),
 				[
 					'headers' => $this->httpHelper->getHeaders(),
+					'progress'  => function () use ($progressBar) {
+						$progressBar->advance();
+					},
 				]
 			);
-			if (empty($input->getOption('json'))) {
+			if (!empty($input->getOption('json'))) {
+				$output->writeln($response->getBody()->getContents());
+			} else {
+				$output->write(PHP_EOL);
 				$output->writeln('<info>Command with id . ' . $input->getArgument('app_run_id') . ' successfully deleted</info>');
 			}
 		} catch (BadResponseException $badResponseException) {
+			$output->write(PHP_EOL);
 			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}
