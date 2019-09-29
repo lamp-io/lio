@@ -23,8 +23,8 @@ class FilesNewCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('Create a symlink on your app')
-			->setHelp('Create a symlink, api reference' . PHP_EOL . 'https://www.lamp.io/api#/files/filesCreate')
+		$this->setDescription('Create a file on your app')
+			->setHelp('Create a file, api reference' . PHP_EOL . 'https://www.lamp.io/api#/files/filesCreate')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
 			->addArgument('file_id', InputArgument::REQUIRED, 'File ID of a file to create')
 			->addArgument('contents', InputArgument::OPTIONAL, 'File content', '')
