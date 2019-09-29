@@ -10,6 +10,7 @@ use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class FilesNewDirCommand extends Command
@@ -27,7 +28,9 @@ class FilesNewDirCommand extends Command
 		$this->setDescription('Create a directory on your app')
 			->setHelp('Create a directory, api reference' . PHP_EOL . 'https://www.lamp.io/api#/files/filesCreate')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addArgument('file_id', InputArgument::REQUIRED, 'File ID of directory to create');
+			->addArgument('file_id', InputArgument::REQUIRED, 'File ID of directory to create')
+			->addOption('apache_writable', null, InputOption::VALUE_REQUIRED, 'Allow apache to write to the file ID')
+			->setBoolOptions(['apache_writable']);
 	}
 
 	/**
@@ -50,7 +53,10 @@ class FilesNewDirCommand extends Command
 				),
 				[
 					'headers'  => $this->httpHelper->getHeaders(),
-					'body'     => $this->getRequestBody(trim($input->getArgument('file_id'), '/')),
+					'body'     => $this->getRequestBody(
+						trim($input->getArgument('file_id'), '/'),
+						!empty($input->getOption('apache_writable')) && $input->getOption('apache_writable') != 'false'
+					),
 					'progress' => function () use ($progressBar) {
 						$progressBar->advance();
 					},
@@ -71,11 +77,12 @@ class FilesNewDirCommand extends Command
 
 	/**
 	 * @param string $fileId
+	 * @param bool $isApacheWritable
 	 * @return string
 	 */
-	protected function getRequestBody(string $fileId): string
+	protected function getRequestBody(string $fileId, bool $isApacheWritable): string
 	{
-		return json_encode([
+		$body = [
 			'data' => [
 				'type'       => 'files',
 				'id'         => $fileId,
@@ -83,6 +90,10 @@ class FilesNewDirCommand extends Command
 					'is_dir' => true,
 				],
 			],
-		]);
+		];
+		if (!empty($isApacheWritable)) {
+			$body['data']['attributes']['apache_writable'] = true;
+		}
+		return json_encode($body);
 	}
 }

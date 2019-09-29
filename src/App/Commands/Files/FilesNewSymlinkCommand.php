@@ -8,6 +8,7 @@ use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class FilesNewSymlinkCommand extends Command
@@ -26,7 +27,9 @@ class FilesNewSymlinkCommand extends Command
 			->setHelp('Create a symlink, api reference' . PHP_EOL . 'https://www.lamp.io/api#/files/filesCreate')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
 			->addArgument('file_id', InputArgument::REQUIRED, 'File ID of a symlink to create')
-			->addArgument('target', InputArgument::REQUIRED, 'Symlink target file ID');
+			->addArgument('target', InputArgument::REQUIRED, 'Symlink target file ID')
+			->addOption('apache_writable', null, InputOption::VALUE_REQUIRED, 'Allow apache to write to the file ID')
+			->setBoolOptions(['apache_writable']);
 	}
 
 	/**
@@ -54,7 +57,8 @@ class FilesNewSymlinkCommand extends Command
 					'headers'  => $this->httpHelper->getHeaders(),
 					'body'     => $this->getRequestBody(
 						trim($input->getArgument('file_id'), '/'),
-						trim($input->getArgument('target'), '/')
+						trim($input->getArgument('target'), '/'),
+						!empty($input->getOption('apache_writable')) && $input->getOption('apache_writable') != 'false'
 					),
 					'progress' => function () use ($progressBar) {
 						$progressBar->advance();
@@ -77,11 +81,12 @@ class FilesNewSymlinkCommand extends Command
 	/**
 	 * @param string $fileId
 	 * @param string $target
+	 *  @param bool $isApacheWritable
 	 * @return string
 	 */
-	protected function getRequestBody(string $fileId, string $target): string
+	protected function getRequestBody(string $fileId, string $target, bool $isApacheWritable): string
 	{
-		return json_encode([
+		$body = [
 			'data' => [
 				'type'       => 'files',
 				'id'         => $fileId,
@@ -90,6 +95,10 @@ class FilesNewSymlinkCommand extends Command
 					'target'     => $target,
 				],
 			],
-		]);
+		];
+		if (!empty($isApacheWritable)) {
+			$body['data']['attributes']['apache_writable'] = true;
+		}
+		return json_encode($body);
 	}
 }
