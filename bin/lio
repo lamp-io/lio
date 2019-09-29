@@ -12,6 +12,7 @@ use Console\App\Commands\AppRestores\AppRestoresListCommand;
 use Console\App\Commands\AppRestores\AppRestoresNewCommand;
 use Console\App\Commands\Apps\SubCommands\AppUpdatesStatusCommand;
 use Console\App\Commands\Deploy\DeployListCommand;
+use Console\App\Commands\Files\FilesNewCommand;
 use Console\App\Commands\Files\FilesNewDirCommand;
 use Console\App\Commands\Files\FilesNewSymlinkCommand;
 use Console\App\Commands\Organizations\OrganizationsListCommand;
@@ -88,6 +89,7 @@ try {
 	$app->add(new FilesNewDirCommand(new Client()));
 	$app->add(new FilesUpdateUnarchiveCommand(new Client()));
 	$app->add(new FilesNewSymlinkCommand(new Client()));
+	$app->add(new FilesNewCommand(new Client()));
 	$app->add(new UsersListCommand(new Client()));
 	$app->add(new AppBackupsListCommand(new Client()));
 	$app->add(new AppBackupsDescribeCommand(new Client()));
