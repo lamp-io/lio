@@ -1,9 +1,9 @@
 <?php
 
-namespace Console\App\Commands\Deploy;
+namespace Lio\App\Commands\Deploy;
 
-use Console\App\Commands\Command;
-use Console\App\Helpers\DeployHelper;
+use Lio\App\Commands\Command;
+use Lio\App\Helpers\DeployHelper;
 use Exception;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Helper\TableSeparator;

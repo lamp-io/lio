@@ -1,9 +1,9 @@
 <?php
 
-namespace Console\App\Commands\Databases;
+namespace Lio\App\Commands\Databases;
 
-use Console\App\Commands\Command;
-use Console\App\Helpers\PasswordHelper;
+use Lio\App\Commands\Command;
+use Lio\App\Helpers\PasswordHelper;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;

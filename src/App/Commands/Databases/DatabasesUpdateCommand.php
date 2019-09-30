@@ -1,14 +1,14 @@
 <?php
 
 
-namespace Console\App\Commands\Databases;
+namespace Lio\App\Commands\Databases;
 
 
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\V1\Document;
-use Console\App\Commands\Command;
-use Console\App\Helpers\PasswordHelper;
+use Lio\App\Commands\Command;
+use Lio\App\Helpers\PasswordHelper;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;
 use InvalidArgumentException;

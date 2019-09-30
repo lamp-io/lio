@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Console\App\Commands\AppRuns;
+namespace Lio\App\Commands\AppRuns;
 
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
@@ -9,7 +9,7 @@ use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Helper\TableSeparator;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Console\App\Commands\Command;
+use Lio\App\Commands\Command;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 use Symfony\Component\Console\Helper\Table;

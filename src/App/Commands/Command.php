@@ -1,9 +1,9 @@
 <?php
 
-namespace Console\App\Commands;
+namespace Lio\App\Commands;
 
-use Console\App\Helpers\AuthHelper;
-use Console\App\Helpers\HttpHelper;
+use Lio\App\Helpers\AuthHelper;
+use Lio\App\Helpers\HttpHelper;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\Console\Command\Command as BaseCommand;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;

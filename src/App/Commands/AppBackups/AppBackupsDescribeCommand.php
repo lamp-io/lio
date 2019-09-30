@@ -1,8 +1,8 @@
 <?php
 
-namespace Console\App\Commands\AppBackups;
+namespace Lio\App\Commands\AppBackups;
 
-use Console\App\Commands\Command;
+use Lio\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;

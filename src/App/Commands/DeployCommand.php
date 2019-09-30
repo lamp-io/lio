@@ -1,20 +1,20 @@
 <?php
 
-namespace Console\App\Commands;
+namespace Lio\App\Commands;
 
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\V1\Document;
-use Console\App\Commands\AppRuns\AppRunsNewCommand;
-use Console\App\Commands\Apps\AppsDescribeCommand;
-use Console\App\Commands\Apps\AppsListCommand;
-use Console\App\Commands\Apps\AppsNewCommand;
-use Console\App\Commands\Databases\DatabasesListCommand;
-use Console\App\Deployers\DeployInterface;
-use Console\App\Deployers\Laravel;
-use Console\App\Deployers\Symfony;
-use Console\App\Helpers\ConfigHelper;
-use Console\App\Helpers\DeployHelper;
+use Lio\App\Commands\AppRuns\AppRunsNewCommand;
+use Lio\App\Commands\Apps\AppsDescribeCommand;
+use Lio\App\Commands\Apps\AppsListCommand;
+use Lio\App\Commands\Apps\AppsNewCommand;
+use Lio\App\Commands\Databases\DatabasesListCommand;
+use Lio\App\Deployers\DeployInterface;
+use Lio\App\Deployers\Laravel;
+use Lio\App\Deployers\Symfony;
+use Lio\App\Helpers\ConfigHelper;
+use Lio\App\Helpers\DeployHelper;
 use GuzzleHttp\ClientInterface;
 use InvalidArgumentException;
 use Exception;
@@ -26,7 +26,7 @@ use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
-use Console\App\Commands\Databases\DatabasesNewCommand;
+use Lio\App\Commands\Databases\DatabasesNewCommand;
 
 class DeployCommand extends Command
 {

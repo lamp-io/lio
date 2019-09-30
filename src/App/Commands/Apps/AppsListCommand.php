@@ -1,6 +1,6 @@
 <?php
 
-namespace Console\App\Commands\Apps;
+namespace Lio\App\Commands\Apps;
 
 use Art4\JsonApiClient\V1\Document;
 use Exception;
@@ -11,7 +11,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
-use Console\App\Commands\Command;
+use Lio\App\Commands\Command;
 use GuzzleHttp\Exception\BadResponseException;
 
 class AppsListCommand extends Command

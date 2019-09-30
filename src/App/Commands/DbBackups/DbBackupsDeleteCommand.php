@@ -1,8 +1,8 @@
 <?php
 
-namespace Console\App\Commands\DbBackups;
+namespace Lio\App\Commands\DbBackups;
 
-use Console\App\Commands\Command;
+use Lio\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;

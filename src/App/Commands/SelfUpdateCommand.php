@@ -1,6 +1,6 @@
 <?php
 
-namespace Console\App\Commands;
+namespace Lio\App\Commands;
 
 use Phar;
 use Symfony\Component\Console\Command\Command;

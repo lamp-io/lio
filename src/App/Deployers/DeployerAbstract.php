@@ -1,24 +1,24 @@
 <?php
 
-namespace Console\App\Deployers;
+namespace Lio\App\Deployers;
 
 use Closure;
-use Console\App\Commands\AppRuns\AppRunsDescribeCommand;
-use Console\App\Commands\AppRuns\AppRunsNewCommand;
-use Console\App\Commands\Apps\AppsDescribeCommand;
-use Console\App\Commands\Command;
-use Console\App\Commands\Databases\DatabasesDescribeCommand;
-use Console\App\Commands\DbBackups\DbBackupsDescribeCommand;
-use Console\App\Commands\DbBackups\DbBackupsNewCommand;
-use Console\App\Commands\DbRestores\DbRestoresDescribeCommand;
-use Console\App\Commands\DbRestores\DbRestoresNewCommand;
-use Console\App\Commands\Files\FilesDeleteCommand;
-use Console\App\Commands\Files\FilesUpdateCommand;
-use Console\App\Commands\Files\FilesUploadCommand;
-use Console\App\Commands\Files\SubCommands\FilesUpdateMoveCommand;
-use Console\App\Commands\Files\SubCommands\FilesUpdateUnarchiveCommand;
-use Console\App\Helpers\AuthHelper;
-use Console\App\Helpers\DeployHelper;
+use Lio\App\Commands\AppRuns\AppRunsDescribeCommand;
+use Lio\App\Commands\AppRuns\AppRunsNewCommand;
+use Lio\App\Commands\Apps\AppsDescribeCommand;
+use Lio\App\Commands\Command;
+use Lio\App\Commands\Databases\DatabasesDescribeCommand;
+use Lio\App\Commands\DbBackups\DbBackupsDescribeCommand;
+use Lio\App\Commands\DbBackups\DbBackupsNewCommand;
+use Lio\App\Commands\DbRestores\DbRestoresDescribeCommand;
+use Lio\App\Commands\DbRestores\DbRestoresNewCommand;
+use Lio\App\Commands\Files\FilesDeleteCommand;
+use Lio\App\Commands\Files\FilesUpdateCommand;
+use Lio\App\Commands\Files\FilesUploadCommand;
+use Lio\App\Commands\Files\SubCommands\FilesUpdateMoveCommand;
+use Lio\App\Commands\Files\SubCommands\FilesUpdateUnarchiveCommand;
+use Lio\App\Helpers\AuthHelper;
+use Lio\App\Helpers\DeployHelper;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
@@ -156,6 +156,7 @@ abstract class DeployerAbstract implements DeployInterface
 
 	/**
 	 * @return string
+	 * @throws GuzzleException
 	 * @throws Exception
 	 */
 	protected function backupDatabase(): string
@@ -193,6 +194,7 @@ abstract class DeployerAbstract implements DeployInterface
 
 	/**
 	 * @param string $dbBackupId
+	 * @throws GuzzleException
 	 * @throws Exception
 	 */
 	protected function restoreDatabase(string $dbBackupId)
@@ -225,6 +227,7 @@ abstract class DeployerAbstract implements DeployInterface
 	 * @param string $appId
 	 * @param string $command
 	 * @param string $progressMessage
+	 * @throws GuzzleException
 	 * @throws Exception
 	 */
 	protected function appRunCommand(string $appId, string $command, string $progressMessage)
@@ -393,6 +396,7 @@ abstract class DeployerAbstract implements DeployInterface
 	 * @param string $dbName
 	 * @param string $dbUser
 	 * @param string $dbPassword
+	 * @throws GuzzleException
 	 * @throws Exception
 	 */
 	protected function importSqlDump(string $dbHost, string $dbName, string $dbUser, string $dbPassword)
@@ -466,6 +470,7 @@ abstract class DeployerAbstract implements DeployInterface
 	 * @param string $dbName
 	 * @param string $dbUser
 	 * @param string $dbPassword
+	 * @throws GuzzleException
 	 * @throws Exception
 	 */
 	protected function createDatabase(string $dbHost, string $dbName, string $dbUser, string $dbPassword)
@@ -758,6 +763,7 @@ abstract class DeployerAbstract implements DeployInterface
 
 	/**
 	 * @param array $skipCommands
+	 * @throws GuzzleException
 	 * @throws Exception
 	 */
 	protected function runCommands(array $skipCommands = [])
@@ -789,6 +795,7 @@ abstract class DeployerAbstract implements DeployInterface
 	/**
 	 * @param string $migrationCommand
 	 * @param string $dbBackupId
+	 * @throws GuzzleException
 	 * @throws Exception
 	 */
 	protected function runMigrations(string $migrationCommand, string $dbBackupId = '')

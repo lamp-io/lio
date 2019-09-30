@@ -1,9 +1,9 @@
 <?php
 
 
-namespace Console\App\Commands\AppRuns;
+namespace Lio\App\Commands\AppRuns;
 
-use Console\App\Commands\Command;
+use Lio\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;

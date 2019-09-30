@@ -1,8 +1,8 @@
 <?php
 
-namespace Console\App\Commands\Apps;
+namespace Lio\App\Commands\Apps;
 
-use Console\App\Commands\Command;
+use Lio\App\Commands\Command;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 use Exception;

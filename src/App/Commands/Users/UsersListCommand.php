@@ -1,8 +1,8 @@
 <?php
 
-namespace Console\App\Commands\Users;
+namespace Lio\App\Commands\Users;
 
-use Console\App\Commands\Command;
+use Lio\App\Commands\Command;
 use Art4\JsonApiClient\V1\Document;
 use Exception;
 use GuzzleHttp\Exception\BadResponseException;
