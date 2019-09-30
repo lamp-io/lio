@@ -1,10 +1,10 @@
 <?php
 
 
-namespace Console\App\Commands\AppRestores;
+namespace Lio\App\Commands\AppRestores;
 
 
-use Console\App\Commands\Command;
+use Lio\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;

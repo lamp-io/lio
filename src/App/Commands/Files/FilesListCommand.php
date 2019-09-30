@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Console\App\Commands\Files;
+namespace Lio\App\Commands\Files;
 
 
 use Art4\JsonApiClient\Exception\ValidationException;
@@ -17,7 +17,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
-use Console\App\Commands\Command;
+use Lio\App\Commands\Command;
 
 class FilesListCommand extends Command
 {

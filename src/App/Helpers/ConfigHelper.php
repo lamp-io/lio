@@ -1,6 +1,6 @@
 <?php
 
-namespace Console\App\Helpers;
+namespace Lio\App\Helpers;
 
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;

@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Console\App\Commands\Apps;
+namespace Lio\App\Commands\Apps;
 
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
@@ -10,7 +10,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
-use Console\App\Commands\Command;
+use Lio\App\Commands\Command;
 use GuzzleHttp\Exception\BadResponseException;
 
 class AppsDeleteCommand extends Command

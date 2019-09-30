@@ -1,11 +1,11 @@
 <?php
 
-namespace Console\App\Commands\OrganizationUsers;
+namespace Lio\App\Commands\OrganizationUsers;
 
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\V1\Document;
-use Console\App\Commands\Command;
+use Lio\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;

@@ -1,8 +1,8 @@
 <?php
 
-namespace Console\App\Commands;
+namespace Lio\App\Commands;
 
-use Console\App\Helpers\AuthHelper;
+use Lio\App\Helpers\AuthHelper;
 use RuntimeException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
@@ -33,7 +33,7 @@ class AuthCommand extends Command
 	/**
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
-	 * @return mixed
+	 * @return int|void|null
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{

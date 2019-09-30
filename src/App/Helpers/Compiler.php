@@ -1,7 +1,8 @@
 <?php
 
-namespace Console\App\Helpers;
+namespace Lio\App\Helpers;
 
+use Phar;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
@@ -38,12 +39,12 @@ class Compiler
 			);
 		}
 
-		$phar = new \Phar(
+		$phar = new Phar(
 			$pathToBuild,
 			0,
 			self::PHAR_NAME
 		);
-		$phar->setSignatureAlgorithm(\Phar::SHA256);
+		$phar->setSignatureAlgorithm(Phar::SHA256);
 
 		$finderSort = function (\SplFileInfo $a, \SplFileInfo $b) {
 			return strcmp(strtr($a->getRealPath(), '\\', '/'), strtr($b->getRealPath(), '\\', '/'));
@@ -76,9 +77,9 @@ class Compiler
 
 
 	/**
-	 * @param \Phar $phar
+	 * @param Phar $phar
 	 */
-	private function addBin(\Phar $phar)
+	private function addBin(Phar $phar)
 	{
 		$content = file_get_contents($this->getAppRoot() . '/bin/lio');
 		$content = preg_replace('{^#!/usr/bin/env php\s*}', '', $content);
@@ -86,10 +87,10 @@ class Compiler
 	}
 
 	/**
-	 * @param \Phar $phar
+	 * @param Phar $phar
 	 * @param SplFileInfo $file
 	 */
-	private function addFile(\Phar $phar, SplFileInfo $file)
+	private function addFile(Phar $phar, SplFileInfo $file)
 	{
 		$path = $file->getRelativePathname();
 		$content = file_get_contents((string)$file);

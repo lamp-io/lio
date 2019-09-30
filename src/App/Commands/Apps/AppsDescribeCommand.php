@@ -1,6 +1,6 @@
 <?php
 
-namespace Console\App\Commands\Apps;
+namespace Lio\App\Commands\Apps;
 
 use Art4\JsonApiClient\V1\Document;
 use Exception;
@@ -11,7 +11,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Art4\JsonApiClient\Helper\Parser;
 use GuzzleHttp\Exception\GuzzleException;
-use Console\App\Commands\Command;
+use Lio\App\Commands\Command;
 use Symfony\Component\Console\Output\NullOutput;
 
 class AppsDescribeCommand extends Command

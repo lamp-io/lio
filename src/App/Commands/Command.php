@@ -1,9 +1,9 @@
 <?php
 
-namespace Console\App\Commands;
+namespace Lio\App\Commands;
 
-use Console\App\Helpers\AuthHelper;
-use Console\App\Helpers\HttpHelper;
+use Lio\App\Helpers\AuthHelper;
+use Lio\App\Helpers\HttpHelper;
 use Exception;
 use GuzzleHttp\ClientInterface;
 use InvalidArgumentException;
@@ -14,7 +14,6 @@ use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 
