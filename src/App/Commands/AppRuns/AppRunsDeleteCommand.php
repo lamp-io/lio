@@ -9,6 +9,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class AppRunsDeleteCommand extends Command
@@ -39,8 +40,8 @@ class AppRunsDeleteCommand extends Command
 	{
 		parent::execute($input, $output);
 		$progressBar = self::getProgressBar(
-			'Deleting app run' . $input->getArgument('app_run_id'),
-			$output
+			'Deleting app run ' . $input->getArgument('app_run_id'),
+			(empty($input->getOption('json'))) ? $output : new NullOutput()
 		);
 		try {
 			$response = $this->httpHelper->getClient()->request(

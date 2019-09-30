@@ -71,7 +71,7 @@ class AppRunsDescribeCommand extends Command
 	{
 		parent::execute($input, $output);
 		$progressBar = self::getProgressBar(
-			'Deleting app run' . $input->getArgument('app_run_id'),
+			'Getting app run ' . $input->getArgument('app_run_id'),
 			(empty($input->getOption('json'))) ? $output : new NullOutput()
 		);
 		try {

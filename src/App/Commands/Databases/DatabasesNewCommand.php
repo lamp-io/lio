@@ -11,6 +11,7 @@ use InvalidArgumentException;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Art4\JsonApiClient\V1\Document;
 use Symfony\Component\Console\Helper\Table;
@@ -66,7 +67,10 @@ class DatabasesNewCommand extends Command
 		if ($this->isPassWordOptionExist($input)) {
 			$this->password = $this->handlePasswordOption($input, $output);
 		}
-
+		$progressBar = self::getProgressBar(
+			'Creating database',
+			(empty($input->getOption('json'))) ? $output : new NullOutput()
+		);
 		try {
 			$response = $this->httpHelper->getClient()->request(
 				'POST',
@@ -74,11 +78,15 @@ class DatabasesNewCommand extends Command
 				[
 					'headers' => $this->httpHelper->getHeaders(),
 					'body'    => $this->getRequestBody($input),
+					'progress'  => function () use ($progressBar) {
+						$progressBar->advance();
+					},
 				]
 			);
 			if (!empty($input->getOption('json'))) {
 				$output->writeln($response->getBody()->getContents());
 			} else {
+				$output->write(PHP_EOL);
 				/** @var Document $document */
 				$document = Parser::parseResponseString($response->getBody()->getContents());
 				$table = $this->getOutputAsTable($document, new Table($output));
@@ -91,10 +99,8 @@ class DatabasesNewCommand extends Command
 				}
 			}
 		} catch (BadResponseException $badResponseException) {
+			$output->write(PHP_EOL);
 			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		} catch (InvalidArgumentException $invalidArgumentException) {
-			$output->writeln($invalidArgumentException->getMessage());
 			return 1;
 		}
 	}
