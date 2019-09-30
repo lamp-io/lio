@@ -12,7 +12,6 @@ use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 
@@ -38,15 +37,6 @@ class Command extends BaseCommand
 		$this->httpHelper = new HttpHelper($httpClient);
 		$this->skipAuth = $skipAuth;
 	}
-
-	/**
-	 *
-	 */
-	protected function configure()
-	{
-		$this->addOption('json', 'j', InputOption::VALUE_NONE, 'Output as a raw json');
-	}
-
 
 	/**
 	 * @param InputInterface $input

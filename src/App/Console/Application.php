@@ -10,6 +10,7 @@ use Lio\App\Commands\Command;
 use Lio\App\Commands\SelfUpdateCommand;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Throwable;
 
@@ -60,6 +61,13 @@ class Application extends BaseApplication
 		parent::addCommands($commands);
 	}
 
+	protected function getDefaultInputDefinition()
+	{
+		$inputDefinition = parent::getDefaultInputDefinition();
+		$inputDefinition->addOption(new InputOption('json', 'j', InputOption::VALUE_NONE, 'Output as a raw json'));
+
+		return $inputDefinition;
+	}
 
 	/**
 	 * @return array
