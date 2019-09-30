@@ -17,6 +17,7 @@ use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Exception;
@@ -73,6 +74,10 @@ class DatabasesUpdateCommand extends Command
 			$password = $helper->ask($input, $output, $question);
 			$input->setOption('mysql_root_password', $password);
 		}
+		$progressBar = self::getProgressBar(
+			'Updating database ' . $input->getArgument('database_id'),
+			(empty($input->getOption('json'))) ? $output : new NullOutput()
+		);
 		try {
 			$response = $this->httpHelper->getClient()->request(
 				'PATCH',
@@ -83,21 +88,23 @@ class DatabasesUpdateCommand extends Command
 				[
 					'headers' => $this->httpHelper->getHeaders(),
 					'body'    => $this->getRequestBody($input),
+					'progress'  => function () use ($progressBar) {
+						$progressBar->advance();
+					},
 				]
 			);
 			if (!empty($input->getOption('json'))) {
 				$output->writeln($response->getBody()->getContents());
 			} else {
+				$output->write(PHP_EOL);
 				/** @var Document $document */
 				$document = Parser::parseResponseString($response->getBody()->getContents());
 				$table = $this->getOutputAsTable($document, new Table($output));
 				$table->render();
 			}
 		} catch (BadResponseException $badResponseException) {
+			$output->write(PHP_EOL);
 			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		} catch (InvalidArgumentException $invalidArgumentException) {
-			$output->writeln($invalidArgumentException->getMessage());
 			return 1;
 		}
 

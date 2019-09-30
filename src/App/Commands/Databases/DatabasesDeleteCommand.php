@@ -7,10 +7,10 @@ use Console\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;
-use InvalidArgumentException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class DatabasesDeleteCommand extends Command
@@ -44,27 +44,34 @@ class DatabasesDeleteCommand extends Command
 		if (!$this->askConfirm('<info>Are you sure you want to delete database? (y/N)</info>', $output, $input)) {
 			return 0;
 		}
+		$progressBar = self::getProgressBar(
+			'Deleting database ' . $input->getArgument('database_id'),
+			(empty($input->getOption('json'))) ? $output : new NullOutput()
+		);
 		try {
-			$this->httpHelper->getClient()->request(
+			$response = $this->httpHelper->getClient()->request(
 				'DELETE',
 				sprintf(
 					self::API_ENDPOINT,
 					$input->getArgument('database_id')
 				),
 				[
-					'headers' => $this->httpHelper->getHeaders(),
+					'headers'  => $this->httpHelper->getHeaders(),
+					'progress' => function () use ($progressBar) {
+						$progressBar->advance();
+					},
 				]
 			);
-			if (empty($input->getOption('json'))) {
+			if (!empty($input->getOption('json'))) {
+				$output->writeln($response->getBody()->getContents());
+			} else {
+				$output->write(PHP_EOL);
 				$output->writeln('<info>Database ' . $input->getArgument('database_id') . ' successfully deleted</info>');
 			}
 		} catch (BadResponseException $badResponseException) {
+			$output->write(PHP_EOL);
 			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
-		} catch (InvalidArgumentException $invalidArgumentException) {
-			$output->writeln($invalidArgumentException->getMessage());
-			return 1;
 		}
-
 	}
 }

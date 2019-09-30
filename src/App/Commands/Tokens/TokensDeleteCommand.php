@@ -10,6 +10,7 @@ use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class TokensDeleteCommand extends Command
@@ -43,7 +44,10 @@ class TokensDeleteCommand extends Command
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
-
+		$progressBar = self::getProgressBar(
+			'Deleting token ' . $input->getArgument('token_id'),
+			(empty($input->getOption('json'))) ? $output : new NullOutput()
+		);
 		try {
 			if (!$this->askConfirm('<info>Are you sure you want to token? (y/N)</info>', $output, $input)) {
 				return 0;
@@ -56,16 +60,21 @@ class TokensDeleteCommand extends Command
 				),
 				[
 					'headers' => $this->httpHelper->getHeaders(),
+					'progress'  => function () use ($progressBar) {
+						$progressBar->advance();
+					},
 				]
 			);
 			if (!empty($input->getOption('json'))) {
 				$output->writeln($response->getBody()->getContents());
 			} else {
+				$output->write(PHP_EOL);
 				$output->writeln(
 					'<info>Token ' . $input->getArgument('token_id') . ' deleted</info>'
 				);
 			}
 		} catch (BadResponseException $badResponseException) {
+			$output->write(PHP_EOL);
 			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}

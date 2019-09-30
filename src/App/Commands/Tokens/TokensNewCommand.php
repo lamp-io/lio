@@ -13,6 +13,7 @@ use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class TokensNewCommand extends Command
@@ -43,7 +44,10 @@ class TokensNewCommand extends Command
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
-
+		$progressBar = self::getProgressBar(
+			'Creating token',
+			(empty($input->getOption('json'))) ? $output : new NullOutput()
+		);
 		try {
 			$response = $this->httpHelper->getClient()->request(
 				'POST',
@@ -54,17 +58,22 @@ class TokensNewCommand extends Command
 						$input->getOption('description'),
 						$input->getOption('enable')
 					),
+					'progress'  => function () use ($progressBar) {
+						$progressBar->advance();
+					},
 				]
 			);
 			if (!empty($input->getOption('json'))) {
 				$output->writeln($response->getBody()->getContents());
 			} else {
+				$output->write(PHP_EOL);
 				/** @var Document $document */
 				$document = Parser::parseResponseString($response->getBody()->getContents());
 				$table = $this->getOutputAsTable($document, new Table($output));
 				$table->render();
 			}
 		} catch (BadResponseException $badResponseException) {
+			$output->write(PHP_EOL);
 			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}
