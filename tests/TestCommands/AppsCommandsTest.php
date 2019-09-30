@@ -4,11 +4,11 @@
 namespace Tests\TestCommands;
 
 
-use Console\App\Commands\Apps\AppsDeleteCommand;
-use Console\App\Commands\Apps\AppsDescribeCommand;
-use Console\App\Commands\Apps\AppsListCommand;
-use Console\App\Commands\Apps\AppsNewCommand;
-use Console\App\Commands\Apps\AppsUpdateCommand;
+use Lio\App\Commands\Apps\AppsDeleteCommand;
+use Lio\App\Commands\Apps\AppsDescribeCommand;
+use Lio\App\Commands\Apps\AppsListCommand;
+use Lio\App\Commands\Apps\AppsNewCommand;
+use Lio\App\Commands\Apps\AppsUpdateCommand;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
