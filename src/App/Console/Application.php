@@ -25,17 +25,17 @@ class Application extends BaseApplication
 	];
 
 	/**
-	 * @var ClassLoader
+	 * @var ClassLoader|null
 	 */
 	private $classLoader;
 
 	/**
 	 * Application constructor.
-	 * @param ClassLoader $classLoader
+	 * @param ClassLoader|null $classLoader
 	 * @param string $name
 	 * @param string $version
 	 */
-	public function __construct(ClassLoader $classLoader, string $name = 'UNKNOWN', string $version = 'UNKNOWN')
+	public function __construct(ClassLoader $classLoader = null, string $name = 'UNKNOWN', string $version = 'UNKNOWN')
 	{
 		parent::__construct($name, $version);
 		$this->classLoader = $classLoader;

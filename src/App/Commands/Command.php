@@ -57,14 +57,6 @@ class Command extends BaseCommand
 	}
 
 	/**
-	 *
-	 */
-	protected function configure()
-	{
-		$this->addOption('json', 'j', InputOption::VALUE_NONE, 'Output as a raw json');
-	}
-
-	/**
 	 * @param array $boolOptions
 	 * @return $this
 	 */

@@ -54,8 +54,8 @@ class AppsDeleteCommand extends Command
 				'DELETE',
 				sprintf(self::API_ENDPOINT, $input->getArgument('app_id')),
 				[
-					'headers' => $this->httpHelper->getHeaders(),
-					'progress'  => function () use ($progressBar) {
+					'headers'  => $this->httpHelper->getHeaders(),
+					'progress' => function () use ($progressBar) {
 						$progressBar->advance();
 					},
 				]
@@ -64,7 +64,7 @@ class AppsDeleteCommand extends Command
 				$output->writeln($response->getBody()->getContents());
 			} else {
 				$output->write(PHP_EOL);
-				$output->writeln('Delete Success, for ' . $input->getArgument('app_id'));
+				$output->writeln('<info>Delete Success, for ' . $input->getArgument('app_id') . '</info>');
 			}
 		} catch (BadResponseException $badResponseException) {
 			$output->write(PHP_EOL);
