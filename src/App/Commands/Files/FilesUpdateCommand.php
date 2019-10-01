@@ -31,7 +31,7 @@ class FilesUpdateCommand extends Command
 			->addArgument('file_id', InputArgument::REQUIRED, 'File ID of file to update')
 			->addArgument('file', InputArgument::OPTIONAL, 'Path to a local file; this is uploaded to remote_path', '')
 			->addOption('apache_writable', null, InputOption::VALUE_REQUIRED, 'Allow apache to write to the file ID')
-			->addOption('recursive', 'r', InputOption::VALUE_NONE, 'Recur into directories')
+			->addOption('recursive', 'r', InputOption::VALUE_NONE, 'Recur into directories (works only with --apache_writable)')
 			->setBoolOptions(['apache_writable']);
 	}
 
