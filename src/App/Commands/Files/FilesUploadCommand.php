@@ -9,7 +9,6 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Lio\App\Commands\Command;
 
@@ -50,7 +49,7 @@ class FilesUploadCommand extends Command
 		try {
 			$progressBar = self::getProgressBar(
 				'Uploading ' . $input->getArgument('file'),
-				(empty($input->getOption('json'))) ? $output : new NullOutput()
+				$output
 			);
 			$this->httpHelper->getClient()->request(
 				'POST',

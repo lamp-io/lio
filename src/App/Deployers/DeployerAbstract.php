@@ -347,6 +347,7 @@ abstract class DeployerAbstract implements DeployInterface
 			sprintf(
 				FilesUpdateCommand::API_ENDPOINT,
 				$this->config['app']['id'],
+				$fileId,
 				($recur) ? '?recur=true' : ''
 			),
 			'PATCH',
@@ -376,7 +377,8 @@ abstract class DeployerAbstract implements DeployInterface
 			sprintf(
 				FilesUpdateCommand::API_ENDPOINT,
 				$appId,
-				$fileId
+				$fileId,
+				''
 			),
 			'PATCH',
 			'Updating ' . $fileId,
@@ -597,7 +599,6 @@ abstract class DeployerAbstract implements DeployInterface
 			]));
 	}
 
-
 	/**
 	 * @param string $localFile
 	 * @param string $fileId
@@ -621,6 +622,7 @@ abstract class DeployerAbstract implements DeployInterface
 	/**
 	 * @param string $fileId
 	 * @throws Exception
+	 * @throws GuzzleException
 	 */
 	protected function unarchiveApp(string $fileId)
 	{
@@ -629,19 +631,23 @@ abstract class DeployerAbstract implements DeployInterface
 			return;
 		});
 
-		$appRunsDescribeCommand = $this->application->find(FilesUpdateUnarchiveCommand::getDefaultName());
-		$args = [
-			'command' => FilesUpdateUnarchiveCommand::getDefaultName(),
-			'file_id' => $fileId,
-			'app_id'  => $this->config['app']['id'],
-			'--json'  => true,
-		];
-		if ($appRunsDescribeCommand->run(new ArrayInput($args), $this->consoleOutput) == '0') {
-			$this->consoleOutput->write(PHP_EOL);
-			$this->updateStepToSuccess($step);
-		} else {
-			throw new Exception('Extracting archive failed');
-		}
+		$this->sendRequest(
+			sprintf(
+				FilesUpdateUnarchiveCommand::API_ENDPOINT,
+				$this->config['app']['id'],
+				$fileId,
+				http_build_query(['command' => 'unarchive'])
+			),
+			'PATCH',
+			'Extracting ' . $fileId,
+			json_encode([
+				'data' => [
+					'id'   => $fileId,
+					'type' => 'files',
+				],
+			])
+		);
+		$this->updateStepToSuccess($step);
 	}
 
 	/**
@@ -833,7 +839,8 @@ abstract class DeployerAbstract implements DeployInterface
 			$url = sprintf(
 				FilesUpdateCommand::API_ENDPOINT,
 				$this->config['app']['id'],
-				'public'
+				'public',
+				''
 			);
 			$httpType = 'PATCH';
 		} else {
