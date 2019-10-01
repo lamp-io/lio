@@ -1,8 +1,8 @@
 <?php
 
-namespace Console\App\Deployers;
+namespace Lio\App\Deployers;
 
-use Console\App\Helpers\DeployHelper;
+use Lio\App\Helpers\DeployHelper;
 use Dotenv\Dotenv;
 use Exception;
 use GuzzleHttp\Exception\ClientException;

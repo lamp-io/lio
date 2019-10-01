@@ -1,23 +1,24 @@
 <?php
 
+
 namespace Lio\App\Commands\Files;
+
 
 use Lio\App\Commands\Command;
 use Exception;
-use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;
-use InvalidArgumentException;
+use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class FilesUpdateCommand extends Command
+class FilesNewDirCommand extends Command
 {
-	const API_ENDPOINT = 'https://api.lamp.io/apps/%s/files/%s%s';
+	const API_ENDPOINT = 'https://api.lamp.io/apps/%s/files/';
 
-	protected static $defaultName = 'files:update';
+	protected static $defaultName = 'files:new:dir';
 
 	/**
 	 *
@@ -25,13 +26,11 @@ class FilesUpdateCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('Update file at file_id(file path including file name, relative to app root)')
-			->setHelp('Update files, api reference' . PHP_EOL . 'https://www.lamp.io/api#/files/filesUpdateID')
+		$this->setDescription('Create a directory on your app')
+			->setHelp('Create a directory, api reference' . PHP_EOL . 'https://www.lamp.io/api#/files/filesCreate')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addArgument('file_id', InputArgument::REQUIRED, 'File ID of file to update')
-			->addArgument('file', InputArgument::OPTIONAL, 'Path to a local file; this is uploaded to remote_path', '')
+			->addArgument('file_id', InputArgument::REQUIRED, 'File ID of directory to create')
 			->addOption('apache_writable', null, InputOption::VALUE_REQUIRED, 'Allow apache to write to the file ID')
-			->addOption('recursive', 'r', InputOption::VALUE_NONE, 'Recur into directories (works only with --apache_writable)')
 			->setBoolOptions(['apache_writable']);
 	}
 
@@ -45,29 +44,21 @@ class FilesUpdateCommand extends Command
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
+		$progressBar = self::getProgressBar(
+			'Creating dir ' . $input->getArgument('file_id'),
+			(empty($input->getOption('json'))) ? $output : new NullOutput()
+		);
 		try {
-			if (!empty($input->getArgument('file')) && !file_exists($input->getArgument('file'))) {
-				throw new InvalidArgumentException('File ' . $input->getArgument('file') . ' not exists');
-			}
-			if (!empty($input->getOption('recursive')) && empty($input->getOption('apache_writable'))) {
-				throw new InvalidArgumentException('[--recursive][-r] can be used only in pair with [--apache_writable]');
-			}
-			$progressBar = self::getProgressBar(
-				'Updating ' . $input->getArgument('file_id'),
-				(empty($input->getOption('json'))) ? $output : new NullOutput());
 			$response = $this->httpHelper->getClient()->request(
-				'PATCH',
+				'POST',
 				sprintf(
 					self::API_ENDPOINT,
-					$input->getArgument('app_id'),
-					$input->getArgument('file_id'),
-					!empty($input->getOption('recursive')) ? '?recur=true' : ''
+					$input->getArgument('app_id')
 				),
 				[
 					'headers'  => $this->httpHelper->getHeaders(),
 					'body'     => $this->getRequestBody(
-						$input->getArgument('file'),
-						$input->getArgument('file_id'),
+						trim($input->getArgument('file_id'), '/'),
 						!empty($input->getOption('apache_writable')) && $input->getOption('apache_writable') != 'false'
 					),
 					'progress' => function () use ($progressBar) {
@@ -78,7 +69,7 @@ class FilesUpdateCommand extends Command
 				$output->writeln($response->getBody()->getContents());
 			} else {
 				$output->write(PHP_EOL);
-				$output->writeln('<info>Success, file ' . $input->getArgument('file_id') . ' has been updated</info>');
+				$output->writeln('<info>Success, directory ' . $input->getArgument('file_id') . ' has been created</info>');
 			}
 		} catch (BadResponseException $badResponseException) {
 			$output->write(PHP_EOL);
@@ -88,27 +79,24 @@ class FilesUpdateCommand extends Command
 	}
 
 	/**
-	 * @param string $localFile
-	 * @param string $remoteFile
+	 * @param string $fileId
 	 * @param bool $isApacheWritable
 	 * @return string
 	 */
-	protected function getRequestBody(string $localFile, string $remoteFile, bool $isApacheWritable): string
+	protected function getRequestBody(string $fileId, bool $isApacheWritable): string
 	{
 		$body = [
 			'data' => [
-				'id'         => $remoteFile,
 				'type'       => 'files',
-				'attributes' => [],
+				'id'         => $fileId,
+				'attributes' => [
+					'is_dir' => true,
+				],
 			],
 		];
-		if (!empty($localFile)) {
-			$body['data']['attributes']['contents'] = file_get_contents($localFile);
-		}
 		if (!empty($isApacheWritable)) {
 			$body['data']['attributes']['apache_writable'] = true;
 		}
 		return json_encode($body);
 	}
-
 }

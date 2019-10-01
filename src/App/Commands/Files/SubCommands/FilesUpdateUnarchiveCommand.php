@@ -1,13 +1,14 @@
 <?php
 
-namespace Console\App\Commands\Files\SubCommands;
+namespace Lio\App\Commands\Files\SubCommands;
 
-use Console\App\Commands\Command;
+use Lio\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class FilesUpdateUnarchiveCommand extends Command
@@ -41,8 +42,11 @@ class FilesUpdateUnarchiveCommand extends Command
 	{
 		parent::execute($input, $output);
 		try {
-			$progressBar = self::getProgressBar('Extracting ' . $input->getArgument('file_id'), $output);
-			$this->httpHelper->getClient()->request(
+			$progressBar = self::getProgressBar(
+				'Extracting ' . $input->getArgument('file_id'),
+				(empty($input->getOption('json'))) ? $output : new NullOutput()
+			);
+			$response = $this->httpHelper->getClient()->request(
 				'PATCH',
 				sprintf(
 					self::API_ENDPOINT,
@@ -59,10 +63,14 @@ class FilesUpdateUnarchiveCommand extends Command
 						$progressBar->advance();
 					},
 				]);
-			if (empty($input->getOption('json'))) {
+			if (!empty($input->getOption('json'))) {
+				$output->writeln($response->getBody()->getContents());
+			} else {
+				$output->write(PHP_EOL);
 				$output->writeln('<info>Success, file ' . $input->getArgument('file_id') . ' has been updated</info>');
 			}
 		} catch (BadResponseException $badResponseException) {
+			$output->write(PHP_EOL);
 			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}

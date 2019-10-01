@@ -1,14 +1,15 @@
 <?php
 
 
-namespace Console\App\Commands\AppBackups;
+namespace Lio\App\Commands\AppBackups;
 
-use Console\App\Commands\Command;
+use Lio\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class AppBackupsNewCommand extends Command
@@ -38,18 +39,29 @@ class AppBackupsNewCommand extends Command
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
-
+		$progressBar = self::getProgressBar(
+			'Creating app backup, for app ' . $input->getArgument('app_id'),
+			(empty($input->getOption('json'))) ? $output : new NullOutput()
+		);
 		try {
-			$this->httpHelper->getClient()->request(
+			$response = $this->httpHelper->getClient()->request(
 				'POST',
 				self::API_ENDPOINT,
 				[
 					'headers' => $this->httpHelper->getHeaders(),
 					'body'    => $this->getRequestBody($input->getArgument('app_id')),
+					'progress'  => function () use ($progressBar) {
+						$progressBar->advance();
+					},
 				]
 			);
-			$output->writeln('<info>Backuping app with id ' . $input->getArgument('app_id') . ', started</info>');
+			if (!empty($input->getOption('json'))) {
+				$output->writeln($response->getBody()->getContents());
+			} else {
+				$output->writeln('<info>Backuping app with id ' . $input->getArgument('app_id') . ', started</info>');
+			}
 		} catch (BadResponseException $badResponseException) {
+			$output->write(PHP_EOL);
 			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}

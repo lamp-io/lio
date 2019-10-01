@@ -1,13 +1,14 @@
 <?php
 
-namespace Console\App\Commands\Files\SubCommands;
+namespace Lio\App\Commands\Files\SubCommands;
 
-use Console\App\Commands\Command;
+use Lio\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class FilesUpdateMoveCommand extends Command
@@ -46,7 +47,7 @@ class FilesUpdateMoveCommand extends Command
 		try {
 			$progressBar = self::getProgressBar(
 				'Moving ' . $input->getArgument('file_id') . ' to ' . $input->getArgument('move_path'),
-				$output
+				(empty($input->getOption('json'))) ? $output : new NullOutput()
 			);
 			$response = $this->httpHelper->getClient()->request(
 				'PATCH',
@@ -69,9 +70,11 @@ class FilesUpdateMoveCommand extends Command
 			if (!empty($input->getOption('json'))) {
 				$output->writeln($response->getBody()->getContents());
 			} else {
+				$output->write(PHP_EOL);
 				$output->writeln('<info>Success, file ' . $input->getArgument('file_id') . ' has been moved</info>');
 			}
 		} catch (BadResponseException $badResponseException) {
+			$output->write(PHP_EOL);
 			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}

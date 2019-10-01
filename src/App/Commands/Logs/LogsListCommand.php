@@ -1,11 +1,11 @@
 <?php
 
-namespace Console\App\Commands\Logs;
+namespace Lio\App\Commands\Logs;
 
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\V1\Document;
-use Console\App\Commands\Command;
+use Lio\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;
@@ -13,6 +13,7 @@ use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Helper\TableSeparator;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class LogsListCommand extends Command
@@ -57,6 +58,10 @@ class LogsListCommand extends Command
 		parent::execute($input, $output);
 
 		try {
+			$progressBar = self::getProgressBar(
+				'Getting logs',
+				(empty($input->getOption('json'))) ? $output : new NullOutput()
+			);
 			$response = $this->httpHelper->getClient()->request(
 				'GET',
 				sprintf(
@@ -64,18 +69,23 @@ class LogsListCommand extends Command
 					$this->httpHelper->optionsToQuery($input->getOptions(), self::OPTIONS_TO_QUERY_KEYS)
 				),
 				[
-					'headers' => $this->httpHelper->getHeaders(),
+					'headers'  => $this->httpHelper->getHeaders(),
+					'progress' => function () use ($progressBar) {
+						$progressBar->advance();
+					},
 				]
 			);
 			if (!empty($input->getOption('json'))) {
 				$output->writeln($response->getBody()->getContents());
 			} else {
+				$output->write(PHP_EOL);
 				/** @var Document $document */
 				$document = Parser::parseResponseString($response->getBody()->getContents());
 				$table = $this->getOutputAsTable($document, new Table($output));
 				$table->render();
 			}
 		} catch (BadResponseException $badResponseException) {
+			$output->write(PHP_EOL);
 			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}

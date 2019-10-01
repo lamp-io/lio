@@ -1,16 +1,17 @@
 <?php
 
 
-namespace Console\App\Commands\AppRestores;
+namespace Lio\App\Commands\AppRestores;
 
 
-use Console\App\Commands\Command;
+use Lio\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class AppRestoresDeleteCommand extends Command
@@ -41,11 +42,13 @@ class AppRestoresDeleteCommand extends Command
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
-
 		if (!$this->askConfirm('<info>Are you sure you want to delete an app restore? (y/N)</info>', $output, $input)) {
 			return 0;
 		}
-
+		$progressBar = self::getProgressBar(
+			'Deleting app restore ' . $input->getArgument('app_restore_id'),
+			(empty($input->getOption('json'))) ? $output : new NullOutput()
+		);
 		try {
 			$response = $this->httpHelper->getClient()->request(
 				'DELETE',
@@ -55,17 +58,21 @@ class AppRestoresDeleteCommand extends Command
 				),
 				[
 					'headers' => $this->httpHelper->getHeaders(),
+					'progress'  => function () use ($progressBar) {
+						$progressBar->advance();
+					},
 				]
-
 			);
 			if (!empty($input->getOption('json'))) {
 				$output->writeln($response->getBody()->getContents());
 			} else {
+				$output->write(PHP_EOL);
 				$output->writeln(
 					'<info>App restore deleted ' . $input->getArgument('app_restore_id') . '</info>'
 				);
 			}
 		} catch (BadResponseException $badResponseException) {
+			$output->write(PHP_EOL);
 			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 

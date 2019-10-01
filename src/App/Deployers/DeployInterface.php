@@ -1,6 +1,6 @@
 <?php
 
-namespace Console\App\Deployers;
+namespace Lio\App\Deployers;
 
 interface DeployInterface
 {

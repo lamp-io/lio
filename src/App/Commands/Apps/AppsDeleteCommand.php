@@ -1,15 +1,16 @@
 <?php
 
 
-namespace Console\App\Commands\Apps;
+namespace Lio\App\Commands\Apps;
 
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
-use Console\App\Commands\Command;
+use Lio\App\Commands\Command;
 use GuzzleHttp\Exception\BadResponseException;
 
 class AppsDeleteCommand extends Command
@@ -44,17 +45,29 @@ class AppsDeleteCommand extends Command
 		if (!$this->askConfirm('<info>Are you sure you want to delete app? (y/N)</info>', $output, $input)) {
 			return 0;
 		}
-
+		$progressBar = self::getProgressBar(
+			'Deleting app ' . $input->getArgument('app_id'),
+			(empty($input->getOption('json'))) ? $output : new NullOutput()
+		);
 		try {
-			$this->httpHelper->getClient()->request(
+			$response = $this->httpHelper->getClient()->request(
 				'DELETE',
 				sprintf(self::API_ENDPOINT, $input->getArgument('app_id')),
 				[
-					'headers' => $this->httpHelper->getHeaders(),
+					'headers'  => $this->httpHelper->getHeaders(),
+					'progress' => function () use ($progressBar) {
+						$progressBar->advance();
+					},
 				]
 			);
-			$output->writeln('Delete Success, for ' . $input->getArgument('app_id'));
+			if (!empty($input->getOption('json'))) {
+				$output->writeln($response->getBody()->getContents());
+			} else {
+				$output->write(PHP_EOL);
+				$output->writeln('<info>Delete Success, for ' . $input->getArgument('app_id') . '</info>');
+			}
 		} catch (BadResponseException $badResponseException) {
+			$output->write(PHP_EOL);
 			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}

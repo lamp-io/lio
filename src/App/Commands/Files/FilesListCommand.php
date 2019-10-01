@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Console\App\Commands\Files;
+namespace Lio\App\Commands\Files;
 
 
 use Art4\JsonApiClient\Exception\ValidationException;
@@ -17,7 +17,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
-use Console\App\Commands\Command;
+use Lio\App\Commands\Command;
 
 class FilesListCommand extends Command
 {
@@ -80,8 +80,8 @@ class FilesListCommand extends Command
 		} catch (BadResponseException $badResponseException) {
 			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
-		} catch (ValidationException $validationException) {
-			$output->writeln('<error>' . $validationException->getMessage() . '</error>');
+		} catch (Exception $exception) {
+			$output->writeln('' . $exception->getTraceAsString() . '');
 			return 1;
 		}
 
@@ -104,8 +104,10 @@ class FilesListCommand extends Command
 				$document->get('data.attributes.is_symlink') ? 'is_symlink: true' : 'is_symlink: false',
 				$document->get('data.attributes.is_symlink') ? 'target: ' . $document->get('data.attributes.target') : '',
 			]),
-			wordwrap(trim(preg_replace('/\t/', ' ', $document->get('data.attributes.contents'))), 80, PHP_EOL),
-		]);
+			$document->has('data.attributes.contents') ? wordwrap(trim(
+				preg_replace('/\t/', ' ', $document->get('data.attributes.contents'))
+			), 80, PHP_EOL) : '',
+			]);
 		return $table;
 	}
 
@@ -217,7 +219,12 @@ class FilesListCommand extends Command
 	{
 		$date = date('Y-m-d H:i:s', strtotime($fileAttributes['modify_time']));
 		$size = $isHumanReadable ? $this->formatBytes($fileAttributes['size']) : $fileAttributes['size'];
-		$fileName = $fileAttributes['is_dir'] ? $fileName . '/' : $fileName;
+		if ($fileAttributes['is_dir']) {
+			$fileName = $fileName . '/';
+		} elseif($fileAttributes['is_symlink']) {
+			$fileName = $fileName . ' -> ' . $fileAttributes['target'];
+		}
+		
 		return [
 			'isDir'     => $fileAttributes['is_dir'],
 			'timestamp' => $date,

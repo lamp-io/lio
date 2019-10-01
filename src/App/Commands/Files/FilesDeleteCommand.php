@@ -1,14 +1,15 @@
 <?php
 
-namespace Console\App\Commands\Files;
+namespace Lio\App\Commands\Files;
 
-use Console\App\Commands\Command;
+use Lio\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class FilesDeleteCommand extends Command
@@ -44,15 +45,17 @@ class FilesDeleteCommand extends Command
 		if (!$this->askConfirm('<info>Are you sure you want to file? (y/N)</info>', $output, $input)) {
 			return 0;
 		}
-		$progressBar = self::getProgressBar('Deleting ' . $input->getArgument('file_id'), $output);
+		$progressBar = self::getProgressBar(
+			'Deleting ' . $input->getArgument('file_id'),
+			(empty($input->getOption('json'))) ? $output : new NullOutput()
+		);
 		try {
-			$this->httpHelper->getClient()->request(
+			$response = $this->httpHelper->getClient()->request(
 				'DELETE',
 				sprintf(
 					self::API_ENDPOINT,
 					$input->getArgument('app_id'),
 					ltrim($input->getArgument('file_id'), '/')
-
 				),
 				[
 					'headers'  => [
@@ -63,12 +66,14 @@ class FilesDeleteCommand extends Command
 						$progressBar->advance();
 					},
 				]);
-			$progressBar->finish();
-			$output->write(PHP_EOL);
-			if (empty($input->getOption('json'))) {
+			if (!empty($input->getOption('json'))) {
+				$output->writeln($response->getBody()->getContents());
+			} else {
+				$output->write(PHP_EOL);
 				$output->writeln('<info>Success, ' . $input->getArgument('file_id') . ' has been deleted</info>');
 			}
 		} catch (BadResponseException $badResponseException) {
+			$output->write(PHP_EOL);
 			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}

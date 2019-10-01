@@ -1,10 +1,12 @@
 <?php
 
-namespace Console\App\Commands;
+namespace Lio\App\Commands;
 
-use Console\App\Helpers\AuthHelper;
-use Console\App\Helpers\HttpHelper;
+use Lio\App\Helpers\AuthHelper;
+use Lio\App\Helpers\HttpHelper;
+use Exception;
 use GuzzleHttp\ClientInterface;
+use InvalidArgumentException;
 use Symfony\Component\Console\Command\Command as BaseCommand;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Symfony\Component\Console\Helper\QuestionHelper;
@@ -12,7 +14,6 @@ use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 
@@ -25,6 +26,8 @@ class Command extends BaseCommand
 	protected $httpHelper;
 
 	private $skipAuth;
+
+	protected $boolOptions = [];
 
 	/**
 	 * Command constructor.
@@ -40,19 +43,34 @@ class Command extends BaseCommand
 	}
 
 	/**
-	 *
+	 * @param array $boolOptions
+	 * @param array $option
 	 */
-	protected function configure()
+	protected function validateBoolOptions(array $boolOptions, array $option)
 	{
-		$this->addOption('json', 'j', InputOption::VALUE_NONE, 'Output as a raw json');
+		foreach ($boolOptions as $boolOption) {
+			if (!empty($option[$boolOption]) && !in_array($option[$boolOption], ['true', 'false'])) {
+				throw new InvalidArgumentException(
+					'Value for options: ' . PHP_EOL . implode(', ', $boolOptions) . PHP_EOL . 'Must be true or false');
+			}
+		}
 	}
 
+	/**
+	 * @param array $boolOptions
+	 * @return $this
+	 */
+	protected function setBoolOptions(array $boolOptions)
+	{
+		$this->boolOptions = array_merge($this->boolOptions, $boolOptions);
+		return $this;
+	}
 
 	/**
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
 	 * @return int|null|void
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -62,6 +80,7 @@ class Command extends BaseCommand
 		}
 		$token = AuthHelper::getToken();
 		$this->httpHelper->setHeader('Authorization', 'Bearer ' . $token);
+		$this->validateBoolOptions($this->boolOptions, $input->getOptions());
 	}
 
 	/**
@@ -83,7 +102,7 @@ class Command extends BaseCommand
 	}
 
 	/**
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	protected function callAuthCommand()
 	{

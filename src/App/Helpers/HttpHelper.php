@@ -1,6 +1,6 @@
 <?php
 
-namespace Console\App\Helpers;
+namespace Lio\App\Helpers;
 
 use GuzzleHttp\ClientInterface;
 

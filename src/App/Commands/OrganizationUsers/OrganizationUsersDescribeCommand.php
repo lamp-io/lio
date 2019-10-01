@@ -1,17 +1,18 @@
 <?php
 
-namespace Console\App\Commands\OrganizationUsers;
+namespace Lio\App\Commands\OrganizationUsers;
 
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\V1\Document;
-use Console\App\Commands\Command;
+use Lio\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class OrganizationUsersDescribeCommand extends Command
@@ -44,7 +45,10 @@ class OrganizationUsersDescribeCommand extends Command
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
-
+		$progressBar = self::getProgressBar(
+			'Getting organization/user relationship  ' . $input->getArgument('organization_user_id'),
+			(empty($input->getOption('json'))) ? $output : new NullOutput()
+		);
 		try {
 			$response = $this->httpHelper->getClient()->request(
 				'GET',
@@ -53,18 +57,23 @@ class OrganizationUsersDescribeCommand extends Command
 					$input->getArgument('organization_user_id')
 				),
 				[
-					'headers' => $this->httpHelper->getHeaders(),
+					'headers'  => $this->httpHelper->getHeaders(),
+					'progress' => function () use ($progressBar) {
+						$progressBar->advance();
+					},
 				]
 			);
 			if (!empty($input->getOption('json'))) {
 				$output->writeln($response->getBody()->getContents());
 			} else {
+				$output->write(PHP_EOL);
 				/** @var Document $document */
 				$document = Parser::parseResponseString($response->getBody()->getContents());
 				$table = $this->getOutputAsTable($document, new Table($output));
 				$table->render();
 			}
 		} catch (BadResponseException $badResponseException) {
+			$output->write(PHP_EOL);
 			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}

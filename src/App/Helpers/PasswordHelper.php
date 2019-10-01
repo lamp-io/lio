@@ -1,6 +1,6 @@
 <?php
 
-namespace Console\App\Helpers;
+namespace Lio\App\Helpers;
 
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;

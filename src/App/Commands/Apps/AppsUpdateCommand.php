@@ -1,8 +1,8 @@
 <?php
 
-namespace Console\App\Commands\Apps;
+namespace Lio\App\Commands\Apps;
 
-use Console\App\Commands\Command;
+use Lio\App\Commands\Command;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 use Exception;
@@ -12,6 +12,7 @@ use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
 use GuzzleHttp\Exception\BadResponseException;
@@ -55,9 +56,10 @@ class AppsUpdateCommand extends Command
 			->addOption('github_webhook_secret', null, InputOption::VALUE_REQUIRED, 'Github web-hook secret token', '')
 			->addOption('webhook_run_command', null, InputOption::VALUE_REQUIRED, 'Github web-hook command', '')
 			->addOption('hostname', null, InputOption::VALUE_REQUIRED, 'The hostname for the app', '')
-			->addOption('hostname_certificate_valid', null, InputOption::VALUE_NONE, 'Is hostname certificate valid')
-			->addOption('public', 'p', InputOption::VALUE_NONE, 'Public for read-only')
-			->addOption('delete_protection', null, InputOption::VALUE_NONE, 'When enabled the app can not be deleted');
+			->addOption('hostname_certificate_valid', null, InputOption::VALUE_REQUIRED, 'Is hostname certificate valid')
+			->addOption('public', 'p', InputOption::VALUE_REQUIRED, 'Public for read-only')
+			->addOption('delete_protection', null, InputOption::VALUE_REQUIRED, 'When enabled the app can not be deleted')
+			->setBoolOptions(['delete_protection', 'public', 'hostname_certificate_valid']);
 	}
 
 	/**
@@ -70,7 +72,10 @@ class AppsUpdateCommand extends Command
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
-
+		$progressBar = self::getProgressBar(
+			'Updating app',
+			(empty($input->getOption('json'))) ? $output : new NullOutput()
+		);
 		try {
 			$response = $this->httpHelper->getClient()->request(
 				'PATCH',
@@ -81,17 +86,22 @@ class AppsUpdateCommand extends Command
 				[
 					'headers' => $this->httpHelper->getHeaders(),
 					'body'    => $this->getRequestBody($input),
+					'progress'  => function () use ($progressBar) {
+						$progressBar->advance();
+					},
 				]
 			);
 			if (!empty($input->getOption('json'))) {
 				$output->writeln($response->getBody()->getContents());
 			} else {
+				$output->write(PHP_EOL);
 				/** @var Document $document */
 				$document = Parser::parseResponseString($response->getBody()->getContents());
 				$table = $this->getOutputAsTable($document, new Table($output));
 				$table->render();
 			}
 		} catch (BadResponseException $badResponseException) {
+			$output->write(PHP_EOL);
 			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}
@@ -149,18 +159,16 @@ class AppsUpdateCommand extends Command
 			'github_webhook_secret'      => (string)$input->getOption('github_webhook_secret'),
 			'webhook_run_command'        => (string)$input->getOption('webhook_run_command'),
 			'hostname'                   => (string)$input->getOption('hostname'),
-			'hostname_certificate_valid' => (bool)$input->getOption('hostname_certificate_valid'),
-			'public'                     => (bool)$input->getOption('public'),
-			'delete_protection'          => (bool)$input->getOption('delete_protection'),
+			'hostname_certificate_valid' => $input->getOption('hostname_certificate_valid') == 'true',
+			'public'                     => $input->getOption('public') == 'true',
+			'delete_protection'          => $input->getOption('delete_protection') == 'true',
 		];
-
-		$attributes = array_filter($attributes, function ($value, $key) {
-			if (((int)$value === 0 && in_array($key, self::ALLOW_ZERO_VALUE)) || !empty($value)) {
+		$attributes = array_filter($attributes, function ($value, $key) use ($input) {
+			if ((((int)$value === 0 || !empty($input->getOption($key))) && in_array($key, self::ALLOW_ZERO_VALUE)) || !empty($input->getOption($key))) {
 				return true;
 			}
 			return false;
 		}, ARRAY_FILTER_USE_BOTH);
-
 		if (empty($attributes)) {
 			throw new InvalidArgumentException('Command requires at least one option to be executed.');
 		}

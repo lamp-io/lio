@@ -1,12 +1,12 @@
 <?php
 
-namespace Console\App\Helpers;
+namespace Lio\App\Helpers;
 
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\V1\Document;
-use Console\App\Commands\Files\FilesDeleteCommand;
-use Console\App\Commands\Files\FilesListCommand;
+use Lio\App\Commands\Files\FilesDeleteCommand;
+use Lio\App\Commands\Files\FilesListCommand;
 use Exception;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;

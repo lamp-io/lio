@@ -4,18 +4,18 @@
 namespace Tests\TestCommands;
 
 
-use Console\App\Commands\Apps\AppsDeleteCommand;
-use Console\App\Commands\Apps\AppsDescribeCommand;
-use Console\App\Commands\Apps\AppsListCommand;
-use Console\App\Commands\Apps\AppsNewCommand;
-use Console\App\Commands\Apps\AppsUpdateCommand;
+use Lio\App\Commands\Apps\AppsDeleteCommand;
+use Lio\App\Commands\Apps\AppsDescribeCommand;
+use Lio\App\Commands\Apps\AppsListCommand;
+use Lio\App\Commands\Apps\AppsNewCommand;
+use Lio\App\Commands\Apps\AppsUpdateCommand;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
+use Lio\App\Console\Application;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -135,8 +135,9 @@ class AppsCommandsTest extends TestCase
 				'--github_webhook_secret'      => 'phpunit',
 				'--webhook_run_command'        => 'phpunit',
 				'--hostname'                   => 'phpunit',
-				'--hostname_certificate_valid' => 'phpunit',
-				'--public'                     => true,
+				'--hostname_certificate_valid' => 'true',
+				'--public'                     => 'true',
+				'--delete_protection'          => 'true',
 			]);
 			$status = $commandTester->getStatusCode();
 		} catch (Exception $exception) {
@@ -180,8 +181,9 @@ class AppsCommandsTest extends TestCase
 				'--github_webhook_secret'      => 'phpunit',
 				'--webhook_run_command'        => 'phpunit',
 				'--hostname'                   => 'phpunit',
-				'--hostname_certificate_valid' => 'phpunit',
-				'--public'                     => true,
+				'--hostname_certificate_valid' => 'true',
+				'--public'                     => 'true',
+				'--delete_protection'          => 'true',
 			]);
 			$status = $commandTester->getStatusCode();
 		} catch (Exception $exception) {
