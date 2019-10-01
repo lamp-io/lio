@@ -10,6 +10,7 @@ use InvalidArgumentException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class FilesUpdateCommand extends Command
@@ -51,7 +52,9 @@ class FilesUpdateCommand extends Command
 			if (!empty($input->getOption('recursive')) && empty($input->getOption('apache_writable'))) {
 				throw new InvalidArgumentException('[--recursive][-r] can be used only in pair with [--apache_writable]');
 			}
-			$progressBar = self::getProgressBar('Updating ' . $input->getArgument('file_id'), $output);
+			$progressBar = self::getProgressBar(
+				'Updating ' . $input->getArgument('file_id'),
+				(empty($input->getOption('json'))) ? $output : new NullOutput());
 			$response = $this->httpHelper->getClient()->request(
 				'PATCH',
 				sprintf(
@@ -71,10 +74,10 @@ class FilesUpdateCommand extends Command
 						$progressBar->advance();
 					},
 				]);
-			$output->write(PHP_EOL);
 			if (!empty($input->getOption('json'))) {
 				$output->writeln($response->getBody()->getContents());
 			} else {
+				$output->write(PHP_EOL);
 				$output->writeln('<info>Success, file ' . $input->getArgument('file_id') . ' has been updated</info>');
 			}
 		} catch (BadResponseException $badResponseException) {

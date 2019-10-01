@@ -10,6 +10,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Output\NullOutput;
 
 class FilesNewSymlinkCommand extends Command
 {
@@ -44,7 +45,7 @@ class FilesNewSymlinkCommand extends Command
 		parent::execute($input, $output);
 		$progressBar = self::getProgressBar(
 			'Creating a symlink ' . $input->getArgument('file_id') . ' -> ' . $input->getArgument('target'),
-			$output
+			(empty($input->getOption('json'))) ? $output : new NullOutput()
 		);
 		try {
 			$response = $this->httpHelper->getClient()->request(
@@ -65,10 +66,10 @@ class FilesNewSymlinkCommand extends Command
 					},
 				]);
 			$progressBar->finish();
-			$output->write(PHP_EOL);
 			if (!empty($input->getOption('json'))) {
 				$output->writeln($response->getBody()->getContents());
 			} else {
+				$output->write(PHP_EOL);
 				$output->writeln('<info>Success, symlink ' . $input->getArgument('file_id') . ' has been created</info>');
 			}
 		} catch (BadResponseException $badResponseException) {

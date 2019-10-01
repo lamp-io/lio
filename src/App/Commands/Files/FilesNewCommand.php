@@ -9,6 +9,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class FilesNewCommand extends Command
@@ -45,7 +46,7 @@ class FilesNewCommand extends Command
 		parent::execute($input, $output);
 		$progressBar = self::getProgressBar(
 			'Creating a file ' . $input->getArgument('file_id'),
-			$output
+			(empty($input->getOption('json'))) ? $output : new NullOutput()
 		);
 		try {
 			$response = $this->httpHelper->getClient()->request(
@@ -66,11 +67,11 @@ class FilesNewCommand extends Command
 						$progressBar->advance();
 					},
 				]);
-			$progressBar->finish();
 			$output->write(PHP_EOL);
 			if (!empty($input->getOption('json'))) {
 				$output->writeln($response->getBody()->getContents());
 			} else {
+				$output->write(PHP_EOL);
 				$output->writeln('<info>Success, file ' . $input->getArgument('file_id') . ' has been created</info>');
 			}
 		} catch (BadResponseException $badResponseException) {

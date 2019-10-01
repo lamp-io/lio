@@ -8,6 +8,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class FilesUpdateFetchCommand extends Command
@@ -46,7 +47,10 @@ class FilesUpdateFetchCommand extends Command
 		parent::execute($input, $output);
 		try {
 			$this->subCommand['source'] = $input->getArgument('source');
-			$progressBar = self::getProgressBar('Fetching it', $output);
+			$progressBar = self::getProgressBar(
+				'Fetching it',
+				(empty($input->getOption('json'))) ? $output : new NullOutput()
+			);
 			$response = $this->httpHelper->getClient()->request(
 				'POST',
 				sprintf(
@@ -66,9 +70,11 @@ class FilesUpdateFetchCommand extends Command
 			if (!empty($input->getOption('json'))) {
 				$output->writeln($response->getBody()->getContents());
 			} else {
+				$output->write(PHP_EOL);
 				$output->writeln(PHP_EOL . '<info>Success, file ' . $input->getArgument('file_id') . ' has been filled, with fetched data</info>');
 			}
 		} catch (BadResponseException $badResponseException) {
+			$output->write(PHP_EOL);
 			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}
