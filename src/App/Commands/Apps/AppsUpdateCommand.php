@@ -163,14 +163,12 @@ class AppsUpdateCommand extends Command
 			'public'                     => $input->getOption('public') == 'true',
 			'delete_protection'          => $input->getOption('delete_protection') == 'true',
 		];
-		var_export($attributes);
 		$attributes = array_filter($attributes, function ($value, $key) use ($input) {
 			if (((int)$value === 0 && in_array($key, self::ALLOW_ZERO_VALUE) && !empty($input->getOption($key))) || !empty($input->getOption($key))) {
 				return true;
 			}
 			return false;
 		}, ARRAY_FILTER_USE_BOTH);
-		var_export($attributes);
 		if (empty($attributes)) {
 			throw new InvalidArgumentException('Command requires at least one option to be executed.');
 		}
