@@ -164,7 +164,7 @@ class AppsUpdateCommand extends Command
 			'delete_protection'          => $input->getOption('delete_protection') == 'true',
 		];
 		$attributes = array_filter($attributes, function ($value, $key) use ($input) {
-			if (((int)$value === 0 && in_array($key, self::ALLOW_ZERO_VALUE) && !empty($input->getOption($key))) || !empty($input->getOption($key))) {
+			if ((((int)$value === 0 || !empty($input->getOption($key))) && in_array($key, self::ALLOW_ZERO_VALUE)) || !empty($input->getOption($key))) {
 				return true;
 			}
 			return false;
