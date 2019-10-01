@@ -75,10 +75,12 @@ class FilesDownloadCommand extends Command
 				$isDirectory,
 				$progressBar
 			);
+			$output->write(PHP_EOL);
 			$output->writeln(
 				'<info>File received, ' . rtrim($input->getArgument('dir')) . DIRECTORY_SEPARATOR . $fileName . '</info>'
 			);
 		} catch (BadResponseException $badResponseException) {
+			$output->write(PHP_EOL);
 			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
 		}
