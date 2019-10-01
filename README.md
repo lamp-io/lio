@@ -490,7 +490,24 @@ Commands
 
 ### Files
 
-1. #### files:list <app_id> <file_id> [-l][--limit] [--human-readable] [-r][--recursive]
+1. ### files:new  <app_id> <file_id> [<contents>] [--apache_writable] [--source]
+
+    Create a file on your app
+        
+    Api reference https://www.lamp.io/api#/files/filesCreate
+    
+    Arguments:
+        
+    * `<app_id>` ***(string)*** The ID of the app
+    * `<file_id>` ***(string)*** File ID of a file to create'
+    * `[<contents>]` ***(string)*** File content
+    
+    Options:
+    
+     * `[--source]` ***(string)*** A URL to that will be retrieved for fetch content
+     * `[--apache_writable]` ***(bool)*** Allow apache to write to the file ID
+
+2. #### files:list <app_id> <file_id> [-l][--limit] [--human-readable] [-r][--recursive]
 
     Return files from the root of an app
     
@@ -507,7 +524,7 @@ Commands
     * `[--human-readable]` ***(bool)*** Format size values from raw bytes to human readable format
     * `[-r][--recursive]` ***(bool)*** Command is performed on all files or objects under the specified path
 
-2. #### files:upload <file> <app_id> <file_id>
+3. #### files:upload <file> <app_id> <file_id>
 
     Creates new file
     
@@ -519,7 +536,7 @@ Commands
     * `<app_id>` ***(string)*** The ID of the app
     * `<file_id>` ***(string)*** File ID of file to save
 
-3. #### files:download <app_id> <file_id> <dir>
+4. #### files:download <app_id> <file_id> <dir>
 
     Download files as zip.
     
@@ -531,7 +548,7 @@ Commands
     * `<file_id>` ***(string)*** The ID of the file. The ID is also the file path relative to its app root
     * `<dir>` ***(string)*** Local path for downloaded file (default: current working dir)
 
-4. #### files:update <app_id> [<file_id>] [<local_file>] [-r][--recur] [--command] [--source]
+5. #### files:update <app_id> [<file_id>] [<local_file>] [-r][--recur] [--command] 
 
    Update file at file_id(file path including file name, relative to app root)
    
@@ -539,11 +556,16 @@ Commands
    
    Arguments:
 
-   * `<app_id(string)>` ***(string)***  The ID of the app
-   * `[<file_id>]` ***(string)*** File ID of file to update. If omitted, update app root directory
+   * `<app_id>` ***(string)***  The ID of the app
+   * `<file_id>` ***(string)*** File ID of file to update. If omitted, update app root directory
    * `[<local_file>]` ***(string)***  Path to a local file; this is uploaded to remote_path
+   
+   Options:
+   
+   * `[-r][--recursive]` ***(bool)*** Recur into directories (works only with [--apache_writable] option)
+   * `[--apache_writable]` ***(bool)*** Allow apache to write to the file ID
 
-5. #### files:delete <app_id> <file_id> [--yes][-y]
+6. #### files:delete <app_id> <file_id> [--yes][-y]
 
     Remove file/directory from your app
     
@@ -558,7 +580,9 @@ Commands
 
     * `[--yes][-y]` ***(bool)*** Skip confirm delete question
     
-6. #### files:new:dir
+### Files sub commands:
+
+1. ### files:new:dir <app_id> <file_id> [--apache_writable]
 
     Create a directory on your app
     
@@ -569,7 +593,11 @@ Commands
     * `<app_id>` ***(string)*** The ID of the app
     * `<file_id>` ***(string)*** File ID of directory to create
     
-6. #### files:new:symlink
+    Options:
+    
+    * `[--apache_writable]` ***(bool)*** Allow apache to write to the file ID
+    
+2. ### files:new:symlink <app_id> <file_id> <target> [--apache_writable]
 
     Create a symlink on your app
     
@@ -578,12 +606,14 @@ Commands
     Arguments:
     
     * `<app_id>` ***(string)*** The ID of the app
-    * `<file_id>` ***(string)*** File ID of file to delete
+    * `<file_id>` ***(string)*** File ID of a symlink to create
     * `<target>` ***(string)*** Symlink target file ID
+    
+    Options:
+    
+    * `[--apache_writable]` ***(bool)*** Allow apache to write to the file ID
 
-### Files sub commands:
-
-1. #### files:update:unarchive <app_id> <file_id>
+3. #### files:update:unarchive <app_id> <file_id>
 
     Extract archive file
     
@@ -594,7 +624,7 @@ Commands
     * `<app_id>` ***(string)*** The ID of the app
     * `<file_id>` ***(string)*** File ID of file to unarchive
 
-2. ### files:update:fetch <app_id> <file_id> <source>
+4. ### files:update:fetch <app_id> <file_id> <source>
 
     Fetch file from URL
     
@@ -606,7 +636,7 @@ Commands
     * `<file_id>` ***(string)*** File ID of file to fetch
     * `<source>` ***(string)*** URL to fetch
 
-3. ### files:update:move <app_id> <file_id> <move_path>
+5. ### files:update:move <app_id> <file_id> <move_path>
 
     Move file to another directory
 
