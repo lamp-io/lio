@@ -29,8 +29,8 @@ class AppUpdatesStatusCommand extends Command
 		$this->setDescription('Enable/disable app')
 			->setHelp('Enable/disable app, api reference' . PHP_EOL . 'https://www.lamp.io/api#/apps/appsUpdate')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addOption('enable', null, InputOption::VALUE_NONE, 'Enable your stopped app')
-			->addOption('disable', null, InputOption::VALUE_NONE, 'Disable your running app');
+			->addOption('enable', null, InputOption::VALUE_REQUIRED, 'Enable/disable your stopped app')
+			->setBoolOptions(['enable']);
 	}
 
 	/**
@@ -43,22 +43,11 @@ class AppUpdatesStatusCommand extends Command
 	{
 		parent::execute($input, $output);
 
-		if (empty($input->getOption('enable')) && empty($input->getOption('disable'))) {
-			$output->writeln('<error>You need to specify --enable or --disable to call this app</error>');
+		if (empty($input->getOption('enable'))) {
+			$output->writeln('<error>You need to specify --enable true/false to call this command</error>');
 			return 1;
 		}
-
-		if (!empty($input->getOption('enable'))) {
-			$replicas = 1;
-		} elseif (!empty($input->getOption('disable'))) {
-			$replicas = 0;
-		} elseif (!empty($input->getOption('enable')) && !empty($input->getOption('disable'))) {
-			$output->writeln('<error>You cant use both options --enable and --disable, only one of it</error>');
-			return 1;
-		} else {
-			$output->writeln('<error>You need to specify --enable or --disable to call this app</error>');
-			return 1;
-		}
+		$replicas = $input->getOption('enable') === 'false' ? 0 : 1;
 
 		$appsUpdateCommand = $this->getApplication()->find(AppsUpdateCommand::getDefaultName());
 		$args = [
