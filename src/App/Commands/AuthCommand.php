@@ -48,6 +48,9 @@ class AuthCommand extends Command
 			} else {
 				$question = new Question('Tokens can be generated at https://www.lamp.io/tokens' . PHP_EOL . PHP_EOL . 'Enter token:' . PHP_EOL, '');
 				$question->setValidator(function ($answer) use ($input) {
+					if (empty($answer) && !empty(stream_get_contents(STDIN))) {
+						return trim(stream_get_contents(STDIN));
+					}
 					if (!empty($input->getOption('no-interaction'))) {
 						throw new RuntimeException(
 							'[--update_token][-u] Works only on interaction mode, you can set token directly using [--token][-t]'

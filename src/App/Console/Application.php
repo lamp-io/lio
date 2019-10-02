@@ -64,7 +64,10 @@ class Application extends BaseApplication
 	protected function getDefaultInputDefinition()
 	{
 		$inputDefinition = parent::getDefaultInputDefinition();
-		$inputDefinition->addOption(new InputOption('json', 'j', InputOption::VALUE_NONE, 'Output as a raw json'));
+		$inputDefinition->addOptions([
+			new InputOption('json', 'j', InputOption::VALUE_NONE, 'Output as a raw json'),
+			new InputOption('--quiet', '-q', InputOption::VALUE_NONE, 'No output'),
+		]);
 
 		return $inputDefinition;
 	}

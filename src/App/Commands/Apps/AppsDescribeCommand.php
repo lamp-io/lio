@@ -84,18 +84,18 @@ class AppsDescribeCommand extends Command
 	{
 		$table->setHeaderTitle('App Describe');
 		$table->setHeaders([
-			'Name', 'Hostname', 'Description', 'Status', 'VCPU', 'Memory', 'Replicas', 'Certificate valid', 'Public',
+			'Name', 'Hostname', 'Hostname Certificate Valid', 'Description', 'Status', 'VCPU', 'Memory', 'Replicas', 'Public', 'Delete Protection'
 		]);
-		$hostNameCert = $document->has('data.attributes.hostname_certificate_valid') && $document->get('data.attributes.hostname_certificate_valid') ? 'true' : 'false';
+		$hostNameCert = $document->has('data.attributes.hostname_certificate_valid') && $document->get('data.attributes.hostname_certificate_valid') ? 'true' : '';
 		$table->addRow([
 			$document->get('data.id'),
 			$document->get('data.attributes.hostname'),
+			$hostNameCert,
 			$document->get('data.attributes.description'),
 			$document->get('data.attributes.status'),
 			$document->get('data.attributes.vcpu'),
 			$document->get('data.attributes.memory'),
 			$document->get('data.attributes.replicas'),
-			$hostNameCert,
 			$document->get('data.attributes.public') ? 'true' : 'false',
 			$document->get('data.attributes.delete_protection') ? 'true' : 'false',
 		]);

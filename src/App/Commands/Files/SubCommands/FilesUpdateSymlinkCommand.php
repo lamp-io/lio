@@ -1,22 +1,24 @@
 <?php
 
+
 namespace Lio\App\Commands\Files\SubCommands;
 
-use Lio\App\Commands\Command;
+
 use Exception;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;
+use Lio\App\Commands\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class FilesNewCommand extends Command
+class FilesUpdateSymlinkCommand extends Command
 {
-	const API_ENDPOINT = 'https://api.lamp.io/apps/%s/files/%s';
+	const API_ENDPOINT = 'https://api.lamp.io/apps/%s/files/';
 
-	protected static $defaultName = 'files:new';
+	protected static $defaultName = 'files:update:symlink';
 
 	/**
 	 *
@@ -24,13 +26,12 @@ class FilesNewCommand extends Command
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('Create a file on your app')
-			->setHelp('Create a file, api reference' . PHP_EOL . 'https://www.lamp.io/api#/files/filesCreate')
+		$this->setDescription('Update a symlink on your app')
+			->setHelp('Create a symlink, api reference' . PHP_EOL . 'https://www.lamp.io/api#/files/filesUpdate')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addArgument('file_id', InputArgument::REQUIRED, 'File ID of a file to create')
-			->addArgument('contents', InputArgument::OPTIONAL, 'File content', '')
+			->addArgument('file_id', InputArgument::REQUIRED, 'File ID of a symlink to update')
+			->addArgument('target', InputArgument::REQUIRED, 'Symlink target file ID')
 			->addOption('apache_writable', null, InputOption::VALUE_REQUIRED, 'Allow apache to write to the file ID')
-			->addOption('source', null, InputOption::VALUE_REQUIRED, 'A URL to that will be retrieved for fetch content')
 			->setBoolOptions(['apache_writable']);
 	}
 
@@ -45,33 +46,33 @@ class FilesNewCommand extends Command
 	{
 		parent::execute($input, $output);
 		$progressBar = self::getProgressBar(
-			'Creating a file ' . $input->getArgument('file_id'),
+			'Updating a symlink ' . $input->getArgument('file_id') . ' -> ' . $input->getArgument('target'),
 			(empty($input->getOption('json'))) ? $output : new NullOutput()
 		);
 		try {
 			$response = $this->httpHelper->getClient()->request(
-				'POST',
+				'PATCH',
 				sprintf(
 					self::API_ENDPOINT,
-					$input->getArgument('app_id'),
-					!empty($input->getOption('source')) ? '?command=fetch&source=' . $input->getOption('source') : ''
+					$input->getArgument('app_id')
 				),
 				[
 					'headers'  => $this->httpHelper->getHeaders(),
 					'body'     => $this->getRequestBody(
 						trim($input->getArgument('file_id'), '/'),
-						$input->getArgument('contents'),
+						trim($input->getArgument('target'), '/'),
 						!empty($input->getOption('apache_writable')) && $input->getOption('apache_writable') != 'false'
 					),
 					'progress' => function () use ($progressBar) {
 						$progressBar->advance();
 					},
 				]);
+			$progressBar->finish();
 			if (!empty($input->getOption('json'))) {
 				$output->writeln($response->getBody()->getContents());
 			} else {
 				$output->write(PHP_EOL);
-				$output->writeln('<info>Success, file ' . $input->getArgument('file_id') . ' has been created</info>');
+				$output->writeln('<info>Success, symlink ' . $input->getArgument('file_id') . ' has been updated</info>');
 			}
 		} catch (BadResponseException $badResponseException) {
 			$output->write(PHP_EOL);
@@ -82,18 +83,19 @@ class FilesNewCommand extends Command
 
 	/**
 	 * @param string $fileId
-	 * @param string $content
-	 * @param bool $isApacheWritable
+	 * @param string $target
+	 *  @param bool $isApacheWritable
 	 * @return string
 	 */
-	protected function getRequestBody(string $fileId, string $content, bool $isApacheWritable): string
+	protected function getRequestBody(string $fileId, string $target, bool $isApacheWritable): string
 	{
 		$body = [
 			'data' => [
 				'type'       => 'files',
 				'id'         => $fileId,
 				'attributes' => [
-					'contents' => $content,
+					'is_symlink' => true,
+					'target'     => $target,
 				],
 			],
 		];
