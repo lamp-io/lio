@@ -612,8 +612,24 @@ Commands
     Options:
     
     * `[--apache_writable]` ***(bool)*** Allow apache to write to the file ID
+    
+3. ### files:update:symlink <app_id> <file_id> <target> [--apache_writable]
+   
+   Update a symlink on your app
+   
+   Api reference https://www.lamp.io/api#/files/filesUpdate
+   
+   Arguments:
+   
+   * `<app_id>` ***(string)*** The ID of the app
+   * `<file_id>` ***(string)*** File ID of a symlink to update
+   * `<target>` ***(string)*** Symlink target file ID
+   
+   Options:
+   
+   * `[--apache_writable]` ***(bool)*** Allow apache to write to the file ID
 
-3. #### files:update:unarchive <app_id> <file_id>
+4. #### files:update:unarchive <app_id> <file_id>
 
     Extract archive file
     
@@ -624,7 +640,7 @@ Commands
     * `<app_id>` ***(string)*** The ID of the app
     * `<file_id>` ***(string)*** File ID of file to unarchive
 
-4. ### files:update:fetch <app_id> <file_id> <source>
+5. ### files:update:fetch <app_id> <file_id> <source>
 
     Fetch file from URL
     
@@ -636,7 +652,7 @@ Commands
     * `<file_id>` ***(string)*** File ID of file to fetch
     * `<source>` ***(string)*** URL to fetch
 
-5. ### files:update:move <app_id> <file_id> <move_path>
+6. ### files:update:move <app_id> <file_id> <move_path>
 
     Move file to another directory
 
