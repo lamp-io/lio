@@ -5,7 +5,7 @@ namespace Lio\App\Commands\Apps\SubCommands;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 use Lio\App\Commands\Apps\AppsUpdateCommand;
-use Lio\App\Commands\Command;
+use Lio\App\Console\Command;
 use Exception;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputArgument;

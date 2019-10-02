@@ -1,6 +1,6 @@
 <?php
 
-namespace Lio\App\Commands;
+namespace Lio\App\Console;
 
 use Lio\App\Helpers\AuthHelper;
 use Lio\App\Helpers\HttpHelper;
@@ -16,6 +16,7 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
+use Lio\App\Commands\AuthCommand;
 
 class Command extends BaseCommand
 {

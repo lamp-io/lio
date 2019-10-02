@@ -7,7 +7,7 @@ namespace Lio\App\Commands\Databases;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\V1\Document;
-use Lio\App\Commands\Command;
+use Lio\App\Console\Command;
 use Lio\App\Helpers\PasswordHelper;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;

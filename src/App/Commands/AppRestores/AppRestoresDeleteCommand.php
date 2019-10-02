@@ -4,7 +4,7 @@
 namespace Lio\App\Commands\AppRestores;
 
 
-use Lio\App\Commands\Command;
+use Lio\App\Console\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;

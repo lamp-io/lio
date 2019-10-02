@@ -11,7 +11,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Art4\JsonApiClient\Helper\Parser;
 use GuzzleHttp\Exception\GuzzleException;
-use Lio\App\Commands\Command;
+use Lio\App\Console\Command;
 use Symfony\Component\Console\Output\NullOutput;
 
 class AppsDescribeCommand extends Command

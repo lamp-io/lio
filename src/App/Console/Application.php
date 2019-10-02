@@ -6,7 +6,6 @@ namespace Lio\App\Console;
 use Composer\Autoload\ClassLoader;
 use GuzzleHttp\Client;
 use Lio\App\Commands\AuthCommand;
-use Lio\App\Commands\Command;
 use Lio\App\Commands\SelfUpdateCommand;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
@@ -16,10 +15,6 @@ use Throwable;
 
 class Application extends BaseApplication
 {
-	const SKIP_COMMANDS = [
-		Command::class,
-	];
-
 	const NO_HTTP_CLIENT_COMMANDS = [
 		SelfUpdateCommand::class, AuthCommand::class,
 	];
@@ -91,9 +86,6 @@ class Application extends BaseApplication
 	{
 		$commands = [];
 		foreach ($commandsList as $namespace) {
-			if (in_array($namespace, self::SKIP_COMMANDS)) {
-				continue;
-			}
 			if (in_array($namespace, self::NO_HTTP_CLIENT_COMMANDS)) {
 				$commands[] = new $namespace();
 			} else {

@@ -2,7 +2,7 @@
 
 namespace Lio\App\Commands\Deploy;
 
-use Lio\App\Commands\Command;
+use Lio\App\Console\Command;
 use Lio\App\Helpers\DeployHelper;
 use Exception;
 use Symfony\Component\Console\Helper\Table;

@@ -10,7 +10,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\OutputInterface;
-use Lio\App\Commands\Command;
+use Lio\App\Console\Command;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 

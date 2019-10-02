@@ -2,6 +2,7 @@
 
 namespace Lio\App\Commands;
 
+use Lio\App\Console\Command;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\V1\Document;

@@ -7,7 +7,7 @@ namespace Lio\App\Commands\Files\SubCommands;
 use Exception;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;
-use Lio\App\Commands\Command;
+use Lio\App\Console\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;

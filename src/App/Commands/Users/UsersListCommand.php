@@ -2,7 +2,7 @@
 
 namespace Lio\App\Commands\Users;
 
-use Lio\App\Commands\Command;
+use Lio\App\Console\Command;
 use Art4\JsonApiClient\V1\Document;
 use Exception;
 use GuzzleHttp\Exception\BadResponseException;

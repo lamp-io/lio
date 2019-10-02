@@ -4,7 +4,7 @@
 namespace Lio\App\Commands\Files;
 
 
-use Lio\App\Commands\Command;
+use Lio\App\Console\Command;
 use Exception;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;

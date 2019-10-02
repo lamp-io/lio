@@ -6,7 +6,7 @@ use Closure;
 use Lio\App\Commands\AppRuns\AppRunsDescribeCommand;
 use Lio\App\Commands\AppRuns\AppRunsNewCommand;
 use Lio\App\Commands\Apps\AppsDescribeCommand;
-use Lio\App\Commands\Command;
+use Lio\App\Console\Command;
 use Lio\App\Commands\Databases\DatabasesDescribeCommand;
 use Lio\App\Commands\DbBackups\DbBackupsDescribeCommand;
 use Lio\App\Commands\DbBackups\DbBackupsNewCommand;

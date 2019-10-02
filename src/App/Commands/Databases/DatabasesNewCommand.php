@@ -2,7 +2,7 @@
 
 namespace Lio\App\Commands\Databases;
 
-use Lio\App\Commands\Command;
+use Lio\App\Console\Command;
 use Lio\App\Helpers\PasswordHelper;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;

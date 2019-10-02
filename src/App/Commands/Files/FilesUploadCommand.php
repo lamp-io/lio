@@ -10,7 +10,7 @@ use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Lio\App\Commands\Command;
+use Lio\App\Console\Command;
 
 class FilesUploadCommand extends Command
 {

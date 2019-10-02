@@ -2,7 +2,7 @@
 
 namespace Lio\App\Commands\Apps;
 
-use Lio\App\Commands\Command;
+use Lio\App\Console\Command;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 use Exception;

@@ -17,7 +17,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
-use Lio\App\Commands\Command;
+use Lio\App\Console\Command;
 
 class FilesListCommand extends Command
 {

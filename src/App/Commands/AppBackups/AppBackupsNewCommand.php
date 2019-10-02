@@ -3,7 +3,7 @@
 
 namespace Lio\App\Commands\AppBackups;
 
-use Lio\App\Commands\Command;
+use Lio\App\Console\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;
