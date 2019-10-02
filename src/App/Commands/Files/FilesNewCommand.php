@@ -67,7 +67,6 @@ class FilesNewCommand extends Command
 						$progressBar->advance();
 					},
 				]);
-			$output->write(PHP_EOL);
 			if (!empty($input->getOption('json'))) {
 				$output->writeln($response->getBody()->getContents());
 			} else {
