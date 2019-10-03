@@ -40,7 +40,7 @@ class AppsListCommand extends AbstractListCommand
 		$serializer = new ArraySerializer(['recursive' => true]);
 		$serializedDocument = $serializer->serialize($document);
 		$table = $this->getTableOutput(
-			$serializedDocument,
+			$serializedDocument['data'],
 			$document,
 			'Apps',
 			[
