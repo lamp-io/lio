@@ -2,16 +2,15 @@
 
 namespace Lio\App\Commands\DbBackups;
 
-use Lio\App\Console\Command;
-use Exception;
-use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\BadResponseException;
+use Art4\JsonApiClient\Document;
+use Art4\JsonApiClient\Helper\Parser;
+use Lio\App\AbstractCommands\AbstractNewCommand;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class DbBackupsNewCommand extends Command
+class DbBackupsNewCommand extends AbstractNewCommand
 {
 	protected static $defaultName = 'db_backups:new';
 
@@ -25,58 +24,35 @@ class DbBackupsNewCommand extends Command
 		parent::configure();
 		$this->setDescription('Back up database')
 			->setHelp('Backup database, api reference' . PHP_EOL . 'https://www.lamp.io/api#/db_backups/dbBackupsCreate')
-			->addArgument('database_id', InputArgument::REQUIRED, 'The id of database');
+			->addArgument('database_id', InputArgument::REQUIRED, 'The id of database')
+			->setApiEndpoint(self::API_ENDPOINT);
 	}
+
+	/**
+	 * @param ResponseInterface $response
+	 * @param OutputInterface $output
+	 */
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output)
+	{
+		/** @var Document $document */
+		$document = Parser::parseResponseString($response->getBody()->getContents());
+		$output->writeln(
+			'<info>Backuping database, with id' . $document->get('data.attributes.database_id') . 'started' . PHP_EOL .
+			'Backup id: ' . $document->get('data.id') . '</info>'
+		);
+	}
+
 
 	/**
 	 * @param InputInterface $input
-	 * @param OutputInterface $output
-	 * @return int|void|null
-	 * @throws Exception
-	 * @throws GuzzleException
-	 */
-	protected function execute(InputInterface $input, OutputInterface $output)
-	{
-		parent::execute($input, $output);
-		$progressBar = self::getProgressBar(
-			'Creating database backup',
-			(empty($input->getOption('json'))) ? $output : new NullOutput()
-		);
-		try {
-			$response = $this->httpHelper->getClient()->request(
-				'POST',
-				self::API_ENDPOINT,
-				[
-					'headers'  => $this->httpHelper->getHeaders(),
-					'body'     => $this->getRequestBody($input->getArgument('database_id')),
-					'progress' => function () use ($progressBar) {
-						$progressBar->advance();
-					},
-				]
-			);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$output->write(PHP_EOL);
-				$output->writeln('<info>Backuping database with id ' . $input->getArgument('database_id') . ', started</info>');
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->write(PHP_EOL);
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		}
-	}
-
-	/**
-	 * @param string $dbId
 	 * @return string
 	 */
-	protected function getRequestBody(string $dbId): string
+	protected function getRequestBody(InputInterface $input): string
 	{
 		return json_encode([
 			'data' => [
 				'attributes' => [
-					'database_id' => $dbId,
+					'database_id' => $input->getArgument('database_id'),
 				],
 				'type'       => 'db_backups',
 			],

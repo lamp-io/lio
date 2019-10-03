@@ -4,17 +4,18 @@
 namespace Lio\App\Commands\Files;
 
 
-use Lio\App\Console\Command;
+use Art4\JsonApiClient\Helper\Parser;
+use Art4\JsonApiClient\V1\Document;
+use Lio\App\AbstractCommands\AbstractNewCommand;
 use Exception;
-use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class FilesNewDirCommand extends Command
+class FilesNewDirCommand extends AbstractNewCommand
 {
 	const API_ENDPOINT = 'https://api.lamp.io/apps/%s/files/';
 
@@ -43,58 +44,36 @@ class FilesNewDirCommand extends Command
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
+		$this->setApiEndpoint(sprintf(
+			self::API_ENDPOINT,
+			$input->getArgument('app_id')
+		));
 		parent::execute($input, $output);
-		$progressBar = self::getProgressBar(
-			'Creating dir ' . $input->getArgument('file_id'),
-			(empty($input->getOption('json'))) ? $output : new NullOutput()
-		);
-		try {
-			$response = $this->httpHelper->getClient()->request(
-				'POST',
-				sprintf(
-					self::API_ENDPOINT,
-					$input->getArgument('app_id')
-				),
-				[
-					'headers'  => $this->httpHelper->getHeaders(),
-					'body'     => $this->getRequestBody(
-						trim($input->getArgument('file_id'), '/'),
-						!empty($input->getOption('apache_writable')) && $input->getOption('apache_writable') != 'false'
-					),
-					'progress' => function () use ($progressBar) {
-						$progressBar->advance();
-					},
-				]);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$output->write(PHP_EOL);
-				$output->writeln('<info>Success, directory ' . $input->getArgument('file_id') . ' has been created</info>');
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->write(PHP_EOL);
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		}
+	}
+
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output): string
+	{
+		/** @var Document $document */
+		$document = Parser::parseResponseString($response->getBody()->getContents());
+		return 'Success, directory ' . $document->get('data.id') . ' has been created';
 	}
 
 	/**
-	 * @param string $fileId
-	 * @param bool $isApacheWritable
+	 * @param InputInterface $input
 	 * @return string
 	 */
-	protected function getRequestBody(string $fileId, bool $isApacheWritable): string
+	protected function getRequestBody(InputInterface $input): string
 	{
 		$body = [
 			'data' => [
 				'type'       => 'files',
-				'id'         => $fileId,
+				'id'         => $input->getArgument('file_id'),
 				'attributes' => [
 					'is_dir' => true,
 				],
 			],
 		];
-		if (!empty($isApacheWritable)) {
+		if (!empty($input->getOption('apache_writable')) && $input->getOption('apache_writable') != 'false') {
 			$body['data']['attributes']['apache_writable'] = true;
 		}
 		return json_encode($body);

@@ -2,17 +2,18 @@
 
 namespace Lio\App\Commands\Files\SubCommands;
 
-use Lio\App\Console\Command;
+use Art4\JsonApiClient\Helper\Parser;
+use Art4\JsonApiClient\V1\Document;
+use Lio\App\AbstractCommands\AbstractNewCommand;
 use Exception;
-use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class FilesNewCommand extends Command
+class FilesNewCommand extends AbstractNewCommand
 {
 	const API_ENDPOINT = 'https://api.lamp.io/apps/%s/files/%s';
 
@@ -43,61 +44,43 @@ class FilesNewCommand extends Command
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
+		$this->setApiEndpoint(sprintf(
+			self::API_ENDPOINT,
+			$input->getArgument('app_id'),
+			!empty($input->getOption('source')) ? '?command=fetch&source=' . $input->getOption('source') : ''
+		));
 		parent::execute($input, $output);
-		$progressBar = self::getProgressBar(
-			'Creating a file ' . $input->getArgument('file_id'),
-			(empty($input->getOption('json'))) ? $output : new NullOutput()
-		);
-		try {
-			$response = $this->httpHelper->getClient()->request(
-				'POST',
-				sprintf(
-					self::API_ENDPOINT,
-					$input->getArgument('app_id'),
-					!empty($input->getOption('source')) ? '?command=fetch&source=' . $input->getOption('source') : ''
-				),
-				[
-					'headers'  => $this->httpHelper->getHeaders(),
-					'body'     => $this->getRequestBody(
-						trim($input->getArgument('file_id'), '/'),
-						$input->getArgument('contents'),
-						!empty($input->getOption('apache_writable')) && $input->getOption('apache_writable') != 'false'
-					),
-					'progress' => function () use ($progressBar) {
-						$progressBar->advance();
-					},
-				]);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$output->write(PHP_EOL);
-				$output->writeln('<info>Success, file ' . $input->getArgument('file_id') . ' has been created</info>');
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->write(PHP_EOL);
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		}
 	}
 
 	/**
-	 * @param string $fileId
-	 * @param string $content
-	 * @param bool $isApacheWritable
+	 * @param ResponseInterface $response
+	 * @param OutputInterface $output
+	 */
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output)
+	{
+		/** @var Document $document */
+		$document = Parser::parseResponseString($response->getBody()->getContents());
+		$output->writeln('<info>Success, file ' . $document->get('data.id') . ' has been created</info>');
+	}
+
+
+	/**
+	 * @param InputInterface $input
 	 * @return string
 	 */
-	protected function getRequestBody(string $fileId, string $content, bool $isApacheWritable): string
+	protected function getRequestBody(InputInterface $input): string
 	{
 		$body = [
 			'data' => [
 				'type'       => 'files',
-				'id'         => $fileId,
+				'id'         => $input->getArgument('file_id'),
 				'attributes' => [
-					'contents' => $content,
+					'contents' => $input->getArgument('contents'),
 				],
 			],
 		];
-		if (!empty($isApacheWritable)) {
+
+		if (!empty($input->getOption('apache_writable')) && $input->getOption('apache_writable') != 'false') {
 			$body['data']['attributes']['apache_writable'] = true;
 		}
 		return json_encode($body);

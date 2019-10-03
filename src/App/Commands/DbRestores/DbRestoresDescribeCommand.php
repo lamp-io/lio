@@ -83,7 +83,6 @@ class DbRestoresDescribeCommand extends Command
 	 * @param Application $application
 	 * @return bool
 	 * @throws Exception
-	 * @throws GuzzleException
 	 */
 	public static function isDbRestoreCompleted(string $dbRestoreId, Application $application): bool
 	{
