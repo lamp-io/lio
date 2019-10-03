@@ -2,23 +2,22 @@
 
 namespace Lio\App\Commands\Databases;
 
-use Lio\App\Console\Command;
+use Lio\App\AbstractCommands\AbstractNewCommand;
 use Lio\App\Helpers\PasswordHelper;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\BadResponseException;
 use InvalidArgumentException;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Art4\JsonApiClient\V1\Document;
 use Symfony\Component\Console\Helper\Table;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\Helper\Parser;
 
-class DatabasesNewCommand extends Command
+class DatabasesNewCommand extends AbstractNewCommand
 {
 	protected static $defaultName = 'databases:new';
 
@@ -51,7 +50,8 @@ class DatabasesNewCommand extends Command
 			->addOption('ssd', null, InputOption::VALUE_REQUIRED, 'Size of ssd storage, default 1Gi', '1Gi')
 			->addOption('vcpu', null, InputOption::VALUE_REQUIRED, 'The number of virtual cpu cores available, default 0.25', '0.25')
 			->addOption('delete_protection', null, InputOption::VALUE_REQUIRED, 'When enabled the database can not be deleted')
-			->setBoolOptions(['delete_protection']);
+			->setBoolOptions(['delete_protection'])
+			->setApiEndpoint(self::API_ENDPOINT);
 	}
 
 	/**
@@ -63,48 +63,26 @@ class DatabasesNewCommand extends Command
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
-		parent::execute($input, $output);
-
 		if ($this->isPassWordOptionExist($input)) {
 			$this->password = $this->handlePasswordOption($input, $output);
 		}
-		$progressBar = self::getProgressBar(
-			'Creating database',
-			(empty($input->getOption('json'))) ? $output : new NullOutput()
-		);
-		try {
-			$response = $this->httpHelper->getClient()->request(
-				'POST',
-				self::API_ENDPOINT,
-				[
-					'headers' => $this->httpHelper->getHeaders(),
-					'body'    => $this->getRequestBody($input),
-					'progress'  => function () use ($progressBar) {
-						$progressBar->advance();
-					},
-				]
+		parent::execute($input, $output);
+	}
+
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output)
+	{
+		/** @var Document $document */
+		$document = Parser::parseResponseString($response->getBody()->getContents());
+		$table = $this->getOutputAsTable($document, new Table($output));
+		$table->render();
+		if (empty($this->password)) {
+			$password = $document->get('data.attributes.mysql_root_password');
+			$output->writeln(
+				'<warning>Database password: ' . $password . '</warning>' . PHP_EOL . '<warning>WARNING: This is the last opportunity to see this password!</warning>'
 			);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$output->write(PHP_EOL);
-				/** @var Document $document */
-				$document = Parser::parseResponseString($response->getBody()->getContents());
-				$table = $this->getOutputAsTable($document, new Table($output));
-				$table->render();
-				if (empty($this->password)) {
-					$password = $document->get('data.attributes.mysql_root_password');
-					$output->writeln(
-						'<warning>Database password: ' . $password . '</warning>' . PHP_EOL . '<warning>WARNING: This is the last opportunity to see this password!</warning>'
-					);
-				}
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->write(PHP_EOL);
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
 		}
 	}
+
 
 	/**
 	 * @param InputInterface $input
