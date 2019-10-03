@@ -3,16 +3,15 @@
 
 namespace Lio\App\Commands\AppRuns;
 
-use Lio\App\Console\Command;
+use Lio\App\AbstractCommands\AbstractDeleteCommand;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\BadResponseException;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class AppRunsDeleteCommand extends Command
+class AppRunsDeleteCommand extends AbstractDeleteCommand
 {
 	const API_ENDPOINT = 'https://api.lamp.io/app_runs/%s';
 
@@ -38,35 +37,21 @@ class AppRunsDeleteCommand extends Command
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
+		$this->setApiEndpoint(sprintf(
+			self::API_ENDPOINT,
+			$input->getArgument('app_run_id')
+		));
 		parent::execute($input, $output);
-		$progressBar = self::getProgressBar(
-			'Deleting app run ' . $input->getArgument('app_run_id'),
-			(empty($input->getOption('json'))) ? $output : new NullOutput()
-		);
-		try {
-			$response = $this->httpHelper->getClient()->request(
-				'DELETE',
-				sprintf(
-					self::API_ENDPOINT,
-					$input->getArgument('app_run_id')
-				),
-				[
-					'headers' => $this->httpHelper->getHeaders(),
-					'progress'  => function () use ($progressBar) {
-						$progressBar->advance();
-					},
-				]
-			);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$output->write(PHP_EOL);
-				$output->writeln('<info>Command with id . ' . $input->getArgument('app_run_id') . ' successfully deleted</info>');
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->write(PHP_EOL);
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		}
+	}
+
+	/**
+	 * @param ResponseInterface $response
+	 * @param OutputInterface $output
+	 * @param InputInterface $input
+	 * @return void|null
+	 */
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output, InputInterface $input)
+	{
+		$output->writeln('<info>App run with id ' . $input->getArgument('app_run_id') . ' has been deleted</info>');
 	}
 }

@@ -3,17 +3,15 @@
 
 namespace Lio\App\Commands\Databases;
 
-use Lio\App\Console\Command;
+use Lio\App\AbstractCommands\AbstractDeleteCommand;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\BadResponseException;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class DatabasesDeleteCommand extends Command
+class DatabasesDeleteCommand extends AbstractDeleteCommand
 {
 	protected static $defaultName = 'databases:delete';
 
@@ -27,8 +25,7 @@ class DatabasesDeleteCommand extends Command
 		parent::configure();
 		$this->setDescription('Delete a database')
 			->setHelp('Delete a database, api reference' . PHP_EOL . 'https://www.lamp.io/api#/databases/databasesDelete')
-			->addArgument('database_id', InputArgument::REQUIRED, 'The id of database')
-			->addOption('yes', 'y', InputOption::VALUE_NONE, 'Skip confirm delete question');
+			->addArgument('database_id', InputArgument::REQUIRED, 'The id of database');
 	}
 
 	/**
@@ -40,38 +37,23 @@ class DatabasesDeleteCommand extends Command
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
+		$this->setApiEndpoint(sprintf(
+			self::API_ENDPOINT,
+			$input->getArgument('database_id')
+		));
 		parent::execute($input, $output);
-		if (!$this->askConfirm('<info>Are you sure you want to delete database? (y/N)</info>', $output, $input)) {
-			return 0;
-		}
-		$progressBar = self::getProgressBar(
-			'Deleting database ' . $input->getArgument('database_id'),
-			(empty($input->getOption('json'))) ? $output : new NullOutput()
-		);
-		try {
-			$response = $this->httpHelper->getClient()->request(
-				'DELETE',
-				sprintf(
-					self::API_ENDPOINT,
-					$input->getArgument('database_id')
-				),
-				[
-					'headers'  => $this->httpHelper->getHeaders(),
-					'progress' => function () use ($progressBar) {
-						$progressBar->advance();
-					},
-				]
-			);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$output->write(PHP_EOL);
-				$output->writeln('<info>Database ' . $input->getArgument('database_id') . ' successfully deleted</info>');
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->write(PHP_EOL);
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		}
 	}
+
+	/**
+	 * @param ResponseInterface $response
+	 * @param OutputInterface $output
+	 * @param InputInterface $input
+	 * @return void|null
+	 */
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output, InputInterface $input)
+	{
+		$output->writeln('<info>Database ' . $input->getArgument('database_id') . ' has been deleted</info>');
+	}
+
+
 }

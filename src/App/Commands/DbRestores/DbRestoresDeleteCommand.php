@@ -2,20 +2,19 @@
 
 namespace Lio\App\Commands\DbRestores;
 
-use Lio\App\Console\Command;
+use Lio\App\AbstractCommands\AbstractDeleteCommand;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\BadResponseException;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class DbRestoresDeleteCommand extends Command
+class DbRestoresDeleteCommand extends AbstractDeleteCommand
 {
-	protected static $defaultName = 'db_restores:delete';
-
 	const API_ENDPOINT = 'https://api.lamp.io/db_restores/%s';
+	
+	protected static $defaultName = 'db_restores:delete';
 
 	/**
 	 *
@@ -37,37 +36,21 @@ class DbRestoresDeleteCommand extends Command
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
+		$this->setApiEndpoint(sprintf(
+			self::API_ENDPOINT,
+			$input->getArgument('db_restore_id')
+		));
 		parent::execute($input, $output);
-		$progressBar = self::getProgressBar(
-			'Deleting a db restore job ' . $input->getArgument('db_restore_id'),
-			(empty($input->getOption('json'))) ? $output : new NullOutput()
-		);
-		try {
-			$response = $this->httpHelper->getClient()->request(
-				'DELETE',
-				sprintf(
-					self::API_ENDPOINT,
-					$input->getArgument('db_restore_id')
-				),
-				[
-					'headers' => $this->httpHelper->getHeaders(),
-					'progress'  => function () use ($progressBar) {
-						$progressBar->advance();
-					},
-				]
-			);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$output->write(PHP_EOL);
-				$output->writeln(
-					'<info>Db restore job deleted ' . $input->getArgument('db_restore_id') . '</info>'
-				);
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->write(PHP_EOL);
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		}
+	}
+
+	/**
+	 * @param ResponseInterface $response
+	 * @param OutputInterface $output
+	 * @param InputInterface $input
+	 * @return void|null
+	 */
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output, InputInterface $input)
+	{
+		$output->writeln('<info>Db restore ' . $input->getArgument('db_restore_id') . ' has been deleted</info>');
 	}
 }
