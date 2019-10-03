@@ -2,24 +2,20 @@
 
 namespace Lio\App\Commands\Apps;
 
+
 use Art4\JsonApiClient\V1\Document;
-use Exception;
-use GuzzleHttp\Exception\GuzzleException;
+use Lio\App\AbstractCommands\AbstractListCommand;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Helper\Table;
-use Symfony\Component\Console\Helper\TableSeparator;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
-use Lio\App\Console\Command;
-use GuzzleHttp\Exception\BadResponseException;
 
-class AppsListCommand extends Command
+class AppsListCommand extends AbstractListCommand
 {
-	protected static $defaultName = 'apps:list';
-
 	const API_ENDPOINT = 'https://api.lamp.io/apps';
+
+	protected static $defaultName = 'apps:list';
 
 	/**
 	 *
@@ -28,71 +24,33 @@ class AppsListCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Returns the apps for an organization')
-			->setHelp('Get list all allowed apps, api reference' . PHP_EOL . 'https://www.lamp.io/api#/apps/appsList');
+			->setHelp('Get list all allowed apps, api reference' . PHP_EOL . 'https://www.lamp.io/api#/apps/appsList')
+			->setApiEndpoint(self::API_ENDPOINT);
 	}
 
 	/**
-	 * @param InputInterface $input
+	 * @param ResponseInterface $response
 	 * @param OutputInterface $output
-	 * @return int|null|void
-	 * @throws Exception
-	 * @throws GuzzleException
+	 * @return void|null
 	 */
-	protected function execute(InputInterface $input, OutputInterface $output)
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output)
 	{
-		parent::execute($input, $output);
-		$progressBar = self::getProgressBar(
-			'Getting apps',
-			(empty($input->getOption('json'))) ? $output : new NullOutput()
-		);
-		try {
-			$response = $this->httpHelper->getClient()->request(
-				'GET',
-				self::API_ENDPOINT,
-				[
-					'headers'  => $this->httpHelper->getHeaders(),
-					'progress' => function () use ($progressBar) {
-						$progressBar->advance();
-					},
-				]
-			);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$output->write(PHP_EOL);
-				/** @var Document $document */
-				$document = Parser::parseResponseString($response->getBody()->getContents());
-				$table = $this->getOutputAsTable($document, new Table($output));
-				$table->render();
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->write(PHP_EOL);
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		}
-	}
-
-	/**
-	 * @param Document $document
-	 * @param Table $table
-	 * @return Table
-	 */
-	protected function getOutputAsTable(Document $document, Table $table): Table
-	{
-		$table->setHeaderTitle('Apps');
-		$table->setHeaders(['App id', 'App description']);
+		/** @var Document $document */
+		$document = Parser::parseResponseString($response->getBody()->getContents());
 		$serializer = new ArraySerializer(['recursive' => true]);
-		$apps = $serializer->serialize($document);
-		foreach ($apps['data'] as $key => $app) {
-			$table->addRow([
-				$app['id'],
-				$app['attributes']['description'],
-			]);
-			if ($key != count($apps['data']) - 1) {
-				$table->addRow(new TableSeparator());
-			}
-		}
-
-		return $table;
+		$serializedDocument = $serializer->serialize($document);
+		$table = $this->getTableOutput(
+			$serializedDocument,
+			$document,
+			'Apps',
+			[
+				'Id'          => 'data.%d.id',
+				'Description' => 'data.%d.attributes.description',
+				'Status'      => 'data.%d.attributes.status',
+				'Public'      => 'data.%d.attributes.public',
+			],
+			new Table($output)
+		);
+		$table->render();
 	}
 }

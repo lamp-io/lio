@@ -5,18 +5,16 @@ namespace Lio\App\Commands\Logs;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\V1\Document;
-use Lio\App\Console\Command;
+use Lio\App\AbstractCommands\AbstractListCommand;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\BadResponseException;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Helper\Table;
-use Symfony\Component\Console\Helper\TableSeparator;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class LogsListCommand extends Command
+class LogsListCommand extends AbstractListCommand
 {
 	const API_ENDPOINT = 'https://api.lamp.io/logs%s';
 
@@ -55,67 +53,38 @@ class LogsListCommand extends Command
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
+		$this->setApiEndpoint(sprintf(
+			self::API_ENDPOINT,
+			$this->httpHelper->optionsToQuery($input->getOptions(), self::OPTIONS_TO_QUERY_KEYS)
+		));
 		parent::execute($input, $output);
-
-		try {
-			$progressBar = self::getProgressBar(
-				'Getting logs',
-				(empty($input->getOption('json'))) ? $output : new NullOutput()
-			);
-			$response = $this->httpHelper->getClient()->request(
-				'GET',
-				sprintf(
-					self::API_ENDPOINT,
-					$this->httpHelper->optionsToQuery($input->getOptions(), self::OPTIONS_TO_QUERY_KEYS)
-				),
-				[
-					'headers'  => $this->httpHelper->getHeaders(),
-					'progress' => function () use ($progressBar) {
-						$progressBar->advance();
-					},
-				]
-			);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$output->write(PHP_EOL);
-				/** @var Document $document */
-				$document = Parser::parseResponseString($response->getBody()->getContents());
-				$table = $this->getOutputAsTable($document, new Table($output));
-				$table->render();
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->write(PHP_EOL);
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		}
 	}
 
-
 	/**
-	 * @param Document $document
-	 * @param Table $table
-	 * @return Table
+	 * @param ResponseInterface $response
+	 * @param OutputInterface $output
+	 * @return void|null
 	 */
-	protected function getOutputAsTable(Document $document, Table $table): Table
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output)
 	{
-		$table->setHeaderTitle('Logs');
-		$table->setStyle('box');
-		$table->setHeaders([
-			'timestamp', 'pod_name', 'payload',
-		]);
+		/** @var Document $document */
+		$document = Parser::parseResponseString($response->getBody()->getContents());
 		$serializer = new ArraySerializer(['recursive' => true]);
-		$sortedData = $this->sortData($serializer->serialize($document)['data'], 'timestamp');
-		$lastElement = end($sortedData);
-		foreach ($sortedData as $key => $data) {
-			$payload = wordwrap(trim(preg_replace(
-				'/\s\s+|\t/', ' ', $data['attributes']['payload']
-			)), 80);
-			$table->addRow([$data['attributes']['timestamp'], $data['attributes']['pod_name'], $payload]);
-			if ($lastElement != $data) {
-				$table->addRow(new TableSeparator());
-			}
-		}
-		return $table;
+		$serializedDocument = $serializer->serialize($document);
+		$sortedData = $this->sortData($serializedDocument['data'], 'timestamp');
+		$table = $this->getTableOutput(
+			$sortedData,
+			$document,
+			'Logs',
+			[
+				'Timestamp' => 'data.%d.attributes.timestamp',
+				'Pod name'  => 'data.%d.attributes.pod_name',
+				'Payload'   => 'data.%d.attributes.payload',
+			],
+			new Table($output),
+			end($sortedData),
+			80
+		);
+		$table->render();
 	}
 }

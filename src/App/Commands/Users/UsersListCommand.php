@@ -2,21 +2,19 @@
 
 namespace Lio\App\Commands\Users;
 
-use Lio\App\Console\Command;
+use Lio\App\AbstractCommands\AbstractListCommand;
 use Art4\JsonApiClient\V1\Document;
 use Exception;
-use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Helper\Table;
-use Symfony\Component\Console\Helper\TableSeparator;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
 
-class UsersListCommand extends Command
+class UsersListCommand extends AbstractListCommand
 {
 
 	const API_ENDPOINT = 'https://api.lamp.io/users%s';
@@ -50,95 +48,38 @@ class UsersListCommand extends Command
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
+		$this->setApiEndpoint(sprintf(
+			self::API_ENDPOINT,
+			$this->httpHelper->optionsToQuery($input->getOptions(), self::OPTIONS_TO_QUERY_KEYS)
+		));
 		parent::execute($input, $output);
-		$progressBar = self::getProgressBar(
-			'Getting users',
-			(empty($input->getOption('json'))) ? $output : new NullOutput()
-		);
-		try {
-			$response = $this->httpHelper->getClient()->request(
-				'GET',
-				sprintf(
-					self::API_ENDPOINT,
-					$this->httpHelper->optionsToQuery($input->getOptions(), self::OPTIONS_TO_QUERY_KEYS)
-				),
-				[
-					'headers' => $this->httpHelper->getHeaders(),
-					'progress'  => function () use ($progressBar) {
-						$progressBar->advance();
-					},
-				]
-			);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$output->write(PHP_EOL);
-				/** @var Document $document */
-				$document = Parser::parseResponseString($response->getBody()->getContents());
-				$table = $this->getOutputAsTable($document, new Table($output));
-				$table->render();
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->write(PHP_EOL);
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		}
 	}
 
 	/**
-	 * @param Document $document
-	 * @param Table $table
-	 * @return Table
+	 * @param ResponseInterface $response
+	 * @param OutputInterface $output
+	 * @return void|null
 	 */
-	protected function getOutputAsTable(Document $document, Table $table): Table
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output)
 	{
-		$table->setHeaderTitle('Users');
-		$table->setHeaders([
-			'User ID', 'Type', 'Attributes',
-		]);
+		/** @var Document $document */
+		$document = Parser::parseResponseString($response->getBody()->getContents());
 		$serializer = new ArraySerializer(['recursive' => true]);
 		$serializedDocument = $serializer->serialize($document);
 		$sortedData = $this->sortData($serializedDocument['data'], 'updated_at');
-		$lastElement = end($sortedData);
-		foreach ($sortedData as $key => $value) {
-			$row = [$value['id'], $value['type']];
-			if (!empty($value['attributes'])) {
-				$attributes = [];
-				foreach ($value['attributes'] as $attributeKey => $attribute) {
-					if ($attributeKey == 'organization_users') {
-						$attributes[] = 'organization_users: ' . PHP_EOL . $this->parseOrganizationUsers($attribute);
-
-					} else {
-						$attributes[] = $attributeKey . ' => ' . $attribute;
-					}
-				}
-				$row[] = (implode(PHP_EOL, $attributes));
-				$table->addRow($row);
-			}
-			if ($lastElement != $value) {
-				$table->addRow(new TableSeparator());
-			}
-		}
-		return $table;
-	}
-
-	/**
-	 * @param array $organizationUsers
-	 * @return string
-	 */
-	protected function parseOrganizationUsers(array $organizationUsers): string
-	{
-		$parseOrgUsersData = [];
-		foreach ($organizationUsers as $organizationUser) {
-			$data = [];
-			foreach ((array)$organizationUser as $key => $value) {
-				if (!empty($value)) {
-					$data[] = '  * ' . $key . ' => ' . $value;
-				}
-			}
-			$parseOrgUsersData[] = implode(PHP_EOL, $data);
-		}
-
-		return implode(PHP_EOL, $parseOrgUsersData);
+		$table = $this->getTableOutput(
+			$sortedData,
+			$document,
+			'Users',
+			[
+				'Id'         => 'data.%d.id',
+				'Created at' => 'data.%d.attributes.created_at',
+				'Email'      => 'data.%d.attributes.email',
+			],
+			new Table($output),
+			end($sortedData),
+			80
+		);
+		$table->render();
 	}
 }
