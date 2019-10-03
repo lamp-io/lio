@@ -95,11 +95,11 @@ abstract class AbstractNewCommand extends Command
 		$table->setHeaders(array_keys($rows));
 		$tableRow = [];
 		foreach ($rows as $row) {
-			$value = $document->get($row);
-			if ($value === true || $value === false) {
-				$value = $value ? 'true' : 'false';
+			$tableValue = $document->get($row);
+			if ($tableValue === true || $tableValue === false) {
+				$tableValue = $tableValue ? 'true' : 'false';
 			}
-			$tableRow[] = wordwrap($value, '30', PHP_EOL);
+			$tableRow[] = wordwrap($tableValue, '30', PHP_EOL);
 		}
 		$table->addRow($tableRow);
 

@@ -57,13 +57,12 @@ class AppsNewCommand extends AbstractNewCommand
 	/**
 	 * @param ResponseInterface $response
 	 * @param OutputInterface $output
-	 * @return string
 	 */
-	protected function renderOutput(ResponseInterface $response, OutputInterface $output): string
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output)
 	{
 		/** @var Document $document */
 		$document = Parser::parseResponseString($response->getBody()->getContents());
-		return 'Your new app successfully created, app id: ' . $document->get('data.id');
+		$output->writeln('<info>Your new app successfully created, app id: ' . $document->get('data.id') . '</info>');
 	}
 
 	/**
