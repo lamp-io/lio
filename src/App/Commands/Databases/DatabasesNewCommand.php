@@ -14,7 +14,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Art4\JsonApiClient\V1\Document;
 use Symfony\Component\Console\Helper\Table;
-use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\Helper\Parser;
 
 class DatabasesNewCommand extends AbstractNewCommand
@@ -22,11 +21,6 @@ class DatabasesNewCommand extends AbstractNewCommand
 	protected static $defaultName = 'databases:new';
 
 	const API_ENDPOINT = 'https://api.lamp.io/databases';
-
-	const EXCLUDE_FROM_OUTPUT = [
-		'my_cnf',
-		'mysql_root_password',
-	];
 
 	/**
 	 * @var
@@ -73,7 +67,18 @@ class DatabasesNewCommand extends AbstractNewCommand
 	{
 		/** @var Document $document */
 		$document = Parser::parseResponseString($response->getBody()->getContents());
-		$table = $this->getOutputAsTable($document, new Table($output));
+		$table = $this->getTableOutput(
+			$document,
+			'Database',
+			[
+				'Id'                => 'data.id',
+				'Status'            => 'data.attributes.status',
+				'Description'       => 'data.attributes.description',
+				'Delete Protection' => 'data.attributes.delete_protection',
+				'Created at'        => 'data.attributes.created_at',
+			],
+			new Table($output)
+		);
 		$table->render();
 		if (empty($this->password)) {
 			$password = $document->get('data.attributes.mysql_root_password');
@@ -155,30 +160,5 @@ class DatabasesNewCommand extends AbstractNewCommand
 				],
 			]
 		);
-	}
-
-
-	/**
-	 * @param Document $document
-	 * @param Table $table
-	 * @return Table
-	 */
-	protected function getOutputAsTable(Document $document, Table $table): Table
-	{
-		$table->setHeaderTitle('Database');
-		$serializer = new ArraySerializer(['recursive' => true]);
-		$serializedDocument = $serializer->serialize($document);
-		$headers = ['Id'];
-		$row = [$serializedDocument['data']['id']];
-
-		foreach ($serializedDocument['data']['attributes'] as $key => $value) {
-			if (!empty($value) && !in_array($key, self::EXCLUDE_FROM_OUTPUT)) {
-				array_push($headers, $key);
-				array_push($row, $value);
-			}
-		}
-		$table->setHeaders($headers);
-		$table->addRow($row);
-		return $table;
 	}
 }

@@ -3,10 +3,12 @@
 
 namespace Lio\App\AbstractCommands;
 
+use Art4\JsonApiClient\V1\Document;
 use Exception;
 use GuzzleHttp\Exception\BadResponseException;
 use Lio\App\Console\Command;
 use Psr\Http\Message\ResponseInterface;
+use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use GuzzleHttp\Exception\GuzzleException;
@@ -79,4 +81,28 @@ abstract class AbstractNewCommand extends Command
 	 * @return null
 	 */
 	abstract protected function renderOutput(ResponseInterface $response, OutputInterface $output);
+
+	/**
+	 * @param Document $document
+	 * @param string $title
+	 * @param array $rows
+	 * @param Table $table
+	 * @return Table
+	 */
+	protected function getTableOutput(Document $document, string $title, array $rows, Table $table): Table
+	{
+		$table->setHeaderTitle($title);
+		$table->setHeaders(array_keys($rows));
+		$tableRow = [];
+		foreach ($rows as $row) {
+			$value = $document->get($row);
+			if ($value === true || $value === false) {
+				$value = $value ? 'true' : 'false';
+			}
+			$tableRow[] = wordwrap($value, '30', PHP_EOL);
+		}
+		$table->addRow($tableRow);
+
+		return $table;
+	}
 }
