@@ -4,7 +4,6 @@ namespace Lio\App\Commands\Tokens;
 
 
 use Art4\JsonApiClient\Helper\Parser;
-use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\V1\Document;
 use Lio\App\AbstractCommands\AbstractNewCommand;
 use Psr\Http\Message\ResponseInterface;
@@ -42,33 +41,18 @@ class TokensNewCommand extends AbstractNewCommand
 	{
 		/** @var Document $document */
 		$document = Parser::parseResponseString($response->getBody()->getContents());
-		$table = $this->getOutputAsTable($document, new Table($output));
+		$table = $this->getTableOutput(
+			$document,
+			'Token',
+			[
+				'Id' => 'data.id',
+				'Token' => 'data.attributes.token',
+				'Enabled' => 'data.attributes.enabled',
+				'Created at' => 'data.attributes.created_at',
+			],
+			new Table($output)
+		);
 		$table->render();
-	}
-
-	/**
-	 * @param Document $document
-	 * @param Table $table
-	 * @return Table
-	 */
-	protected function getOutputAsTable(Document $document, Table $table): Table
-	{
-		$table->setHeaderTitle('Token Created');
-		$table->setStyle('box');
-		$table->setHeaders(['Id', 'Attributes']);
-		$serializer = new ArraySerializer(['recursive' => true]);
-		$serializedDocument = $serializer->serialize($document);
-		$attributes = [];
-		foreach ($serializedDocument['data']['attributes'] as $attributeKey => $attribute) {
-			array_push($attributes, $attributeKey . ' : ' . $attribute);
-		}
-		$table->addRow([
-			$serializedDocument['data']['id'],
-			implode(PHP_EOL, $attributes),
-		]);
-
-
-		return $table;
 	}
 
 	/**
