@@ -43,7 +43,7 @@ abstract class AbstractNewCommand extends Command
 			if (!empty($input->getOption('json'))) {
 				$output->writeln($response->getBody()->getContents());
 			} else {
-				$this->renderOutput($response, $output);
+				$this->renderOutput($response, $output, $input);
 			}
 		} catch (BadResponseException $badResponseException) {
 			$output->write(PHP_EOL);
@@ -78,9 +78,10 @@ abstract class AbstractNewCommand extends Command
 	/**
 	 * @param ResponseInterface $response
 	 * @param OutputInterface $output
+	 * @param InputInterface $input
 	 * @return null
 	 */
-	abstract protected function renderOutput(ResponseInterface $response, OutputInterface $output);
+	abstract protected function renderOutput(ResponseInterface $response, OutputInterface $output, InputInterface $input);
 
 	/**
 	 * @param Document $document

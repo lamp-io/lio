@@ -11,6 +11,7 @@ use Lio\App\AbstractCommands\AbstractListCommand;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Input\InputInterface;
 
 class TokensListCommand extends AbstractListCommand
 {
@@ -35,9 +36,10 @@ class TokensListCommand extends AbstractListCommand
 	/**
 	 * @param ResponseInterface $response
 	 * @param OutputInterface $output
+	 * @param InputInterface $input
 	 * @return void|null
 	 */
-	protected function renderOutput(ResponseInterface $response, OutputInterface $output)
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output, InputInterface $input)
 	{
 		/** @var Document $document */
 		$document = Parser::parseResponseString($response->getBody()->getContents());

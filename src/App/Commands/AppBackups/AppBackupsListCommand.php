@@ -56,9 +56,10 @@ class AppBackupsListCommand extends AbstractListCommand
 	/**
 	 * @param ResponseInterface $response
 	 * @param OutputInterface $output
+	 * @param InputInterface $input
 	 * @return void|null
 	 */
-	protected function renderOutput(ResponseInterface $response, OutputInterface $output)
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output, InputInterface $input)
 	{
 		/** @var Document $document */
 		$document = Parser::parseResponseString($response->getBody()->getContents());

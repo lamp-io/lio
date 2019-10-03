@@ -42,9 +42,10 @@ class AppRestoresNewCommand extends AbstractNewCommand
 	/**
 	 * @param ResponseInterface $response
 	 * @param OutputInterface|null $output
+	 * @param InputInterface $input
 	 * @throws GuzzleException
 	 */
-	protected function renderOutput(ResponseInterface $response, OutputInterface $output)
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output, InputInterface $input)
 	{
 		/** @var Document $document */
 		$document = Parser::parseResponseString($response->getBody()->getContents());

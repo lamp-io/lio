@@ -10,6 +10,7 @@ use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 use Symfony\Component\Console\Helper\Table;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
+use Symfony\Component\Console\Input\InputInterface;
 
 class AppRunsListCommand extends AbstractListCommand
 {
@@ -31,9 +32,10 @@ class AppRunsListCommand extends AbstractListCommand
 	/**
 	 * @param ResponseInterface $response
 	 * @param OutputInterface $output
+	 * @param InputInterface $input
 	 * @return void|null
 	 */
-	protected function renderOutput(ResponseInterface $response, OutputInterface $output)
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output, InputInterface $input)
 	{
 		/** @var Document $document */
 		$document = Parser::parseResponseString($response->getBody()->getContents());

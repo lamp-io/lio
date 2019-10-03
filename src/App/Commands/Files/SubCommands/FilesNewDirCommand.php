@@ -51,7 +51,7 @@ class FilesNewDirCommand extends AbstractNewCommand
 		parent::execute($input, $output);
 	}
 
-	protected function renderOutput(ResponseInterface $response, OutputInterface $output): string
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output, InputInterface $input)
 	{
 		/** @var Document $document */
 		$document = Parser::parseResponseString($response->getBody()->getContents());

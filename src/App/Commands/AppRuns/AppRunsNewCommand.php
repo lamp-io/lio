@@ -37,10 +37,11 @@ class AppRunsNewCommand extends AbstractNewCommand
 	/**
 	 * @param ResponseInterface $response
 	 * @param OutputInterface $output
+	 * @param InputInterface $input
 	 * @throws GuzzleException
 	 * @throws Exception
 	 */
-	protected function renderOutput(ResponseInterface $response, OutputInterface $output)
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output, InputInterface $input)
 	{
 		/** @var Document $document */
 		$document = Parser::parseResponseString($response->getBody()->getContents());
