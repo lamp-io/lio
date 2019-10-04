@@ -2,21 +2,16 @@
 
 namespace Lio\App\Commands\Apps;
 
-use Art4\JsonApiClient\V1\Document;
 use Exception;
-use GuzzleHttp\Exception\BadResponseException;
-use Symfony\Component\Console\Helper\Table;
+use Lio\App\AbstractCommands\AbstractDescribeCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
-use Art4\JsonApiClient\Helper\Parser;
 use GuzzleHttp\Exception\GuzzleException;
-use Lio\App\Console\Command;
-use Symfony\Component\Console\Output\NullOutput;
 
-class AppsDescribeCommand extends Command
+class AppsDescribeCommand extends AbstractDescribeCommand
 {
-	const API_ENDPOINT = 'https://api.lamp.io/apps/{app_id}';
+	const API_ENDPOINT = 'https://api.lamp.io/apps/%s';
 
 	/**
 	 * @var string
@@ -43,63 +38,17 @@ class AppsDescribeCommand extends Command
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
+		$this->setApiEndpoint(sprintf(
+			self::API_ENDPOINT,
+			$input->getArgument('app_id')
+		));
+		$this->setSkipAttributes([
+			'github_webhook_secret',
+			'httpd_conf',
+			'php_ini',
+			'ssh_pub_key',
+			'webhook_run_command',
+		]);
 		parent::execute($input, $output);
-		$progressBar = self::getProgressBar(
-			'Getting app ' . $input->getArgument('app_id'),
-			(empty($input->getOption('json'))) ? $output : new NullOutput()
-		);
-		try {
-			$response = $this->httpHelper->getClient()->request(
-				'GET',
-				str_replace('{app_id}', $input->getArgument('app_id'), self::API_ENDPOINT),
-				[
-					'headers'  => $this->httpHelper->getHeaders(),
-					'progress' => function () use ($progressBar) {
-						$progressBar->advance();
-					},
-				]
-			);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$output->write(PHP_EOL);
-				/** @var Document $document */
-				$document = Parser::parseResponseString($response->getBody()->getContents());
-				$table = $this->getOutputAsTable($document, new Table($output));
-				$table->render();
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->write(PHP_EOL);
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		}
-	}
-
-	/**
-	 * @param Document $document
-	 * @param Table $table
-	 * @return Table
-	 */
-	protected function getOutputAsTable(Document $document, Table $table): Table
-	{
-		$table->setHeaderTitle('App Describe');
-		$table->setHeaders([
-			'Name', 'Hostname', 'Hostname Certificate Valid', 'Description', 'Status', 'VCPU', 'Memory', 'Replicas', 'Public', 'Delete Protection'
-		]);
-		$hostNameCert = $document->has('data.attributes.hostname_certificate_valid') && $document->get('data.attributes.hostname_certificate_valid') ? 'true' : '';
-		$table->addRow([
-			$document->get('data.id'),
-			$document->get('data.attributes.hostname'),
-			$hostNameCert,
-			$document->get('data.attributes.description'),
-			$document->get('data.attributes.status'),
-			$document->get('data.attributes.vcpu'),
-			$document->get('data.attributes.memory'),
-			$document->get('data.attributes.replicas'),
-			$document->get('data.attributes.public') ? 'true' : 'false',
-			$document->get('data.attributes.delete_protection') ? 'true' : 'false',
-		]);
-
-		return $table;
 	}
 }
