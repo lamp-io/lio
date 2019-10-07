@@ -6,9 +6,9 @@ namespace Lio\App\Commands\AppRestores;
 
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
+use Exception;
 use Lio\App\AbstractCommands\AbstractNewCommand;
 use Lio\App\Console\Command;
-use GuzzleHttp\Exception\GuzzleException;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -43,7 +43,7 @@ class AppRestoresNewCommand extends AbstractNewCommand
 	 * @param ResponseInterface $response
 	 * @param OutputInterface|null $output
 	 * @param InputInterface $input
-	 * @throws GuzzleException
+	 * @throws Exception
 	 */
 	protected function renderOutput(ResponseInterface $response, OutputInterface $output, InputInterface $input)
 	{

@@ -50,7 +50,7 @@ abstract class AbstractNewCommand extends AbstractCommand
 	 * @param InputInterface $input
 	 * @return mixed
 	 */
-	abstract protected function getRequestBody(InputInterface $input);
+	abstract protected function getRequestBody(InputInterface $input): string;
 
 	/**
 	 * @param Document $document
