@@ -6,20 +6,14 @@ namespace Lio\App\AbstractCommands;
 use Art4\JsonApiClient\V1\Document;
 use Exception;
 use GuzzleHttp\Exception\BadResponseException;
-use Lio\App\Console\Command;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use GuzzleHttp\Exception\GuzzleException;
 
-abstract class AbstractNewCommand extends Command
+abstract class AbstractNewCommand extends AbstractCommand
 {
-	/**
-	 * @var string
-	 */
-	protected $apiEndpoint = '';
-
 	/**
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
@@ -51,6 +45,24 @@ abstract class AbstractNewCommand extends Command
 			return 1;
 		}
 	}
+
+	/**
+	 * @param InputInterface $input
+	 * @return ResponseInterface
+	 * @throws GuzzleException
+	 */
+	protected function sendRequest(InputInterface $input): ResponseInterface
+	{
+		return $this->httpHelper->getClient()->request(
+			'POST',
+			$this->getApiEndpoint(),
+			[
+				'headers' => $this->httpHelper->getHeaders(),
+				'body'    => $this->getRequestBody($input),
+			]
+		);
+	}
+
 
 	/**
 	 * @param string $apiEndpoint

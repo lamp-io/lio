@@ -4,58 +4,29 @@
 namespace Lio\App\AbstractCommands;
 
 use Art4\JsonApiClient\V1\Document;
-use Exception;
-use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;
-use Lio\App\Console\Command;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Helper\TableSeparator;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-abstract class AbstractListCommand extends Command
+abstract class AbstractListCommand extends AbstractCommand
 {
 	/**
-	 * @var string
-	 */
-	protected $apiEndpoint = '';
-
-	/**
-	 * @param string $apiEndpoint
-	 */
-	public function setApiEndpoint(string $apiEndpoint): void
-	{
-		$this->apiEndpoint = $apiEndpoint;
-	}
-
-	/**
 	 * @param InputInterface $input
-	 * @param OutputInterface $output
-	 * @return int|null|void
-	 * @throws Exception
+	 * @return ResponseInterface
 	 * @throws GuzzleException
 	 */
-	protected function execute(InputInterface $input, OutputInterface $output)
+	protected function sendRequest(InputInterface $input): ResponseInterface
 	{
-		parent::execute($input, $output);
-		try {
-			$response = $this->httpHelper->getClient()->request(
-				'GET',
-				$this->apiEndpoint,
-				[
-					'headers' => $this->httpHelper->getHeaders(),
-				]
-			);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$this->renderOutput($response, $output, $input);
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		}
+		return $this->httpHelper->getClient()->request(
+			'GET',
+			$this->apiEndpoint,
+			[
+				'headers' => $this->httpHelper->getHeaders(),
+			]
+		);
 	}
 
 	/**

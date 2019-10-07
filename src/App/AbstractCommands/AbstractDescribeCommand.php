@@ -7,34 +7,18 @@ namespace Lio\App\AbstractCommands;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\V1\Document;
-use Exception;
-use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;
-use Lio\App\Console\Command;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-abstract class AbstractDescribeCommand extends Command
+abstract class AbstractDescribeCommand extends AbstractCommand
 {
-	/**
-	 * @var string
-	 */
-	protected $apiEndpoint = '';
-
 	/**
 	 * @var array
 	 */
 	protected $skipAttributes = [];
-
-	/**
-	 * @param string $apiEndpoint
-	 */
-	public function setApiEndpoint(string $apiEndpoint): void
-	{
-		$this->apiEndpoint = $apiEndpoint;
-	}
 
 	/**
 	 * @param array $skipAttributes
@@ -45,14 +29,6 @@ abstract class AbstractDescribeCommand extends Command
 	}
 
 	/**
-	 * @return string
-	 */
-	public function getApiEndpoint(): string
-	{
-		return $this->apiEndpoint;
-	}
-
-	/**
 	 * @return array
 	 */
 	public function getSkipAttributes(): array
@@ -60,35 +36,22 @@ abstract class AbstractDescribeCommand extends Command
 		return $this->skipAttributes;
 	}
 
-
 	/**
 	 * @param InputInterface $input
-	 * @param OutputInterface $output
-	 * @return int|null|void
-	 * @throws Exception
+	 * @return ResponseInterface
 	 * @throws GuzzleException
 	 */
-	protected function execute(InputInterface $input, OutputInterface $output)
+	protected function sendRequest(InputInterface $input): ResponseInterface
 	{
-		parent::execute($input, $output);
-		try {
-			$response = $this->httpHelper->getClient()->request(
-				'GET',
-				$this->getApiEndpoint(),
-				[
-					'headers' => $this->httpHelper->getHeaders(),
-				]
-			);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$this->renderOutput($response, $output, $input);
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		}
+		return $this->httpHelper->getClient()->request(
+			'GET',
+			$this->getApiEndpoint(),
+			[
+				'headers' => $this->httpHelper->getHeaders(),
+			]
+		);
 	}
+
 
 	/**
 	 * @param ResponseInterface $response
