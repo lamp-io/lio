@@ -7,7 +7,6 @@ use Art4\JsonApiClient\V1\Document;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
 use GuzzleHttp\Exception\GuzzleException;
 
 abstract class AbstractNewCommand extends AbstractCommand
@@ -52,14 +51,6 @@ abstract class AbstractNewCommand extends AbstractCommand
 	 * @return mixed
 	 */
 	abstract protected function getRequestBody(InputInterface $input);
-
-	/**
-	 * @param ResponseInterface $response
-	 * @param OutputInterface $output
-	 * @param InputInterface $input
-	 * @return null
-	 */
-	abstract protected function renderOutput(ResponseInterface $response, OutputInterface $output, InputInterface $input);
 
 	/**
 	 * @param Document $document
