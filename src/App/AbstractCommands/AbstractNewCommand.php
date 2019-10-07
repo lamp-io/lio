@@ -4,8 +4,6 @@
 namespace Lio\App\AbstractCommands;
 
 use Art4\JsonApiClient\V1\Document;
-use Exception;
-use GuzzleHttp\Exception\BadResponseException;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
@@ -14,38 +12,6 @@ use GuzzleHttp\Exception\GuzzleException;
 
 abstract class AbstractNewCommand extends AbstractCommand
 {
-	/**
-	 * @param InputInterface $input
-	 * @param OutputInterface $output
-	 * @return int|void|null
-	 * @throws GuzzleException
-	 * @throws Exception
-	 */
-	protected function execute(InputInterface $input, OutputInterface $output)
-	{
-		parent::execute($input, $output);
-
-		try {
-			$response = $this->httpHelper->getClient()->request(
-				'POST',
-				$this->getApiEndpoint(),
-				[
-					'headers' => $this->httpHelper->getHeaders(),
-					'body'    => $this->getRequestBody($input),
-				]
-			);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$this->renderOutput($response, $output, $input);
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->write(PHP_EOL);
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		}
-	}
-
 	/**
 	 * @param InputInterface $input
 	 * @return ResponseInterface
