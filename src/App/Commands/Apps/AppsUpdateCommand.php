@@ -2,22 +2,15 @@
 
 namespace Lio\App\Commands\Apps;
 
-use Lio\App\Console\Command;
-use Art4\JsonApiClient\Helper\Parser;
-use Art4\JsonApiClient\V1\Document;
+use Lio\App\AbstractCommands\AbstractUpdateCommand;
 use Exception;
-use Symfony\Component\Console\Helper\Table;
-use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
-use Art4\JsonApiClient\Serializer\ArraySerializer;
-use GuzzleHttp\Exception\BadResponseException;
 
-class AppsUpdateCommand extends Command
+class AppsUpdateCommand extends AbstractUpdateCommand
 {
 	const API_ENDPOINT = 'https://api.lamp.io/apps/%s';
 
@@ -67,72 +60,22 @@ class AppsUpdateCommand extends Command
 	 * @param OutputInterface $output
 	 * @return int|null|void
 	 * @throws Exception
-	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
+		$this->setApiEndpoint(sprintf(
+			self::API_ENDPOINT,
+			$input->getArgument('app_id')
+		));
+		$this->setSkipAttributes([
+			'github_webhook_secret',
+			'httpd_conf',
+			'php_ini',
+			'ssh_pub_key',
+			'webhook_run_command',
+		]);
 		parent::execute($input, $output);
-		$progressBar = self::getProgressBar(
-			'Updating app',
-			(empty($input->getOption('json'))) ? $output : new NullOutput()
-		);
-		try {
-			$response = $this->httpHelper->getClient()->request(
-				'PATCH',
-				sprintf(
-					self::API_ENDPOINT,
-					$input->getArgument('app_id')
-				),
-				[
-					'headers' => $this->httpHelper->getHeaders(),
-					'body'    => $this->getRequestBody($input),
-					'progress'  => function () use ($progressBar) {
-						$progressBar->advance();
-					},
-				]
-			);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$output->write(PHP_EOL);
-				/** @var Document $document */
-				$document = Parser::parseResponseString($response->getBody()->getContents());
-				$table = $this->getOutputAsTable($document, new Table($output));
-				$table->render();
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->write(PHP_EOL);
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		}
 	}
-
-	/**
-	 * @param Document $document
-	 * @param Table $table
-	 * @return Table
-	 */
-	protected function getOutputAsTable(Document $document, Table $table): Table
-	{
-		$table->setHeaderTitle('App');
-		$serializer = new ArraySerializer(['recursive' => true]);
-		$serializedDocument = $serializer->serialize($document);
-		$headers = ['Id', 'Attributes'];
-		$row = [$serializedDocument['data']['id']];
-		$attributes = [];
-		foreach ($serializedDocument['data']['attributes'] as $key => $attribute) {
-			if ((!empty($attribute)) && !in_array($key, self::EXCLUDE_FROM_OUTPUT)) {
-				$attributes[] = $key . ' : ' . trim(preg_replace(
-						'/\s\s+|\t/', ' ', wordwrap($attribute, 40)
-					));
-			}
-		}
-		$row[] = implode(PHP_EOL, $attributes);
-		$table->setHeaders($headers);
-		$table->addRow($row);
-		return $table;
-	}
-
 
 	/**
 	 * @param InputInterface $input

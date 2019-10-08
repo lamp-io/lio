@@ -2,22 +2,18 @@
 
 namespace Lio\App\Commands\Files\SubCommands;
 
-use Lio\App\Console\Command;
+use Lio\App\AbstractCommands\AbstractUpdateCommand;
 use Exception;
-use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\BadResponseException;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class FilesUpdateUnarchiveCommand extends Command
+class FilesUpdateUnarchiveCommand extends AbstractUpdateCommand
 {
 	const API_ENDPOINT = 'https://api.lamp.io/apps/%s/files/%s/?%s';
 
 	protected static $defaultName = 'files:update:unarchive';
-
-	protected $subCommand = ['command' => 'unarchive'];
 
 	/**
 	 *
@@ -36,55 +32,38 @@ class FilesUpdateUnarchiveCommand extends Command
 	 * @param OutputInterface $output
 	 * @return int|null|void
 	 * @throws Exception
-	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
+		$this->setApiEndpoint(sprintf(
+			self::API_ENDPOINT,
+			$input->getArgument('app_id'),
+			ltrim($input->getArgument('file_id'), '/'),
+			'command=unarchive'
+		));
 		parent::execute($input, $output);
-		try {
-			$progressBar = self::getProgressBar(
-				'Extracting ' . $input->getArgument('file_id'),
-				(empty($input->getOption('json'))) ? $output : new NullOutput()
-			);
-			$response = $this->httpHelper->getClient()->request(
-				'PATCH',
-				sprintf(
-					self::API_ENDPOINT,
-					$input->getArgument('app_id'),
-					ltrim($input->getArgument('file_id'), '/'),
-					http_build_query($this->subCommand)
-				),
-				[
-					'headers'  => $this->httpHelper->getHeaders(),
-					'body'     => $this->getRequestBody(
-						$input->getArgument('file_id')
-					),
-					'progress' => function () use ($progressBar) {
-						$progressBar->advance();
-					},
-				]);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$output->write(PHP_EOL);
-				$output->writeln('<info>Success, file ' . $input->getArgument('file_id') . ' has been updated</info>');
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->write(PHP_EOL);
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		}
 	}
 
 	/**
-	 * @param string $remoteFile
+	 * @param ResponseInterface $response
+	 * @param OutputInterface $output
+	 * @param InputInterface $input
+	 * @return void|null
+	 */
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output, InputInterface $input)
+	{
+		$output->writeln('<info>Success, file ' . $input->getArgument('file_id') . ' has been unarchived</info>');
+	}
+
+	/**
+	 * @param InputInterface $input
 	 * @return string
 	 */
-	protected function getRequestBody(string $remoteFile): string
+	protected function getRequestBody(InputInterface $input): string
 	{
 		return json_encode([
 			'data' => [
-				'id'   => ltrim($remoteFile, '/'),
+				'id'   => ltrim($input->getArgument('file_id'), '/'),
 				'type' => 'files',
 			],
 		], JSON_UNESCAPED_SLASHES);
