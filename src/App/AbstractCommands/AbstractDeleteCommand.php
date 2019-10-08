@@ -35,6 +35,14 @@ abstract class AbstractDeleteCommand extends AbstractCommand
 		);
 	}
 
+	protected function execute(InputInterface $input, OutputInterface $output)
+	{
+		if (!$this->askConfirm('<info>Are you sure you want to delete ? (y/N)</info>', $output, $input)) {
+			return 0;
+		}
+		return parent::execute($input, $output);
+	}
+
 	/**
 	 * @param string $questionText
 	 * @param OutputInterface $output

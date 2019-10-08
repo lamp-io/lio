@@ -4,7 +4,6 @@
 namespace Lio\App\Commands\Apps;
 
 use Exception;
-use GuzzleHttp\Exception\GuzzleException;
 use Lio\App\AbstractCommands\AbstractDeleteCommand;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Input\InputArgument;
@@ -33,7 +32,6 @@ class AppsDeleteCommand extends AbstractDeleteCommand
 	 * @param OutputInterface $output
 	 * @return int|void|null
 	 * @throws Exception
-	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
