@@ -6,8 +6,8 @@ namespace Lio\App\Commands\AppBackups;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\V1\Document;
+use Exception;
 use Lio\App\AbstractCommands\AbstractListCommand;
-use GuzzleHttp\Exception\GuzzleException;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
@@ -42,7 +42,7 @@ class AppBackupsListCommand extends AbstractListCommand
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
 	 * @return int|void|null
-	 * @throws GuzzleException
+	 * @throws Exception
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
