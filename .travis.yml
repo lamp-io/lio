@@ -9,6 +9,14 @@ matrix:
     - php: 7.3
     - php: nightly
     - php: 7.4snapshot
+    - deploy:
+        script: composer build
+        provider: releases
+        api_key: $GITHUB_TOKEN
+        file: build/lio.phar
+        skip_cleanup: true
+        on:
+          branch: phar_artifact
   fast_finish: true
   allow_failures:
     - php: nightly
@@ -23,15 +31,6 @@ script:
 before_deploy:
   - composer build
 
-jobs:
-  include:
-    - stage: deploy
-      php: 7.3
-      provider: releases
-      file: build/lio.phar
-        skip_cleanup: true
-        on:
-          branch: phar_artifact
 #deploy:
 #  provider: releases
 #  api_key: $GITHUB_TOKEN
@@ -39,3 +38,4 @@ jobs:
 #  skip_cleanup: true
 #  on:
 #    branch: phar_artifact
+#    php: 7.3
