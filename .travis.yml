@@ -26,6 +26,7 @@ jobs:
         skip_cleanup: true
         on:
           tags: true
+        name: $TRAVIS_TAG
   allow_failures:
     - php: nightly
     - php: 7.4snapshot
