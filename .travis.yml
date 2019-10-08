@@ -23,10 +23,19 @@ script:
 before_deploy:
   - composer build
 
-deploy:
-  provider: releases
-  api_key: $GITHUB_TOKEN
-  file: build/lio.phar
-  skip_cleanup: true
-  on:
-    branch: phar_artifact
+jobs:
+  include:
+    - stage: deploy
+      php: 7.3
+      provider: releases
+      file: build/lio.phar
+        skip_cleanup: true
+        on:
+          branch: phar_artifact
+#deploy:
+#  provider: releases
+#  api_key: $GITHUB_TOKEN
+#  file: build/lio.phar
+#  skip_cleanup: true
+#  on:
+#    branch: phar_artifact
