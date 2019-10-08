@@ -85,11 +85,11 @@ class Application extends BaseApplication
 	private function getCommandsObjects(array $commandsList): array
 	{
 		$commands = [];
-		foreach ($commandsList as $namespace) {
-			if (in_array($namespace, self::NO_HTTP_CLIENT_COMMANDS)) {
-				$commands[] = new $namespace();
+		foreach ($commandsList as $command) {
+			if (in_array($command, self::NO_HTTP_CLIENT_COMMANDS)) {
+				$commands[] = new $command();
 			} else {
-				$commands[] = new $namespace(new Client());
+				$commands[] = new $command(new Client());
 			}
 		}
 		return $commands;
