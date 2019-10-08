@@ -2,7 +2,6 @@
 
 namespace Lio\App\Commands;
 
-use Lio\App\Console\Command;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\V1\Document;
@@ -11,6 +10,7 @@ use Lio\App\Commands\Apps\AppsDescribeCommand;
 use Lio\App\Commands\Apps\AppsListCommand;
 use Lio\App\Commands\Apps\AppsNewCommand;
 use Lio\App\Commands\Databases\DatabasesListCommand;
+use Lio\App\Console\CommandWrapper;
 use Lio\App\Deployers\DeployInterface;
 use Lio\App\Deployers\Laravel;
 use Lio\App\Deployers\Symfony;
@@ -29,7 +29,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Lio\App\Commands\Databases\DatabasesNewCommand;
 
-class DeployCommand extends Command
+class DeployCommand extends CommandWrapper
 {
 	/**
 	 * @var string
@@ -63,7 +63,7 @@ class DeployCommand extends Command
 	 */
 	protected $isNewDbInstance = false;
 
-	public function __construct(ClientInterface $httpClient, $name = null)
+	public function __construct(ClientInterface $httpClient, string $name = null)
 	{
 		parent::__construct($httpClient, $name);
 		$this->httpClient = $httpClient;

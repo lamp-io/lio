@@ -8,6 +8,9 @@ use Art4\JsonApiClient\Exception\ValidationException;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;
+use Lio\App\Console\CommandWrapper;
+use Lio\App\Helpers\CommandsHelper;
+use Lio\App\Helpers\HttpHelper;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputArgument;
@@ -17,15 +20,19 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
-use Lio\App\Console\Command;
 
-class FilesListCommand extends Command
+class FilesListCommand extends CommandWrapper
 {
 	const API_ENDPOINT = 'https://api.lamp.io/apps/%s/files/%s';
 
 	const MAX_LIMIT = '1000';
 
 	protected static $defaultName = 'files:list';
+
+	/**
+	 * @var HttpHelper
+	 */
+	protected $httpHelper;
 
 	/**
 	 * @var int
@@ -49,7 +56,7 @@ class FilesListCommand extends Command
 			->addArgument('file_id', InputArgument::OPTIONAL, 'The ID of the file. The ID is also the file path relative to its app root.', '/')
 			->addOption('limit', 'l', InputOption::VALUE_REQUIRED, ' The number of results to return in each response to a list operation. The default value is 1000 (the maximum allowed). Using a lower value may help if an operation times out', self::MAX_LIMIT)
 			->addOption('human-readable', '', InputOption::VALUE_NONE, 'Format size values from raw bytes to human readable format')
-			->addOption('recursive', 'r', InputOption::VALUE_NONE, 'Command is performed on all files or objects under the specified path');
+			->addOption('recursive', 'r', InputOption::VALUE_NONE, 'CommandWrapper is performed on all files or objects under the specified path');
 	}
 
 	/**
@@ -76,7 +83,6 @@ class FilesListCommand extends Command
 				}
 				$table->render();
 			}
-
 		} catch (BadResponseException $badResponseException) {
 			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
 			return 1;
@@ -107,7 +113,7 @@ class FilesListCommand extends Command
 			$document->has('data.attributes.contents') ? wordwrap(trim(
 				preg_replace('/\t/', ' ', $document->get('data.attributes.contents'))
 			), 80, PHP_EOL) : '',
-			]);
+		]);
 		return $table;
 	}
 
@@ -139,7 +145,7 @@ class FilesListCommand extends Command
 	protected function getTableFilesList(array $data, Table $table): Table
 	{
 		$table->setStyle('compact');
-		foreach ($this->sortData($data, 'fileName') as $val) {
+		foreach (CommandsHelper::sortData($data, 'fileName') as $val) {
 			$table->addRow([
 				$val['timestamp'],
 				$val['size'],
@@ -221,10 +227,10 @@ class FilesListCommand extends Command
 		$size = $isHumanReadable ? $this->formatBytes($fileAttributes['size']) : $fileAttributes['size'];
 		if ($fileAttributes['is_dir']) {
 			$fileName = $fileName . '/';
-		} elseif($fileAttributes['is_symlink']) {
+		} elseif ($fileAttributes['is_symlink']) {
 			$fileName = $fileName . ' -> ' . $fileAttributes['target'];
 		}
-		
+
 		return [
 			'isDir'     => $fileAttributes['is_dir'],
 			'timestamp' => $date,

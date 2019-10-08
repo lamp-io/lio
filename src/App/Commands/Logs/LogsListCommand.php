@@ -8,6 +8,7 @@ use Art4\JsonApiClient\V1\Document;
 use Lio\App\AbstractCommands\AbstractListCommand;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use Lio\App\Helpers\CommandsHelper;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
@@ -72,7 +73,7 @@ class LogsListCommand extends AbstractListCommand
 		$document = Parser::parseResponseString($response->getBody()->getContents());
 		$serializer = new ArraySerializer(['recursive' => true]);
 		$serializedDocument = $serializer->serialize($document);
-		$sortedData = $this->sortData($serializedDocument['data'], 'timestamp');
+		$sortedData = CommandsHelper::sortData($serializedDocument['data'], 'timestamp');
 		$table = $this->getTableOutput(
 			$sortedData,
 			$document,

@@ -4,7 +4,7 @@
 namespace Lio\App\Commands\Databases;
 
 use Lio\App\AbstractCommands\AbstractUpdateCommand;
-use Lio\App\Helpers\PasswordHelper;
+use Lio\App\Helpers\CommandsHelper;
 use InvalidArgumentException;
 use Symfony\Component\Console\Exception\InvalidArgumentException as CliInvalidArgumentException;
 use Symfony\Component\Console\Input\InputArgument;
@@ -58,7 +58,7 @@ class DatabasesUpdateCommand extends AbstractUpdateCommand
 		if ($input->getOption('mysql_root_password')) {
 			/** @var QuestionHelper $helper */
 			$helper = $this->getHelper('question');
-			$question = PasswordHelper::getPasswordQuestion(
+			$question = CommandsHelper::getPasswordQuestion(
 				'<info>Please provide a password for the MySQL root user</info>',
 				null,
 				$output
@@ -82,7 +82,7 @@ class DatabasesUpdateCommand extends AbstractUpdateCommand
 		}
 		$attributes = [];
 		foreach ($input->getOptions() as $key => $val) {
-			if (!in_array($key, self::DEFAULT_CLI_OPTIONS) && !empty($val)) {
+			if (!in_array($key, CommandsHelper::DEFAULT_CLI_OPTIONS) && !empty($val)) {
 				if ($key == 'my_cnf') {
 					$attributes[$key] = file_get_contents($val);
 				} elseif ($key == 'vcpu') {
@@ -96,7 +96,7 @@ class DatabasesUpdateCommand extends AbstractUpdateCommand
 		}
 
 		if (empty($attributes)) {
-			throw new CliInvalidArgumentException('Command requires at least one option to be executed. List of allowed options');
+			throw new CliInvalidArgumentException('CommandWrapper requires at least one option to be executed. List of allowed options');
 		}
 
 		return json_encode([

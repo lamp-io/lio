@@ -18,10 +18,6 @@ class AppsUpdateCommand extends AbstractUpdateCommand
 
 	const PHP_INI_OPTION_NAME = 'php_ini';
 
-	const EXCLUDE_FROM_OUTPUT = [
-		'ssh_pub_key',
-	];
-
 	const ALLOW_ZERO_VALUE = [
 		'replicas',
 	];
@@ -113,7 +109,7 @@ class AppsUpdateCommand extends AbstractUpdateCommand
 			return false;
 		}, ARRAY_FILTER_USE_BOTH);
 		if (empty($attributes)) {
-			throw new InvalidArgumentException('Command requires at least one option to be executed.');
+			throw new InvalidArgumentException('CommandWrapper requires at least one option to be executed.');
 		}
 
 		return json_encode([

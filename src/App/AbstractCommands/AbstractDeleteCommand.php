@@ -3,12 +3,11 @@
 namespace Lio\App\AbstractCommands;
 
 use GuzzleHttp\Exception\GuzzleException;
+use Lio\App\Helpers\CommandsHelper;
 use Psr\Http\Message\ResponseInterface;
-use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 abstract class AbstractDeleteCommand extends AbstractCommand
 {
@@ -37,26 +36,14 @@ abstract class AbstractDeleteCommand extends AbstractCommand
 
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
-		if (!$this->askConfirm('<info>Are you sure you want to delete ? (y/N)</info>', $output, $input)) {
+		if (!CommandsHelper::askConfirm(
+			'<info>Are you sure you want to delete ? (y/N)</info>',
+			$output,
+			$input,
+			$this->getHelper('question'))
+		) {
 			return 0;
 		}
 		return parent::execute($input, $output);
-	}
-
-	/**
-	 * @param string $questionText
-	 * @param OutputInterface $output
-	 * @param InputInterface $input
-	 * @return bool
-	 */
-	protected function askConfirm(string $questionText, OutputInterface $output, InputInterface $input): bool
-	{
-		if (!empty($input->getOption('yes'))) {
-			return true;
-		}
-		/** @var QuestionHelper $helper */
-		$helper = $this->getHelper('question');
-		$question = new ConfirmationQuestion($questionText, false);
-		return $helper->ask($input, $output, $question);
 	}
 }

@@ -6,17 +6,18 @@ namespace Lio\App\Commands\Files;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;
+use Lio\App\Helpers\CommandsHelper;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
-use Lio\App\Console\Command;
+use Lio\App\Console\CommandWrapper;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 
-class FilesDownloadCommand extends Command
+class FilesDownloadCommandWrapper extends CommandWrapper
 {
 	const API_ENDPOINT = 'https://api.lamp.io/apps/%s/files/%s';
 
@@ -57,7 +58,7 @@ class FilesDownloadCommand extends Command
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
-		$progressBar = self::getProgressBar(
+		$progressBar = CommandsHelper::getProgressBar(
 			'Downloading',
 			(empty($input->getOption('json'))) ? $output : new NullOutput()
 		);

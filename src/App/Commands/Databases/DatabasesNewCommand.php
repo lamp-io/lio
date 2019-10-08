@@ -3,7 +3,7 @@
 namespace Lio\App\Commands\Databases;
 
 use Lio\App\AbstractCommands\AbstractNewCommand;
-use Lio\App\Helpers\PasswordHelper;
+use Lio\App\Helpers\CommandsHelper;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use InvalidArgumentException;
@@ -113,7 +113,7 @@ class DatabasesNewCommand extends AbstractNewCommand
 		} else {
 			/** @var QuestionHelper $helper */
 			$helper = $this->getHelper('question');
-			$question = PasswordHelper::getPasswordQuestion(
+			$question = CommandsHelper::getPasswordQuestion(
 				'<info>Please provide a password for the MySQL root user</info>',
 				null,
 				$output
@@ -137,7 +137,7 @@ class DatabasesNewCommand extends AbstractNewCommand
 
 		$attributes = [];
 		foreach ($input->getOptions() as $optionKey => $option) {
-			if (!in_array($optionKey, self::DEFAULT_CLI_OPTIONS) && !empty($option)) {
+			if (!in_array($optionKey, CommandsHelper::DEFAULT_CLI_OPTIONS) && !empty($option)) {
 				if ($optionKey == 'delete_protection') {
 					$attributes[$optionKey] = $option == 'true';
 				} elseif ($optionKey == 'vcpu') {

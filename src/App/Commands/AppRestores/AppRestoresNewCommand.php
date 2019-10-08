@@ -8,7 +8,7 @@ use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 use Exception;
 use Lio\App\AbstractCommands\AbstractNewCommand;
-use Lio\App\Console\Command;
+use Lio\App\Helpers\CommandsHelper;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -50,7 +50,7 @@ class AppRestoresNewCommand extends AbstractNewCommand
 		/** @var Document $document */
 		$document = Parser::parseResponseString($response->getBody()->getContents());
 		$appRestoreId = $document->get('data.id');
-		$progressBar = Command::getProgressBar('Restoring app ' . $document->get('data.attributes.target_app_id'), $output);
+		$progressBar = CommandsHelper::getProgressBar('Restoring app ' . $document->get('data.attributes.target_app_id'), $output);
 		$progressBar->start();
 		while (!AppRestoresDescribeCommand::isAppRestoreCompleted($appRestoreId, $this->getApplication())) {
 			$progressBar->advance();

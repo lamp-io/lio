@@ -4,6 +4,7 @@
 namespace Lio\App\Commands\AppRuns;
 
 use Lio\App\AbstractCommands\AbstractListCommand;
+use Lio\App\Helpers\CommandsHelper;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Art4\JsonApiClient\Helper\Parser;
@@ -41,7 +42,7 @@ class AppRunsListCommand extends AbstractListCommand
 		$document = Parser::parseResponseString($response->getBody()->getContents());
 		$serializer = new ArraySerializer(['recursive' => true]);
 		$serializedDocument = $serializer->serialize($document);
-		$sortedData = $this->sortData($serializedDocument['data'], 'created_at');
+		$sortedData = CommandsHelper::sortData($serializedDocument['data'], 'created_at');
 		$table = $this->getTableOutput(
 			$sortedData,
 			$document,
@@ -51,7 +52,7 @@ class AppRunsListCommand extends AbstractListCommand
 				'App ID'     => 'data.%d.attributes.app_id',
 				'Created at' => 'data.%d.attributes.created_at',
 				'Complete'   => 'data.%d.attributes.complete',
-				'Command'    => 'data.%d.attributes.command',
+				'CommandWrapper'    => 'data.%d.attributes.command',
 				'Status'     => 'data.%d.attributes.status',
 			],
 			new Table($output),

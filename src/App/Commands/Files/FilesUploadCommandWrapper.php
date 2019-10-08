@@ -7,12 +7,13 @@ namespace Lio\App\Commands\Files;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;
+use Lio\App\Helpers\CommandsHelper;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Lio\App\Console\Command;
+use Lio\App\Console\CommandWrapper;
 
-class FilesUploadCommand extends Command
+class FilesUploadCommandWrapper extends CommandWrapper
 {
 	const API_ENDPOINT = 'https://api.lamp.io/apps/%s/files';
 
@@ -47,7 +48,7 @@ class FilesUploadCommand extends Command
 		}
 
 		try {
-			$progressBar = self::getProgressBar(
+			$progressBar = CommandsHelper::getProgressBar(
 				'Uploading ' . $input->getArgument('file'),
 				$output
 			);

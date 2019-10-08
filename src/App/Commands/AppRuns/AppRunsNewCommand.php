@@ -5,13 +5,13 @@ namespace Lio\App\Commands\AppRuns;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Lio\App\AbstractCommands\AbstractNewCommand;
+use Lio\App\Helpers\CommandsHelper;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\OutputInterface;
-use Lio\App\Console\Command;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 
@@ -30,7 +30,7 @@ class AppRunsNewCommand extends AbstractNewCommand
 		$this->setDescription('Run command on app')
 			->setHelp('Run command on app, api reference' . PHP_EOL . 'https://www.lamp.io/api#/app_runs/appRunsCreate')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addArgument('exec', InputArgument::REQUIRED, 'Command to run')
+			->addArgument('exec', InputArgument::REQUIRED, 'CommandWrapper to run')
 			->setApiEndpoint(self::API_ENDPOINT);
 	}
 
@@ -46,7 +46,7 @@ class AppRunsNewCommand extends AbstractNewCommand
 		/** @var Document $document */
 		$document = Parser::parseResponseString($response->getBody()->getContents());
 		$appRunId = $document->get('data.id');
-		$progressBar = Command::getProgressBar($document->get('data.attributes.command'), $output);
+		$progressBar = CommandsHelper::getProgressBar($document->get('data.attributes.command'), $output);
 		$progressBar->start();
 		while (!AppRunsDescribeCommand::isExecutionCompleted($appRunId, $this->getApplication())) {
 			$progressBar->advance();

@@ -2,21 +2,17 @@
 
 namespace Lio\App\Commands\Apps\SubCommands;
 
-use Art4\JsonApiClient\Helper\Parser;
-use Art4\JsonApiClient\V1\Document;
-use Lio\App\Commands\Apps\AppsUpdateCommand;
-use Lio\App\Console\Command;
+use Lio\App\AbstractCommands\AbstractUpdateCommand;
 use Exception;
-use Symfony\Component\Console\Input\ArrayInput;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class AppUpdatesStatusCommand extends Command
+class AppUpdatesStatusCommand extends AbstractUpdateCommand
 {
-	const API_ENDPOINT = 'https://api.lamp.io/app_runs/';
+	const API_ENDPOINT = 'https://api.lamp.io/apps/%s';
 
 	protected static $defaultName = 'apps:update:status';
 
@@ -41,39 +37,44 @@ class AppUpdatesStatusCommand extends Command
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
-		parent::execute($input, $output);
-
+		$this->setApiEndpoint(sprintf(
+			self::API_ENDPOINT,
+			$input->getArgument('app_id')
+		));
 		if (empty($input->getOption('enable'))) {
 			$output->writeln('<error>You need to specify --enable true/false to call this command</error>');
 			return 1;
 		}
-		$replicas = $input->getOption('enable') === 'false' ? 0 : 1;
-
-		$appsUpdateCommand = $this->getApplication()->find(AppsUpdateCommand::getDefaultName());
-		$args = [
-			'command'    => AppsUpdateCommand::getDefaultName(),
-			'app_id'     => $input->getArgument('app_id'),
-			'--replicas' => $replicas,
-			'--json'     => true,
-		];
-		$bufferedOutput = new BufferedOutput();
-		$commandResult = $appsUpdateCommand->run(new ArrayInput($args), $bufferedOutput);
-		if ($commandResult === 0) {
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($bufferedOutput->fetch());
-			} else {
-				/** @var Document $document */
-				$document = Parser::parseResponseString($bufferedOutput->fetch());
-				if ($document->get('data.attributes.replicas') === 1) {
-					$output->writeln('<info>App ' . $document->get('data.id') . ', has been enabled</info>');
-				} else {
-					$output->writeln('<info>App ' . $document->get('data.id') . ', has been disabled</info>');
-				}
-			}
-		} else {
-			$output->writeln('<error>' . $bufferedOutput->fetch() . '</error>');
-			return 1;
-		}
-
+		parent::execute($input, $output);
 	}
+
+	/**
+	 * @param ResponseInterface $response
+	 * @param OutputInterface $output
+	 * @param InputInterface $input
+	 * @return void|null
+	 */
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output, InputInterface $input)
+	{
+		$action = $input->getOption('enable') === 'false' ? 'disabled' : 'enabled';
+		$output->writeln('<info>App ' . $input->getArgument('app_id') . ', has been ' . $action . '</info>');
+	}
+
+	/**
+	 * @param InputInterface $input
+	 * @return string
+	 */
+	protected function getRequestBody(InputInterface $input): string
+	{
+		return json_encode([
+			'data' => [
+				'attributes' => [
+					'replicas' => $input->getOption('enable') === 'false' ? 0 : 1,
+				],
+				'id'         => $input->getArgument('app_id'),
+				'type'       => 'apps',
+			],
+		]);
+	}
+
 }

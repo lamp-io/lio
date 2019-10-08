@@ -4,6 +4,7 @@
 namespace Lio\App\Console;
 
 use Composer\Autoload\ClassLoader;
+use Error;
 use GuzzleHttp\Client;
 use Lio\App\Commands\AuthCommand;
 use Lio\App\Commands\SelfUpdateCommand;
@@ -89,7 +90,15 @@ class Application extends BaseApplication
 			if (in_array($command, self::NO_HTTP_CLIENT_COMMANDS)) {
 				$commands[] = new $command();
 			} else {
-				$commands[] = new $command(new Client());
+				try {
+					$commands[] = new $command(new Client());
+				} catch (Error $error) {
+					var_export([
+						$error->getMessage(),
+						$command,
+					]);
+					exit(1);
+				}
 			}
 		}
 		return $commands;

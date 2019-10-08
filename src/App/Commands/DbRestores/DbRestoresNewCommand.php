@@ -5,8 +5,8 @@ namespace Lio\App\Commands\DbRestores;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 use Lio\App\AbstractCommands\AbstractNewCommand;
-use Lio\App\Console\Command;
 use Exception;
+use Lio\App\Helpers\CommandsHelper;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -42,7 +42,7 @@ class DbRestoresNewCommand extends AbstractNewCommand
 		/** @var Document $document */
 		$document = Parser::parseResponseString($response->getBody()->getContents());
 		$dbRestoreId = $document->get('data.id');
-		$progressBar = Command::getProgressBar('Restoring database ' . $document->get('data.attributes.target_database_id'), $output);
+		$progressBar = CommandsHelper::getProgressBar('Restoring database ' . $document->get('data.attributes.target_database_id'), $output);
 		$progressBar->start();
 		while (!DbRestoresDescribeCommand::isDbRestoreCompleted($dbRestoreId, $this->getApplication())) {
 			$progressBar->advance();

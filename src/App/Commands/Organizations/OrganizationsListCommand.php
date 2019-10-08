@@ -7,6 +7,7 @@ use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\V1\Document;
 use Lio\App\AbstractCommands\AbstractListCommand;
+use Lio\App\Helpers\CommandsHelper;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -44,7 +45,7 @@ class OrganizationsListCommand extends AbstractListCommand
 		$document = Parser::parseResponseString($response->getBody()->getContents());
 		$serializer = new ArraySerializer(['recursive' => true]);
 		$serializedDocument = $serializer->serialize($document);
-		$sortedData = $this->sortData($serializedDocument['data'], 'updated_at');
+		$sortedData = CommandsHelper::sortData($serializedDocument['data'], 'updated_at');
 		$table = $this->getTableOutput(
 			$sortedData,
 			$document,

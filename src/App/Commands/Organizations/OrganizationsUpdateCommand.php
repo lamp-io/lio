@@ -5,6 +5,7 @@ namespace Lio\App\Commands\Organizations;
 
 use Lio\App\AbstractCommands\AbstractUpdateCommand;
 use Exception;
+use Lio\App\Helpers\CommandsHelper;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -57,13 +58,13 @@ class OrganizationsUpdateCommand extends AbstractUpdateCommand
 	{
 		$attributes = [];
 		foreach ($input->getOptions() as $optionKey => $optionValue) {
-			if (!in_array($optionKey, self::DEFAULT_CLI_OPTIONS) && !empty($input->getOption($optionKey))) {
+			if (!in_array($optionKey, CommandsHelper::DEFAULT_CLI_OPTIONS) && !empty($input->getOption($optionKey))) {
 				$attributes[$optionKey] = $optionValue;
 			}
 
 		}
 		if (empty($attributes)) {
-			throw new InvalidArgumentException('Command requires at least one option to be executed');
+			throw new InvalidArgumentException('CommandWrapper requires at least one option to be executed');
 		}
 		return json_encode([
 			'data' => [
