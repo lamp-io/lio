@@ -8,6 +8,7 @@ use Lio\App\Helpers\HttpHelper;
 use Exception;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -38,6 +39,7 @@ class CommandWrapper extends Command
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
+		$output->getFormatter()->setStyle('warning', new OutputFormatterStyle('black', 'yellow'));
 		if (!AuthHelper::isTokenExist() && !$this->skipAuth) {
 			CommandsHelper::callAuthCommand($this->getApplication());
 		}
