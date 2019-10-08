@@ -19,3 +19,14 @@ before_script:
 
 script:
   - ./vendor/bin/phpunit
+
+before_deploy:
+  - composer build
+
+deploy:
+  provider: releases
+  api_key: $GITHUB_TOKEN
+  file: build/lio.phar
+  skip_cleanup: true
+  on:
+    branch: phar_artifact
