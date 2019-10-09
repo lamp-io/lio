@@ -28,24 +28,6 @@ abstract class AbstractNewCommand extends AbstractCommand
 		);
 	}
 
-
-	/**
-	 * @param string $apiEndpoint
-	 */
-	public function setApiEndpoint(string $apiEndpoint): void
-	{
-		$this->apiEndpoint = $apiEndpoint;
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getApiEndpoint(): string
-	{
-		return $this->apiEndpoint;
-	}
-
-
 	/**
 	 * @param InputInterface $input
 	 * @return mixed
