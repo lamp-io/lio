@@ -14,11 +14,11 @@ $ composer global require lamp-io/lio
 
 ##### As local composer package
 ```sh
-composer require lamp-il/lio
+composer require lamp-io/lio
 ```
 
 ##### Download as a PHAR
-[lio.phar]()
+[lio.phar](https://github.com/lamp-io/lio/releases/latest/download/lio.phar)
 
 Usage
 ------------
