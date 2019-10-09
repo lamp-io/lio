@@ -1,6 +1,6 @@
 <?php
 
-namespace Lio\App\Helpers;
+namespace Lio\App\Phar;
 
 use Phar;
 use Symfony\Component\Console\Output\ConsoleOutput;
