@@ -7,7 +7,7 @@ if (file_exists(dirname(__DIR__, 3) . '/autoload.php')) {
 	require_once dirname(__DIR__) . '/vendor/autoload.php';
 }
 
-use Lio\App\Helpers\Compiler;
+use Lio\App\Phar\Compiler;
 
 try {
 	$compiler = new Compiler();

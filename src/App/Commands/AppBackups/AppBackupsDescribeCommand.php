@@ -2,19 +2,14 @@
 
 namespace Lio\App\Commands\AppBackups;
 
-use Lio\App\Commands\Command;
+use Lio\App\AbstractCommands\AbstractDescribeCommand;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\BadResponseException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
-use Art4\JsonApiClient\V1\Document;
-use Symfony\Component\Console\Helper\Table;
-use Art4\JsonApiClient\Helper\Parser;
 
-class AppBackupsDescribeCommand extends Command
+class AppBackupsDescribeCommand extends AbstractDescribeCommand
 {
 	protected static $defaultName = 'app_backups:describe';
 
@@ -40,57 +35,10 @@ class AppBackupsDescribeCommand extends Command
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
+		$this->setApiEndpoint(sprintf(
+			self::API_ENDPOINT,
+			$input->getArgument('app_backup_id')
+		));
 		parent::execute($input, $output);
-		$progressBar = self::getProgressBar(
-			'Getting app backup ' . $input->getArgument('app_backup_id'),
-			(empty($input->getOption('json'))) ? $output : new NullOutput()
-		);
-		try {
-			$response = $this->httpHelper->getClient()->request(
-				'GET',
-				sprintf(
-					self::API_ENDPOINT,
-					$input->getArgument('app_backup_id')
-				),
-				[
-					'headers' => $this->httpHelper->getHeaders(),
-					'progress'  => function () use ($progressBar) {
-						$progressBar->advance();
-					},
-				]
-			);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$output->write(PHP_EOL);
-				/** @var Document $document */
-				$document = Parser::parseResponseString($response->getBody()->getContents());
-				$table = $this->getOutputAsTable($document, new Table($output));
-				$table->render();
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->write(PHP_EOL);
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		}
-	}
-
-	/**
-	 * @param Document $document
-	 * @param Table $table
-	 * @return Table
-	 */
-	protected function getOutputAsTable(Document $document, Table $table): Table
-	{
-		$table->setHeaderTitle('App Backup ' . $document->get('data.id'));
-		$table->setHeaders(['App id', 'Complete', 'Created at', 'Organization id', 'Status']);
-		$table->addRow([
-			$document->get('data.attributes.app_id'),
-			$document->get('data.attributes.complete'),
-			$document->get('data.attributes.created_at'),
-			$document->get('data.attributes.organization_id'),
-			$document->get('data.attributes.status'),
-		]);
-		return $table;
 	}
 }

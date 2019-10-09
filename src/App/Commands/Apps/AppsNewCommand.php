@@ -5,18 +5,15 @@ namespace Lio\App\Commands\Apps;
 
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
-use Exception;
-use GuzzleHttp\Exception\GuzzleException;
+use Lio\App\AbstractCommands\AbstractNewCommand;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
-use Lio\App\Commands\Command;
-use GuzzleHttp\Exception\BadResponseException;
 
-class AppsNewCommand extends Command
+class AppsNewCommand extends AbstractNewCommand
 {
 	const API_ENDPOINT = 'https://api.lamp.io/apps';
 
@@ -53,48 +50,20 @@ class AppsNewCommand extends Command
 			->addOption('hostname_certificate_valid', null, InputOption::VALUE_REQUIRED, 'Is hostname certificate valid')
 			->addOption('public', 'p', InputOption::VALUE_REQUIRED, 'Public for read-only')
 			->addOption('delete_protection', null, InputOption::VALUE_REQUIRED, 'When enabled the app can not be deleted')
-			->setBoolOptions(['delete_protection', 'public', 'hostname_certificate_valid']);
+			->setBoolOptions(['delete_protection', 'public', 'hostname_certificate_valid'])
+			->setApiEndpoint(self::API_ENDPOINT);
 	}
 
 	/**
-	 * @param InputInterface $input
+	 * @param ResponseInterface $response
 	 * @param OutputInterface $output
-	 * @return int|null|void
-	 * @throws Exception
-	 * @throws GuzzleException
+	 * @param InputInterface $input
 	 */
-	protected function execute(InputInterface $input, OutputInterface $output)
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output, InputInterface $input)
 	{
-		parent::execute($input, $output);
-		$progressBar = self::getProgressBar(
-			'Creating app',
-			(empty($input->getOption('json'))) ? $output : new NullOutput()
-		);
-		try {
-			$response = $this->httpHelper->getClient()->request(
-				'POST',
-				self::API_ENDPOINT,
-				[
-					'headers' => $this->httpHelper->getHeaders(),
-					'body'    => $this->getRequestBody($input),
-					'progress'  => function () use ($progressBar) {
-						$progressBar->advance();
-					},
-				]
-			);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$output->write(PHP_EOL);
-				/** @var Document $document */
-				$document = Parser::parseResponseString($response->getBody()->getContents());
-				$output->writeln('<info>Your new app successfully created, app id: ' . $document->get('data.id') . '</info>');
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->write(PHP_EOL);
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		}
+		/** @var Document $document */
+		$document = Parser::parseResponseString($response->getBody()->getContents());
+		$output->writeln('<info>Your new app successfully created, app id: ' . $document->get('data.id') . '</info>');
 	}
 
 	/**

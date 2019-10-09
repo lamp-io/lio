@@ -2,16 +2,17 @@
 
 namespace Lio\App\Commands\DbRestores;
 
-use Lio\App\Commands\Command;
+use Art4\JsonApiClient\Helper\Parser;
+use Art4\JsonApiClient\V1\Document;
+use Lio\App\AbstractCommands\AbstractNewCommand;
 use Exception;
-use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\BadResponseException;
+use Lio\App\Helpers\CommandsHelper;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class DbRestoresNewCommand extends Command
+class DbRestoresNewCommand extends AbstractNewCommand
 {
 	protected static $defaultName = 'db_restores:new';
 
@@ -26,60 +27,43 @@ class DbRestoresNewCommand extends Command
 		$this->setDescription('Create db restore job (restore a db backup to a database)')
 			->setHelp('Restore a db backup to a database, api reference' . PHP_EOL . 'https://www.lamp.io/api#/db_restores/dbRestoresCreate')
 			->addArgument('database_id', InputArgument::REQUIRED, 'The id of database')
-			->addArgument('db_backup_id', InputArgument::REQUIRED, 'The ID of the db backup');
+			->addArgument('db_backup_id', InputArgument::REQUIRED, 'The ID of the db backup')
+			->setApiEndpoint(self::API_ENDPOINT);
 	}
+
+	/**
+	 * @param ResponseInterface $response
+	 * @param OutputInterface $output
+	 * @param InputInterface $input
+	 * @throws Exception
+	 */
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output, InputInterface $input)
+	{
+		/** @var Document $document */
+		$document = Parser::parseResponseString($response->getBody()->getContents());
+		$dbRestoreId = $document->get('data.id');
+		$progressBar = CommandsHelper::getProgressBar('Restoring database ' . $document->get('data.attributes.target_database_id'), $output);
+		$progressBar->start();
+		while (!DbRestoresDescribeCommand::isDbRestoreCompleted($dbRestoreId, $this->getApplication())) {
+			$progressBar->advance();
+		}
+		$progressBar->finish();
+		$output->write(PHP_EOL);
+		$output->writeln('<info>Restore finished for database, ' . $document->get('data.attributes.target_database_id') . '</info>');
+	}
+
 
 	/**
 	 * @param InputInterface $input
-	 * @param OutputInterface $output
-	 * @return int|void|null
-	 * @throws Exception
-	 * @throws GuzzleException
-	 */
-	protected function execute(InputInterface $input, OutputInterface $output)
-	{
-		parent::execute($input, $output);
-		$progressBar = self::getProgressBar(
-			'Creating a db restore job',
-			(empty($input->getOption('json'))) ? $output : new NullOutput()
-		);
-		try {
-			$response = $this->httpHelper->getClient()->request(
-				'POST',
-				self::API_ENDPOINT,
-				[
-					'headers'  => $this->httpHelper->getHeaders(),
-					'body'     => $this->getRequestBody($input->getArgument('db_backup_id'), $input->getArgument('database_id')),
-					'progress' => function () use ($progressBar) {
-						$progressBar->advance();
-					},
-				]
-			);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$output->write(PHP_EOL);
-				$output->writeln('<info> On database ' . $input->getArgument('database_id') . ' restore job started, with backup ' . $input->getArgument('db_backup_id') . '</info>');
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->write(PHP_EOL);
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		}
-	}
-
-	/**
-	 * @param string $dbBackup
-	 * @param string $dbId
 	 * @return string
 	 */
-	protected function getRequestBody(string $dbBackup, string $dbId): string
+	protected function getRequestBody(InputInterface $input): string
 	{
 		return json_encode([
 			'data' => [
 				'attributes' => [
-					'db_backup_id'       => $dbBackup,
-					'target_database_id' => $dbId,
+					'db_backup_id'       => $input->getArgument('db_backup_id'),
+					'target_database_id' => $input->getArgument('database_id'),
 				],
 				'type'       => 'db_restores',
 			],

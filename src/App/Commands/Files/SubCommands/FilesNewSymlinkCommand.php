@@ -2,17 +2,18 @@
 
 namespace Lio\App\Commands\Files\SubCommands;
 
-use Lio\App\Commands\Command;
+use Art4\JsonApiClient\Helper\Parser;
+use Art4\JsonApiClient\V1\Document;
+use Lio\App\AbstractCommands\AbstractNewCommand;
 use Exception;
-use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Output\NullOutput;
 
-class FilesNewSymlinkCommand extends Command
+class FilesNewSymlinkCommand extends AbstractNewCommand
 {
 	const API_ENDPOINT = 'https://api.lamp.io/apps/%s/files/';
 
@@ -42,62 +43,45 @@ class FilesNewSymlinkCommand extends Command
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
+		$this->setApiEndpoint(sprintf(
+			self::API_ENDPOINT,
+			$input->getArgument('app_id')
+		));
 		parent::execute($input, $output);
-		$progressBar = self::getProgressBar(
-			'Creating a symlink ' . $input->getArgument('file_id') . ' -> ' . $input->getArgument('target'),
-			(empty($input->getOption('json'))) ? $output : new NullOutput()
-		);
-		try {
-			$response = $this->httpHelper->getClient()->request(
-				'POST',
-				sprintf(
-					self::API_ENDPOINT,
-					$input->getArgument('app_id')
-				),
-				[
-					'headers'  => $this->httpHelper->getHeaders(),
-					'body'     => $this->getRequestBody(
-						trim($input->getArgument('file_id'), '/'),
-						trim($input->getArgument('target'), '/'),
-						!empty($input->getOption('apache_writable')) && $input->getOption('apache_writable') != 'false'
-					),
-					'progress' => function () use ($progressBar) {
-						$progressBar->advance();
-					},
-				]);
-			$progressBar->finish();
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$output->write(PHP_EOL);
-				$output->writeln('<info>Success, symlink ' . $input->getArgument('file_id') . ' has been created</info>');
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->write(PHP_EOL);
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		}
 	}
 
 	/**
-	 * @param string $fileId
-	 * @param string $target
-	 *  @param bool $isApacheWritable
+	 * @param ResponseInterface $response
+	 * @param OutputInterface $output
+	 * @param InputInterface $input
+	 * @return void|null
+	 */
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output, InputInterface $input)
+	{
+		/** @var Document $document */
+		$document = Parser::parseResponseString($response->getBody()->getContents());
+		$output->writeln('<info>Success, symlink ' . $document->get('data.id') . ' has been created</info>');
+	}
+
+
+	/**
+	 * @param InputInterface $input
 	 * @return string
 	 */
-	protected function getRequestBody(string $fileId, string $target, bool $isApacheWritable): string
+	protected function getRequestBody(InputInterface $input): string
 	{
 		$body = [
 			'data' => [
 				'type'       => 'files',
-				'id'         => $fileId,
+				'id'         => $input->getArgument('file_id'),
 				'attributes' => [
+					'target'     => $input->getArgument('target'),
 					'is_symlink' => true,
-					'target'     => $target,
 				],
 			],
 		];
-		if (!empty($isApacheWritable)) {
+
+		if (!empty($input->getOption('apache_writable')) && $input->getOption('apache_writable') != 'false') {
 			$body['data']['attributes']['apache_writable'] = true;
 		}
 		return json_encode($body);

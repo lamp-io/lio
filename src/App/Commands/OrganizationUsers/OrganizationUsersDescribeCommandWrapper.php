@@ -5,17 +5,18 @@ namespace Lio\App\Commands\OrganizationUsers;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\V1\Document;
-use Lio\App\Commands\Command;
+use Lio\App\Console\CommandWrapper;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;
+use Lio\App\Helpers\CommandsHelper;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class OrganizationUsersDescribeCommand extends Command
+class OrganizationUsersDescribeCommandWrapper extends CommandWrapper
 {
 	const API_ENDPOINT = 'https://api.lamp.io/organization_users/%s';
 
@@ -45,7 +46,7 @@ class OrganizationUsersDescribeCommand extends Command
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
-		$progressBar = self::getProgressBar(
+		$progressBar = CommandsHelper::getProgressBar(
 			'Getting organization/user relationship  ' . $input->getArgument('organization_user_id'),
 			(empty($input->getOption('json'))) ? $output : new NullOutput()
 		);

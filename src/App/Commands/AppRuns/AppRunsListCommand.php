@@ -3,20 +3,17 @@
 
 namespace Lio\App\Commands\AppRuns;
 
-use Exception;
-use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\BadResponseException;
-use Symfony\Component\Console\Helper\TableSeparator;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\NullOutput;
+use Lio\App\AbstractCommands\AbstractListCommand;
+use Lio\App\Helpers\CommandsHelper;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Lio\App\Commands\Command;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 use Symfony\Component\Console\Helper\Table;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
+use Symfony\Component\Console\Input\InputInterface;
 
-class AppRunsListCommand extends Command
+class AppRunsListCommand extends AbstractListCommand
 {
 	const API_ENDPOINT = 'https://api.lamp.io/app_runs/';
 
@@ -29,76 +26,39 @@ class AppRunsListCommand extends Command
 	{
 		parent::configure();
 		$this->setDescription('Return all app runs for all user\'s organizations')
-			->setHelp('Get all app runs for all user\'s organizations, api reference' . PHP_EOL . 'https://www.lamp.io/api#/app_runs/appRunsList');
+			->setHelp('Get all app runs for all user\'s organizations, api reference' . PHP_EOL . 'https://www.lamp.io/api#/app_runs/appRunsList')
+			->setApiEndpoint(self::API_ENDPOINT);
 	}
 
 	/**
-	 * @param InputInterface $input
+	 * @param ResponseInterface $response
 	 * @param OutputInterface $output
-	 * @return int|void|null
-	 * @throws Exception
-	 * @throws GuzzleException
+	 * @param InputInterface $input
+	 * @return void|null
 	 */
-	protected function execute(InputInterface $input, OutputInterface $output)
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output, InputInterface $input)
 	{
-		parent::execute($input, $output);
-		$progressBar = self::getProgressBar(
-			'Getting app runs',
-			(empty($input->getOption('json'))) ? $output : new NullOutput()
-		);
-		try {
-			$response = $this->httpHelper->getClient()->request(
-				'GET',
-				self::API_ENDPOINT,
-				[
-					'headers' => $this->httpHelper->getHeaders(),
-					'progress' => function () use ($progressBar, $input) {
-						$progressBar->advance();
-					},
-				]
-			);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$output->write(PHP_EOL);
-				/** @var Document $document */
-				$document = Parser::parseResponseString($response->getBody()->getContents());
-				$table = $this->getOutputAsTable($document, new Table($output));
-				$table->render();
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->write(PHP_EOL);
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		}
-	}
-
-	/**
-	 * @param Document $document
-	 * @param Table $table
-	 * @return Table
-	 */
-	protected function getOutputAsTable(Document $document, Table $table): Table
-	{
-		$table->setHeaderTitle('App runs list');
+		/** @var Document $document */
+		$document = Parser::parseResponseString($response->getBody()->getContents());
 		$serializer = new ArraySerializer(['recursive' => true]);
-		$appRuns = $serializer->serialize($document->get('data'));
-		$table->setHeaders(['Id', 'App ID', 'Complete', 'Command', 'Created at']);
-		$sortedData = $this->sortData($appRuns, 'created_at');
-		$lastElement = end($sortedData);
-		foreach ($sortedData as $key => $data) {
-			$table->addRow([
-				$data['id'],
-				$data['attributes']['app_id'],
-				$data['attributes']['complete'],
-				wordwrap($data['attributes']['command'], 20, PHP_EOL),
-				$data['attributes']['created_at'],
-			]);
-			if ($data != $lastElement) {
-				$table->addRow(new TableSeparator());
-			}
-		}
-
-		return $table;
+		$serializedDocument = $serializer->serialize($document);
+		$sortedData = CommandsHelper::sortData($serializedDocument['data'], 'created_at');
+		$table = $this->getTableOutput(
+			$sortedData,
+			$document,
+			'App runs',
+			[
+				'Id'         => 'data.%d.id',
+				'App ID'     => 'data.%d.attributes.app_id',
+				'Created at' => 'data.%d.attributes.created_at',
+				'Complete'   => 'data.%d.attributes.complete',
+				'CommandWrapper'    => 'data.%d.attributes.command',
+				'Status'     => 'data.%d.attributes.status',
+			],
+			new Table($output),
+			end($sortedData)
+		);
+		$table->render();
 	}
+
 }

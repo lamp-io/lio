@@ -2,20 +2,21 @@
 
 namespace Lio\App\Commands\AppBackups;
 
-use Lio\App\Commands\Command;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\BadResponseException;
+use Lio\App\Console\CommandWrapper;
+use Lio\App\Helpers\CommandsHelper;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class AppBackupsDownloadCommand extends Command
+class AppBackupsDownloadCommand extends CommandWrapper
 {
-	protected static $defaultName = 'app_backups:download';
-
 	const API_ENDPOINT = 'https://api.lamp.io/app_backups/%s';
+
+	protected static $defaultName = 'app_backups:download';
 
 	/**
 	 *
@@ -32,14 +33,14 @@ class AppBackupsDownloadCommand extends Command
 	/**
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
-	 * @return int|void|null
-	 * @throws Exception
+	 * @return int|null|void
 	 * @throws GuzzleException
+	 * @throws Exception
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
-		$progressBar = self::getProgressBar(
+		$progressBar = CommandsHelper::getProgressBar(
 			'Downloading app backup ' . $input->getArgument('app_backup_id'),
 			(empty($input->getOption('json'))) ? $output : new NullOutput()
 		);
@@ -52,14 +53,14 @@ class AppBackupsDownloadCommand extends Command
 					$input->getArgument('app_backup_id')
 				),
 				[
-					'headers' => array_merge(
+					'headers'  => array_merge(
 						$this->httpHelper->getHeaders(),
 						['Accept' => 'application/x-gzip']
 					),
-					'progress'  => function () use ($progressBar) {
+					'progress' => function () use ($progressBar) {
 						$progressBar->advance();
 					},
-					'sink'    => fopen($input->getArgument('dir') . DIRECTORY_SEPARATOR . $input->getArgument('app_backup_id') . '.tar.gz', 'w+'),
+					'sink'     => fopen($input->getArgument('dir') . DIRECTORY_SEPARATOR . $input->getArgument('app_backup_id') . '.tar.gz', 'w+'),
 				]
 
 			);

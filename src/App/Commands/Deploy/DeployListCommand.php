@@ -2,18 +2,24 @@
 
 namespace Lio\App\Commands\Deploy;
 
-use Lio\App\Commands\Command;
+use Lio\App\Console\CommandWrapper;
 use Lio\App\Helpers\DeployHelper;
 use Exception;
+use Lio\App\Helpers\HttpHelper;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Helper\TableSeparator;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class DeployListCommand extends Command
+class DeployListCommand extends CommandWrapper
 {
 	protected static $defaultName = 'deploy:list';
+
+	/**
+	 * @var HttpHelper
+	 */
+	protected $httpHelper;
 
 	/**
 	 *
@@ -34,7 +40,6 @@ class DeployListCommand extends Command
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		parent::execute($input, $output);
-
 		if (!DeployHelper::isReleasesFolderExists($input->getArgument('app_id'), $this->getApplication())) {
 			throw new Exception('Your app hasn\'t not contain any deploys yet');
 		}

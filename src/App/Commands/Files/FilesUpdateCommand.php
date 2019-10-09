@@ -2,18 +2,16 @@
 
 namespace Lio\App\Commands\Files;
 
-use Lio\App\Commands\Command;
+use Lio\App\AbstractCommands\AbstractUpdateCommand;
 use Exception;
-use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\BadResponseException;
 use InvalidArgumentException;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class FilesUpdateCommand extends Command
+class FilesUpdateCommand extends AbstractUpdateCommand
 {
 	const API_ENDPOINT = 'https://api.lamp.io/apps/%s/files/%s%s';
 
@@ -40,73 +38,53 @@ class FilesUpdateCommand extends Command
 	 * @param OutputInterface $output
 	 * @return int|null|void
 	 * @throws Exception
-	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
-		parent::execute($input, $output);
-		try {
-			if (!empty($input->getArgument('file')) && !file_exists($input->getArgument('file'))) {
-				throw new InvalidArgumentException('File ' . $input->getArgument('file') . ' not exists');
-			}
-			if (!empty($input->getOption('recursive')) && empty($input->getOption('apache_writable'))) {
-				throw new InvalidArgumentException('[--recursive][-r] can be used only in pair with [--apache_writable]');
-			}
-			$progressBar = self::getProgressBar(
-				'Updating ' . $input->getArgument('file_id'),
-				(empty($input->getOption('json'))) ? $output : new NullOutput());
-			$response = $this->httpHelper->getClient()->request(
-				'PATCH',
-				sprintf(
-					self::API_ENDPOINT,
-					$input->getArgument('app_id'),
-					$input->getArgument('file_id'),
-					!empty($input->getOption('recursive')) ? '?recur=true' : ''
-				),
-				[
-					'headers'  => $this->httpHelper->getHeaders(),
-					'body'     => $this->getRequestBody(
-						$input->getArgument('file'),
-						$input->getArgument('file_id'),
-						!empty($input->getOption('apache_writable')) && $input->getOption('apache_writable') != 'false'
-					),
-					'progress' => function () use ($progressBar) {
-						$progressBar->advance();
-					},
-				]);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$output->write(PHP_EOL);
-				$output->writeln('<info>Success, file ' . $input->getArgument('file_id') . ' has been updated</info>');
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->write(PHP_EOL);
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
+		$this->setApiEndpoint(sprintf(
+			self::API_ENDPOINT,
+			$input->getArgument('app_id'),
+			$input->getArgument('file_id'),
+			!empty($input->getOption('recursive')) ? '?recur=true' : ''
+		));
+		if (!empty($input->getArgument('file')) && !file_exists($input->getArgument('file'))) {
+			throw new InvalidArgumentException('File ' . $input->getArgument('file') . ' not exists');
 		}
+		if (!empty($input->getOption('recursive')) && empty($input->getOption('apache_writable'))) {
+			throw new InvalidArgumentException('[--recursive][-r] can be used only in pair with [--apache_writable]');
+		}
+		parent::execute($input, $output);
 	}
 
 	/**
-	 * @param string $localFile
-	 * @param string $remoteFile
-	 * @param bool $isApacheWritable
+	 * @param ResponseInterface $response
+	 * @param OutputInterface $output
+	 * @param InputInterface $input
+	 * @return void|null
+	 */
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output, InputInterface $input)
+	{
+		$output->writeln('<info>Success, file ' . $input->getArgument('file_id') . ' has been updated</info>');
+	}
+
+	/**
+	 * @param InputInterface $input
 	 * @return string
 	 */
-	protected function getRequestBody(string $localFile, string $remoteFile, bool $isApacheWritable): string
+	protected function getRequestBody(InputInterface $input): string
 	{
 		$body = [
 			'data' => [
-				'id'         => $remoteFile,
+				'id'         => $input->getArgument('file_id'),
 				'type'       => 'files',
 				'attributes' => [],
 			],
 		];
-		if (!empty($localFile)) {
-			$body['data']['attributes']['contents'] = file_get_contents($localFile);
+		if (!empty($input->getArgument('file'))) {
+			$body['data']['attributes']['contents'] = file_get_contents($input->getArgument('file'));
 		}
-		if (!empty($isApacheWritable)) {
-			$body['data']['attributes']['apache_writable'] = true;
+		if (!empty($input->getOption('apache_writable'))) {
+			$body['data']['attributes']['apache_writable'] = $input->getOption('apache_writable') != 'false';
 		}
 		return json_encode($body);
 	}

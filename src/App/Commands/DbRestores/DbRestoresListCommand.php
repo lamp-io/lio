@@ -5,18 +5,17 @@ namespace Lio\App\Commands\DbRestores;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\V1\Document;
-use Lio\App\Commands\Command;
+use Lio\App\AbstractCommands\AbstractListCommand;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\BadResponseException;
+use Lio\App\Helpers\CommandsHelper;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Helper\Table;
-use Symfony\Component\Console\Helper\TableSeparator;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class DbRestoresListCommand extends Command
+class DbRestoresListCommand extends AbstractListCommand
 {
 	const API_ENDPOINT = 'https://api.lamp.io/db_restores%s';
 
@@ -49,72 +48,41 @@ class DbRestoresListCommand extends Command
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
+		$this->setApiEndpoint(sprintf(
+			self::API_ENDPOINT,
+			$this->httpHelper->optionsToQuery($input->getOptions(), self::OPTIONS_TO_QUERY_KEYS)
+		));
 		parent::execute($input, $output);
-		$progressBar = self::getProgressBar(
-			'Getting a db restore jobs',
-			(empty($input->getOption('json'))) ? $output : new NullOutput()
-		);
-		try {
-			$response = $this->httpHelper->getClient()->request(
-				'GET',
-				sprintf(
-					self::API_ENDPOINT,
-					$this->httpHelper->optionsToQuery($input->getOptions(), self::OPTIONS_TO_QUERY_KEYS)
-				),
-				[
-					'headers' => $this->httpHelper->getHeaders(),
-					'progress'  => function () use ($progressBar) {
-						$progressBar->advance();
-					},
-				]
-			);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$output->write(PHP_EOL);
-				/** @var Document $document */
-				$document = Parser::parseResponseString($response->getBody()->getContents());
-				$table = $this->getOutputAsTable($document, new Table($output));
-				$table->render();
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->write(PHP_EOL);
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		}
 	}
 
 	/**
-	 * @param Document $document
-	 * @param Table $table
-	 * @return Table
+	 * @param ResponseInterface $response
+	 * @param OutputInterface $output
+	 * @param InputInterface $input
+	 * @return void|null
 	 */
-	protected function getOutputAsTable(Document $document, Table $table): Table
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output, InputInterface $input)
 	{
-		$table->setHeaderTitle('Database Restore Jobs');
-		$table->setStyle('box');
-		$table->setHeaders([
-			'Id', 'Database', 'Db backup', 'Complete', 'Created at', 'Organization Id', 'Status',
-		]);
+		/** @var Document $document */
+		$document = Parser::parseResponseString($response->getBody()->getContents());
 		$serializer = new ArraySerializer(['recursive' => true]);
 		$serializedDocument = $serializer->serialize($document);
-		$sortedData = $this->sortData($serializedDocument['data'], 'created_at');
-		$lastElement = end($sortedData);
-		foreach ($sortedData as $key => $value) {
-			$table->addRow([
-				$value['id'],
-				$value['attributes']['target_database_id'],
-				$value['attributes']['db_backup_id'],
-				($value['attributes']['complete']) ? 'true' : 'false',
-				$value['attributes']['created_at'],
-				$value['attributes']['organization_id'],
-				$value['attributes']['status'],
-			]);
-			if ($value != $lastElement) {
-				$table->addRow(new TableSeparator());
-			}
-
-		}
-		return $table;
+		$sortedData = CommandsHelper::sortData($serializedDocument['data'], 'created_at');
+		$table = $this->getTableOutput(
+			$sortedData,
+			$document,
+			'Database restores',
+			[
+				'Id'              => 'data.%d.id',
+				'Backup Id'       => 'data.%d.attributes.db_backup_id',
+				'Database Id'     => 'data.%d.attributes.target_database_id',
+				'Created at'      => 'data.%d.attributes.created_at',
+				'Organization Id' => 'data.%d.attributes.organization_id',
+				'Status'          => 'data.%d.attributes.status',
+			],
+			new Table($output),
+			end($sortedData)
+		);
+		$table->render();
 	}
 }

@@ -4,21 +4,19 @@
 namespace Lio\App\Commands\AppRestores;
 
 
-use Lio\App\Commands\Command;
+use Lio\App\AbstractCommands\AbstractDeleteCommand;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\BadResponseException;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class AppRestoresDeleteCommand extends Command
+class AppRestoresDeleteCommand extends AbstractDeleteCommand
 {
-	protected static $defaultName = 'app_restores:delete';
-
 	const API_ENDPOINT = 'https://api.lamp.io/app_restores/%s';
+
+	protected static $defaultName = 'app_restores:delete';
 
 	/**
 	 *
@@ -28,8 +26,7 @@ class AppRestoresDeleteCommand extends Command
 		parent::configure();
 		$this->setDescription('Delete an app restore')
 			->setHelp('Delete an app restore, api reference' . PHP_EOL . 'https://www.lamp.io/api#/app_restores/appRestoresDelete')
-			->addArgument('app_restore_id', InputArgument::REQUIRED, 'The ID of the app restore')
-			->addOption('yes', 'y', InputOption::VALUE_NONE, 'Skip confirm delete question');
+			->addArgument('app_restore_id', InputArgument::REQUIRED, 'The ID of the app restore');
 	}
 
 	/**
@@ -41,41 +38,23 @@ class AppRestoresDeleteCommand extends Command
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
+		$this->setApiEndpoint(sprintf(
+			self::API_ENDPOINT,
+			$input->getArgument('app_restore_id')
+		));
 		parent::execute($input, $output);
-		if (!$this->askConfirm('<info>Are you sure you want to delete an app restore? (y/N)</info>', $output, $input)) {
-			return 0;
-		}
-		$progressBar = self::getProgressBar(
-			'Deleting app restore ' . $input->getArgument('app_restore_id'),
-			(empty($input->getOption('json'))) ? $output : new NullOutput()
-		);
-		try {
-			$response = $this->httpHelper->getClient()->request(
-				'DELETE',
-				sprintf(
-					self::API_ENDPOINT,
-					$input->getArgument('app_restore_id')
-				),
-				[
-					'headers' => $this->httpHelper->getHeaders(),
-					'progress'  => function () use ($progressBar) {
-						$progressBar->advance();
-					},
-				]
-			);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$output->write(PHP_EOL);
-				$output->writeln(
-					'<info>App restore deleted ' . $input->getArgument('app_restore_id') . '</info>'
-				);
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->write(PHP_EOL);
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-
-		}
 	}
+
+	/**
+	 * @param ResponseInterface $response
+	 * @param OutputInterface $output
+	 * @param InputInterface $input
+	 * @return void|null
+	 */
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output, InputInterface $input)
+	{
+		$output->writeln('<info>App restore ' . $input->getArgument('app_restore_id') . ' has been deleted</info>');
+	}
+
+
 }

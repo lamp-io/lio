@@ -6,7 +6,6 @@ use Closure;
 use Lio\App\Commands\AppRuns\AppRunsDescribeCommand;
 use Lio\App\Commands\AppRuns\AppRunsNewCommand;
 use Lio\App\Commands\Apps\AppsDescribeCommand;
-use Lio\App\Commands\Command;
 use Lio\App\Commands\Databases\DatabasesDescribeCommand;
 use Lio\App\Commands\DbBackups\DbBackupsDescribeCommand;
 use Lio\App\Commands\DbBackups\DbBackupsNewCommand;
@@ -14,10 +13,11 @@ use Lio\App\Commands\DbRestores\DbRestoresDescribeCommand;
 use Lio\App\Commands\DbRestores\DbRestoresNewCommand;
 use Lio\App\Commands\Files\FilesDeleteCommand;
 use Lio\App\Commands\Files\FilesUpdateCommand;
-use Lio\App\Commands\Files\FilesUploadCommand;
+use Lio\App\Commands\Files\FilesUploadCommandWrapper;
 use Lio\App\Commands\Files\SubCommands\FilesUpdateMoveCommand;
 use Lio\App\Commands\Files\SubCommands\FilesUpdateUnarchiveCommand;
 use Lio\App\Helpers\AuthHelper;
+use Lio\App\Helpers\CommandsHelper;
 use Lio\App\Helpers\DeployHelper;
 use Exception;
 use GuzzleHttp\Client;
@@ -129,7 +129,7 @@ abstract class DeployerAbstract implements DeployInterface
 		}
 		$zip = new ZipArchive();
 		$finder = new Finder();
-		$progressBar = Command::getProgressBar('Creating an artifact', $this->consoleOutput);
+		$progressBar = CommandsHelper::getProgressBar('Creating an artifact', $this->consoleOutput);
 		$finder->in($this->appPath)->ignoreDotFiles(false);
 		if (!$finder->hasResults()) {
 			throw new Exception('Empty app directory');
@@ -179,7 +179,7 @@ abstract class DeployerAbstract implements DeployInterface
 			/** @var Document $document */
 			$document = Parser::parseResponseString($bufferOutput->fetch());
 			$dbBackupId = $document->get('data.id');
-			$progressBar = Command::getProgressBar('Backup current database state', $this->consoleOutput);
+			$progressBar = CommandsHelper::getProgressBar('Backup current database state', $this->consoleOutput);
 			$progressBar->start();
 			while (!DbBackupsDescribeCommand::isDbBackupCreated($dbBackupId, $this->application)) {
 				$progressBar->advance();
@@ -211,7 +211,7 @@ abstract class DeployerAbstract implements DeployInterface
 			$document = Parser::parseResponseString($bufferOutput->fetch());
 			/** @var Document $document */
 			$dbRestoreId = $document->get('data.id');
-			$progressBar = Command::getProgressBar('Restoring db to previous state', $this->consoleOutput);
+			$progressBar = CommandsHelper::getProgressBar('Restoring db to previous state', $this->consoleOutput);
 			$progressBar->start();
 			while (!DbRestoresDescribeCommand::isDbRestoreCompleted($dbRestoreId, $this->application)) {
 				$progressBar->advance();
@@ -244,7 +244,7 @@ abstract class DeployerAbstract implements DeployInterface
 			/** @var Document $document */
 			$document = Parser::parseResponseString($bufferOutput->fetch());
 			$appRunId = $document->get('data.id');
-			$progressBar = Command::getProgressBar($progressMessage, $this->consoleOutput);
+			$progressBar = CommandsHelper::getProgressBar($progressMessage, $this->consoleOutput);
 			$progressBar->start();
 			while (!AppRunsDescribeCommand::isExecutionCompleted($appRunId, $this->application)) {
 				$progressBar->advance();
@@ -252,7 +252,7 @@ abstract class DeployerAbstract implements DeployInterface
 			$progressBar->finish();
 			$this->consoleOutput->write(PHP_EOL);
 		} else {
-			throw new Exception('Command ' . $command . '. Failed');
+			throw new Exception('CommandWrapper ' . $command . '. Failed');
 		}
 	}
 
@@ -262,7 +262,7 @@ abstract class DeployerAbstract implements DeployInterface
 	 */
 	protected function initApp(string $appId)
 	{
-		$progressBar = Command::getProgressBar('Initializing app', $this->consoleOutput);
+		$progressBar = CommandsHelper::getProgressBar('Initializing app', $this->consoleOutput);
 		$progressBar->start();
 		while (!$this->isAppRunning($appId)) {
 			$progressBar->advance();
@@ -456,7 +456,7 @@ abstract class DeployerAbstract implements DeployInterface
 	 */
 	protected function initDatabase(string $dbHost)
 	{
-		$progressBar = Command::getProgressBar('Initializing database', $this->consoleOutput);
+		$progressBar = CommandsHelper::getProgressBar('Initializing database', $this->consoleOutput);
 		$progressBar->start();
 		$dbIsRunning = false;
 		while (!$dbIsRunning) {
@@ -559,9 +559,9 @@ abstract class DeployerAbstract implements DeployInterface
 	 */
 	protected function uploadFile(string $localFile, string $fileId): int
 	{
-		$filesUploadCommand = $this->application->find(FilesUploadCommand::getDefaultName());
+		$filesUploadCommand = $this->application->find(FilesUploadCommandWrapper::getDefaultName());
 		$args = [
-			'command' => FilesUploadCommand::getDefaultName(),
+			'command' => FilesUploadCommandWrapper::getDefaultName(),
 			'file'    => $localFile,
 			'app_id'  => $this->config['app']['id'],
 			'file_id' => $fileId,
@@ -688,7 +688,7 @@ abstract class DeployerAbstract implements DeployInterface
 				'Authorization' => 'Bearer ' . AuthHelper::getToken(),
 			];
 		}
-		$progressBar = Command::getProgressBar($progressBarMessage, $output);
+		$progressBar = CommandsHelper::getProgressBar($progressBarMessage, $output);
 		$response = $this->httpClient->request(
 			$httpType,
 			$url,
@@ -751,7 +751,7 @@ abstract class DeployerAbstract implements DeployInterface
 			$this->consoleOutput->write(PHP_EOL);
 		} else {
 			$url = sprintf(
-				FilesUploadCommand::API_ENDPOINT,
+				FilesUploadCommandWrapper::API_ENDPOINT,
 				$this->config['app']['id']
 			);
 			$this->sendRequest($url, 'POST', 'Creating sqlite database', json_encode([
@@ -845,7 +845,7 @@ abstract class DeployerAbstract implements DeployInterface
 			$httpType = 'PATCH';
 		} else {
 			$url = sprintf(
-				FilesUploadCommand::API_ENDPOINT,
+				FilesUploadCommandWrapper::API_ENDPOINT,
 				$this->config['app']['id']
 			);
 			$httpType = 'POST';
@@ -904,7 +904,7 @@ abstract class DeployerAbstract implements DeployInterface
 	protected function createFileIfNotExists(string $name, string $message, bool $isDir = false)
 	{
 		$postFileUrl = sprintf(
-			FilesUploadCommand::API_ENDPOINT,
+			FilesUploadCommandWrapper::API_ENDPOINT,
 			$this->config['app']['id']
 		);
 		$postFileBody = json_encode([

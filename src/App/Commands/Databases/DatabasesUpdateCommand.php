@@ -3,35 +3,22 @@
 
 namespace Lio\App\Commands\Databases;
 
-
-use Art4\JsonApiClient\Helper\Parser;
-use Art4\JsonApiClient\Serializer\ArraySerializer;
-use Art4\JsonApiClient\V1\Document;
-use Lio\App\Commands\Command;
-use Lio\App\Helpers\PasswordHelper;
-use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\BadResponseException;
+use Lio\App\AbstractCommands\AbstractUpdateCommand;
+use Lio\App\Helpers\CommandsHelper;
 use InvalidArgumentException;
 use Symfony\Component\Console\Exception\InvalidArgumentException as CliInvalidArgumentException;
-use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Exception;
 
-class DatabasesUpdateCommand extends Command
+class DatabasesUpdateCommand extends AbstractUpdateCommand
 {
-	protected static $defaultName = 'databases:update';
-
 	const API_ENDPOINT = 'https://api.lamp.io/databases/%s';
 
-	const EXCLUDE_FROM_OUTPUT = [
-		'my_cnf',
-		'mysql_root_password',
-	];
+	protected static $defaultName = 'databases:update';
 
 	/**
 	 *
@@ -58,15 +45,20 @@ class DatabasesUpdateCommand extends Command
 	 * @param OutputInterface $output
 	 * @return int|void|null
 	 * @throws Exception
-	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
-		parent::execute($input, $output);
+		$this->setApiEndpoint(sprintf(
+			self::API_ENDPOINT,
+			$input->getArgument('database_id')
+		));
+		$this->setSkipAttributes([
+			'my_cnf',
+		]);
 		if ($input->getOption('mysql_root_password')) {
 			/** @var QuestionHelper $helper */
 			$helper = $this->getHelper('question');
-			$question = PasswordHelper::getPasswordQuestion(
+			$question = CommandsHelper::getPasswordQuestion(
 				'<info>Please provide a password for the MySQL root user</info>',
 				null,
 				$output
@@ -74,48 +66,14 @@ class DatabasesUpdateCommand extends Command
 			$password = $helper->ask($input, $output, $question);
 			$input->setOption('mysql_root_password', $password);
 		}
-		$progressBar = self::getProgressBar(
-			'Updating database ' . $input->getArgument('database_id'),
-			(empty($input->getOption('json'))) ? $output : new NullOutput()
-		);
-		try {
-			$response = $this->httpHelper->getClient()->request(
-				'PATCH',
-				sprintf(
-					self::API_ENDPOINT,
-					$input->getArgument('database_id')
-				),
-				[
-					'headers' => $this->httpHelper->getHeaders(),
-					'body'    => $this->getRequestBody($input),
-					'progress'  => function () use ($progressBar) {
-						$progressBar->advance();
-					},
-				]
-			);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$output->write(PHP_EOL);
-				/** @var Document $document */
-				$document = Parser::parseResponseString($response->getBody()->getContents());
-				$table = $this->getOutputAsTable($document, new Table($output));
-				$table->render();
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->write(PHP_EOL);
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		}
+		parent::execute($input, $output);
 
 	}
-
 
 	/**
 	 * @param InputInterface $input
 	 * @return string
 	 * @throws Exception
-	 * @throws GuzzleException
 	 */
 	protected function getRequestBody(InputInterface $input): string
 	{
@@ -124,7 +82,7 @@ class DatabasesUpdateCommand extends Command
 		}
 		$attributes = [];
 		foreach ($input->getOptions() as $key => $val) {
-			if (!in_array($key, self::DEFAULT_CLI_OPTIONS) && !empty($val)) {
+			if (!in_array($key, CommandsHelper::DEFAULT_CLI_OPTIONS) && !empty($val)) {
 				if ($key == 'my_cnf') {
 					$attributes[$key] = file_get_contents($val);
 				} elseif ($key == 'vcpu') {
@@ -138,7 +96,7 @@ class DatabasesUpdateCommand extends Command
 		}
 
 		if (empty($attributes)) {
-			throw new CliInvalidArgumentException('Command requires at least one option to be executed. List of allowed options');
+			throw new CliInvalidArgumentException('CommandWrapper requires at least one option to be executed. List of allowed options');
 		}
 
 		return json_encode([
@@ -148,28 +106,5 @@ class DatabasesUpdateCommand extends Command
 				'type'       => 'databases',
 			],
 		]);
-	}
-
-	/**
-	 * @param Document $document
-	 * @param Table $table
-	 * @return Table
-	 */
-	protected function getOutputAsTable(Document $document, Table $table): Table
-	{
-		$table->setHeaderTitle('Database');
-		$serializer = new ArraySerializer(['recursive' => true]);
-		$serializedDocument = $serializer->serialize($document);
-		$headers = ['Id'];
-		$row = [$serializedDocument['data']['id']];
-		foreach ($serializedDocument['data']['attributes'] as $key => $value) {
-			if (!empty($value) && !in_array($key, self::EXCLUDE_FROM_OUTPUT)) {
-				array_push($headers, $key);
-				array_push($row, $value);
-			}
-		}
-		$table->setHeaders($headers);
-		$table->addRow($row);
-		return $table;
 	}
 }

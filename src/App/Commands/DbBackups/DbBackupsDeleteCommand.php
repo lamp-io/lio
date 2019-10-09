@@ -2,17 +2,15 @@
 
 namespace Lio\App\Commands\DbBackups;
 
-use Lio\App\Commands\Command;
+use Lio\App\AbstractCommands\AbstractDeleteCommand;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\BadResponseException;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class DbBackupsDeleteCommand extends Command
+class DbBackupsDeleteCommand extends AbstractDeleteCommand
 {
 	protected static $defaultName = 'db_backups:delete';
 
@@ -26,8 +24,7 @@ class DbBackupsDeleteCommand extends Command
 		parent::configure();
 		$this->setDescription('Delete a db backup')
 			->setHelp('Delete a db backup, api reference' . PHP_EOL . 'https://www.lamp.io/api#/db_backups/dbBackupsDelete')
-			->addArgument('db_backup_id', InputArgument::REQUIRED, 'The ID of the db backup')
-			->addOption('yes', 'y', InputOption::VALUE_NONE, 'Skip confirm delete question');
+			->addArgument('db_backup_id', InputArgument::REQUIRED, 'The ID of the db backup');
 	}
 
 	/**
@@ -39,40 +36,21 @@ class DbBackupsDeleteCommand extends Command
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
+		$this->setApiEndpoint(sprintf(
+			self::API_ENDPOINT,
+			$input->getArgument('db_backup_id')
+		));
 		parent::execute($input, $output);
-		if (!$this->askConfirm('<info>Are you sure you want to delete db backup? (y/N)</info>', $output, $input)) {
-			return 0;
-		}
-		$progressBar = self::getProgressBar(
-			'Deleting database backup ' . $input->getArgument('db_backup_id'),
-			(empty($input->getOption('json'))) ? $output : new NullOutput()
-		);
-		try {
-			$response = $this->httpHelper->getClient()->request(
-				'DELETE',
-				sprintf(
-					self::API_ENDPOINT,
-					$input->getArgument('db_backup_id')
-				),
-				[
-					'headers'  => $this->httpHelper->getHeaders(),
-					'progress' => function () use ($progressBar) {
-						$progressBar->advance();
-					},
-				]
-			);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$output->write(PHP_EOL);
-				$output->writeln(
-					'<info>Database backup deleted ' . $input->getArgument('db_backup_id') . '</info>'
-				);
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->write(PHP_EOL);
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		}
+	}
+
+	/**
+	 * @param ResponseInterface $response
+	 * @param OutputInterface $output
+	 * @param InputInterface $input
+	 * @return void|null
+	 */
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output, InputInterface $input)
+	{
+		$output->writeln('<info>Database backup ' . $input->getArgument('db_backup_id') . ' has been deleted</info>');
 	}
 }

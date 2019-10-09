@@ -3,22 +3,17 @@
 namespace Lio\App\Commands\AppRuns;
 
 use Exception;
-use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\BadResponseException;
+use Lio\App\AbstractCommands\AbstractDescribeCommand;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\BufferedOutput;
-use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
-use Lio\App\Commands\Command;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
-use Symfony\Component\Console\Helper\Table;
-use Art4\JsonApiClient\Serializer\ArraySerializer;
 
-class AppRunsDescribeCommand extends Command
+class AppRunsDescribeCommand extends AbstractDescribeCommand
 {
 	const API_ENDPOINT = 'https://api.lamp.io/app_runs/%s';
 
@@ -35,12 +30,20 @@ class AppRunsDescribeCommand extends Command
 			->addArgument('app_run_id', InputArgument::REQUIRED, 'ID of app run');
 	}
 
+	protected function execute(InputInterface $input, OutputInterface $output)
+	{
+		$this->setApiEndpoint(sprintf(
+			self::API_ENDPOINT,
+			$input->getArgument('app_run_id')
+		));
+		return parent::execute($input, $output);
+	}
+
 	/**
 	 * @param string $appRunId
 	 * @param Application $application
 	 * @return bool
 	 * @throws Exception
-	 * @throws GuzzleException
 	 */
 	public static function isExecutionCompleted(string $appRunId, Application $application): bool
 	{
@@ -58,76 +61,5 @@ class AppRunsDescribeCommand extends Command
 			throw new Exception($document->get('data.attributes.output'));
 		}
 		return $document->get('data.attributes.complete');
-	}
-
-	/**
-	 * @param InputInterface $input
-	 * @param OutputInterface $output
-	 * @return int|void|null
-	 * @throws Exception
-	 * @throws GuzzleException
-	 */
-	protected function execute(InputInterface $input, OutputInterface $output)
-	{
-		parent::execute($input, $output);
-		$progressBar = self::getProgressBar(
-			'Getting app run ' . $input->getArgument('app_run_id'),
-			(empty($input->getOption('json'))) ? $output : new NullOutput()
-		);
-		try {
-			$response = $this->httpHelper->getClient()->request(
-				'GET',
-				sprintf(
-					self::API_ENDPOINT,
-					$input->getArgument('app_run_id')
-				),
-				[
-					'headers'  => $this->httpHelper->getHeaders(),
-					'progress' => function () use ($progressBar, $input) {
-						$progressBar->advance();
-					},
-				]
-			);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				$output->write(PHP_EOL);
-				/** @var Document $document */
-				$document = Parser::parseResponseString($response->getBody()->getContents());
-				$table = $this->getOutputAsTable($document, new Table($output));
-				$table->render();
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->write(PHP_EOL);
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
-		}
-	}
-
-	/**
-	 * @param Document $document
-	 * @param Table $table
-	 * @return Table
-	 */
-	protected function getOutputAsTable(Document $document, Table $table): Table
-	{
-		$table->setHeaderTitle('App runs describe');
-		$serializer = new ArraySerializer(['recursive' => true]);
-		$appRuns = $serializer->serialize($document);
-		$tableHeader = ['id'];
-		$row = ['app_id' => $document->get('data.id')];
-		foreach ($appRuns['data']['attributes'] as $key => $attribute) {
-			if ($key == 'command' || $key == 'output') {
-				$attribute = wordwrap(trim(preg_replace(
-					'/\s\s+|\t/', ' ', $attribute
-				)), 20);
-			}
-			array_push($row, $attribute);
-			array_push($tableHeader, $key);
-		}
-		$table->setHeaders($tableHeader);
-		$table->addRow($row);
-
-		return $table;
 	}
 }

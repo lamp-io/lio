@@ -4,17 +4,18 @@ namespace Lio\App\Commands\AppRuns;
 
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\BadResponseException;
+use Lio\App\AbstractCommands\AbstractNewCommand;
+use Lio\App\Helpers\CommandsHelper;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\OutputInterface;
-use Lio\App\Commands\Command;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 
-class AppRunsNewCommand extends Command
+class AppRunsNewCommand extends AbstractNewCommand
 {
 	const API_ENDPOINT = 'https://api.lamp.io/app_runs/';
 
@@ -29,58 +30,37 @@ class AppRunsNewCommand extends Command
 		$this->setDescription('Run command on app')
 			->setHelp('Run command on app, api reference' . PHP_EOL . 'https://www.lamp.io/api#/app_runs/appRunsCreate')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addArgument('exec', InputArgument::REQUIRED, 'Command to run');
+			->addArgument('exec', InputArgument::REQUIRED, 'CommandWrapper to run')
+			->setApiEndpoint(self::API_ENDPOINT);
 	}
 
 	/**
-	 * @param InputInterface $input
+	 * @param ResponseInterface $response
 	 * @param OutputInterface $output
-	 * @return int|void|null
-	 * @throws Exception
+	 * @param InputInterface $input
 	 * @throws GuzzleException
+	 * @throws Exception
 	 */
-	protected function execute(InputInterface $input, OutputInterface $output)
+	protected function renderOutput(ResponseInterface $response, OutputInterface $output, InputInterface $input)
 	{
-		parent::execute($input, $output);
-
-		try {
-			$response = $this->httpHelper->getClient()->request(
-				'POST',
-				self::API_ENDPOINT,
-				[
-					'headers' => $this->httpHelper->getHeaders(),
-					'body'    => $this->getRequestBody(
-						$input->getArgument('app_id'),
-						$input->getArgument('exec')
-					),
-				]
-			);
-			if (!empty($input->getOption('json'))) {
-				$output->writeln($response->getBody()->getContents());
-			} else {
-				/** @var Document $document */
-				$document = Parser::parseResponseString($response->getBody()->getContents());
-				$appRunId = $document->get('data.id');
-				$progressBar = Command::getProgressBar($input->getArgument('exec'), $output);
-				$progressBar->start();
-				while (!AppRunsDescribeCommand::isExecutionCompleted($appRunId, $this->getApplication())) {
-					$progressBar->advance();
-				}
-				$progressBar->finish();
-				$output->write(PHP_EOL);
-				$output->write('<info>' . $this->getCommandOutput($appRunId) . '</info>');
-			}
-		} catch (BadResponseException $badResponseException) {
-			$output->writeln('<error>' . $badResponseException->getResponse()->getBody()->getContents() . '</error>');
-			return 1;
+		/** @var Document $document */
+		$document = Parser::parseResponseString($response->getBody()->getContents());
+		$appRunId = $document->get('data.id');
+		$progressBar = CommandsHelper::getProgressBar($document->get('data.attributes.command'), $output);
+		$progressBar->start();
+		while (!AppRunsDescribeCommand::isExecutionCompleted($appRunId, $this->getApplication())) {
+			$progressBar->advance();
 		}
+		$progressBar->finish();
+		$output->write(PHP_EOL);
+		$output->writeln('<info>' . $this->getCommandOutput($appRunId) . '</info>');
 	}
+
 
 	/**
 	 * @param string $appRunId
 	 * @return string
 	 * @throws Exception
-	 * @throws GuzzleException
 	 */
 	protected function getCommandOutput(string $appRunId): string
 	{
@@ -101,22 +81,19 @@ class AppRunsNewCommand extends Command
 	}
 
 	/**
-	 * @param string $appId
-	 * @param string $command
+	 * @param InputInterface $input
 	 * @return string
 	 */
-	protected function getRequestBody(string $appId, string $command): string
+	protected function getRequestBody(InputInterface $input): string
 	{
 		return json_encode([
-			'data' =>
-				[
-					'attributes' =>
-						[
-							'app_id'  => $appId,
-							'command' => $command,
-						],
-					'type'       => 'app_runs',
+			'data' => [
+				'attributes' => [
+					'app_id'  => $input->getArgument('app_id'),
+					'command' => $input->getArgument('exec'),
 				],
+				'type'       => 'app_runs',
+			],
 		]);
 	}
 }
