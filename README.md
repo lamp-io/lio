@@ -18,7 +18,7 @@ composer require lamp-il/lio
 ```
 
 ##### Download as a PHAR
-[lio.phar]()
+[lio.phar](https://github.com/lamp-io/lio/releases/latest/download/lio.phar)
 
 Usage
 ------------
