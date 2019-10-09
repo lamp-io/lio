@@ -6,18 +6,12 @@ use Exception;
 use GuzzleHttp\Exception\BadResponseException;
 use Lio\App\Console\CommandWrapper;
 use Lio\App\Helpers\CommandsHelper;
-use Lio\App\Helpers\HttpHelper;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 abstract class AbstractCommand extends CommandWrapper
 {
-	/**
-	 * @var HttpHelper
-	 */
-	protected $httpHelper;
-
 	/**
 	 * @var string
 	 */
