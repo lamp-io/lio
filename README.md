@@ -39,31 +39,6 @@ Commands
     * [-n][--no-interaction](bool) Do not ask any interactive question
     * [-v|vv|vvv][--verbose](bool) Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug
 
-### Deploy
-
-1. #### deploy [--laravel] [--sqlite] [\<dir>]
-
-    Deploy your app to lamp.io
-
-    Deploy command will create [lamp.yo.yaml](#lampioyaml) config file, inside of your project root, deploy process can be controlled by editing this file, you can check doc here [lamp.yo.yaml](#lampioyaml)
-
-    Arguments:
-
-    * `[<dir>]` ***(string)***  Path to a directory of your application, default value current working directory
-
-    Options:
-    * `[--sqlite]` ***(bool)*** Use sqlite as a persistent storage
-    * `[--laravel]` ***(bool)***  Deploy laravel app
-    * `[--symfony]` ***(bool)*** Deploy symfony app
-
-2. #### deploy:list <app_id>
-
-    Get list of available deploys
-
-    Arguments:
-
-    * `<app_id>` ***(string)*** The ID of the app
-
 ### Auth
 
 1.  #### auth [-u][--update_token]
@@ -832,76 +807,19 @@ deploy.sh
 ```bash
 #!/bin/sh -l
 composer global require lamp-io/lio dev-master --update-with-dependencies
-echo "$HOME"/.config/composer/vendor/bin/lio auth -t "$AUTH_TOKEN" -n
-"$HOME"/.config/composer/vendor/bin/lio auth -t "$AUTH_TOKEN" -n
-"$HOME"/.config/composer/vendor/bin/lio deploy --laravel -n
 ```
 
 ## Github actions
 
 Basic workflow example:
-```yaml
-on: [push]
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v1
-      - name: Lio deploy
-        uses: lamp-io/lio_deploy@master
-        with:
-          auth_token: ${{ secrets.lamp_io_token }}
-```
 
-You can get more details on [lamp-io/lio_deploy]() action, repository page
+
+You can get more details on [lamp-io/lio_deploy](https://github.com/lamp-io/action-lio-deploy) action, repository page
 
 Composer scripts
 ------------
 
 1. `composer build` Create phar build
-
-# Lamp.io.yaml
-
-* `release` ***(int)*** Id of your release (this value will be set automatically)
-* `type` ***(string)*** Type of your application (e.g laravel, symfony)
-* `deploy-branches` ***(dictionary)*** Only for CI/CD system. You can set for which branches will be allowed deploy, for each branch will be created separate app (by default only for master)
-* `deploy-all-branches` ***(bool)*** Only for CI/CD system. Allow to make deploy from any branch, for each branch will be created separate app
-* `app` ***(dictionary)*** Settings related to your lamp-io app
-    * `attributes` ***(dictionary)*** Lamp-io app attributes, it use same values has [apps:new](#appsnew-organization_id--d--description---httpd_conf---max_replicas--m--memory---min_replicas---php_ini--r--replicas---vcpu---github_webhook_secret---webhook_run_command---hostname---hostname_certificate_valid---public--delete_protection)
-     command options
-    * `id` ***(string)*** Lamp-io app id
-    * `url` ***(string)*** Web app url (this value will be set automatically)
-* `database` ***(dictionary)*** Settings related to your database
-    * `id` ***(string)*** Lamp-io database id
-    * `attributes` ***(dictionary)*** Lamp-io database attributes, it use same values has [database:new](#databasesnew---d--description--m--memory---organization_id---mysql_root_password---my_cnf---ssd---vcpu--delete_protection) command options
-    * `sql_dump` ***(string)*** Absolute path to your sql dump, that you need to have imported to remote database
-    * `type` ***(enum)*** Internal(db hosted on lamp-io platform) or external(db hosted outside of lamp-io platform) DB
-    * `system` ***(string)*** DB engine (e.g mysql, sqlite)
-    * `root_password` ***(string)*** DB root password
-* `apache_permissions_dir` ***(list)*** Select a dir that need to has apache permissions to write on it. NOTE: all default files that required apache write permissions, will be updated automatically
-* `commands` ***(dictionary)*** Commands that should be runt before symlink release (Please note that you can not add here migrate commands, it will be runt by default)
-* `no_migrations` ***(bool)*** Is need to run migrations, default TRUE
-* `retain` ***(int)*** How many old releases should be kept (Default value 10)
-
-# Examples
-
-* Example of lamp.io.yaml config for deploy with external mysql db (other values will be added during deploy process)
-```yaml
-database:
-    type: external
-    system: mysql
-```
-
-* Example of lamp.io.yaml config for CI/CD deploy, where will be allowed deploy from staging branch (it will create separate app for staging branch)
-```yaml
-deploy-branches:
-  - staging
-```
-
-* Example of lamp.io.yaml config for CI/CD deploy, where will be allowed deploy from any branch (it will create separate app for staging branch)
-```yaml
-deploy-all-branches: true
-```
 
 ## License
 
