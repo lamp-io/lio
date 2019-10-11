@@ -8,6 +8,8 @@ class AuthHelper
 {
 	const TOKEN_FILE_NAME = 'token';
 
+	const TOKEN_ENV_VAR = 'LAMP_IO_TOKEN';
+
 	/**
 	 * @param string $token
 	 * @return bool|int
@@ -48,7 +50,7 @@ class AuthHelper
 	 */
 	protected static function getTokenFromEnv(): string
 	{
-		return !empty(getenv('LAMP_IO_TOKEN')) ? getenv('LAMP_IO_TOKEN') : '';
+		return !empty(getenv(self::TOKEN_ENV_VAR)) ? getenv(self::TOKEN_ENV_VAR) : '';
 	}
 
 	/**
