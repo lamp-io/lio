@@ -3,7 +3,6 @@
 namespace Lio\App\Console;
 
 use Lio\App\Helpers\AuthHelper;
-use Lio\App\Helpers\CommandsHelper;
 use Lio\App\Helpers\HttpHelper;
 use Exception;
 use GuzzleHttp\ClientInterface;
@@ -40,8 +39,10 @@ class CommandWrapper extends Command
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		$output->getFormatter()->setStyle('warning', new OutputFormatterStyle('black', 'yellow'));
-		if (!AuthHelper::isTokenExist() && !$this->skipAuth) {
-			CommandsHelper::callAuthCommand($this->getApplication());
+		if (empty(AuthHelper::getToken()) && !$this->skipAuth) {
+			throw new Exception(
+				'Missed auth token' . PHP_EOL . 'Tokens can be generated at https://www.lamp.io/tokens'
+			);
 		}
 		$this->httpHelper->setHeader('Authorization', 'Bearer ' . AuthHelper::getToken());
 	}

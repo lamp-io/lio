@@ -2,6 +2,8 @@
 
 namespace Lio\App\Helpers;
 
+use Symfony\Component\Console\Exception\RuntimeException;
+
 class AuthHelper
 {
 	const TOKEN_FILE_NAME = 'token';
@@ -9,7 +11,7 @@ class AuthHelper
 	/**
 	 * @param string $token
 	 * @return bool|int
-	 * @throws \RuntimeException
+	 * @throws RuntimeException
 	 */
 	public static function saveToken(string $token)
 	{
@@ -34,13 +36,19 @@ class AuthHelper
 	}
 
 	/**
-	 * @return bool
+	 * @return string
 	 */
-	public static function isTokenExist(): bool
+	protected static function getTokenFromFile(): string
 	{
-		return file_exists(self::getPathToTokenFolder() . self::TOKEN_FILE_NAME) &&
-			!empty(file_get_contents(self::getPathToTokenFolder() . self::TOKEN_FILE_NAME));
+		return file_exists(self::getPathToTokenFolder() . self::TOKEN_FILE_NAME) ? file_get_contents(self::getPathToTokenFolder() . self::TOKEN_FILE_NAME) : '';
+	}
 
+	/**
+	 * @return string
+	 */
+	protected static function getTokenFromEnv(): string
+	{
+		return !empty(getenv('LAMP_IO_TOKEN')) ? getenv('LAMP_IO_TOKEN') : '';
 	}
 
 	/**
@@ -48,6 +56,6 @@ class AuthHelper
 	 */
 	public static function getToken(): string
 	{
-		return (self::isTokenExist()) ? trim(file_get_contents(self::getPathToTokenFolder() . self::TOKEN_FILE_NAME)) : '';
+		return !empty(self::getTokenFromEnv()) ? self::getTokenFromEnv() : self::getTokenFromFile();
 	}
 }
