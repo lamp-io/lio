@@ -26,22 +26,43 @@ Usage
 lio command [options] [arguments]
 ```
 
+Authentication
+------------
+
+Tokens can be generated at [https://www.lamp.io/tokens](https://www.lamp.io/tokens)
+
+How lio can handle tokens
+
+1.  Store token in a environment variable
+
+    ```sh
+    export $LAMP_IO_TOKEN={TOKEN_VALUE}
+    ```
+
+2.  Store token in a file
+
+    Call auth command, it will ask you to prompt token
+    ```sh
+    lio auth
+    ```
+    Token will be stored in $HOME/.config/lamp.io/token
+
 Commands
 ------------
 ### Global options
 
-    * [-j][--json] Output as a raw json
-    * [-h][--help](bool) Display this help message
-    * [-q][--quiet](bool) Do not output any message
-    * [-V][--version](bool) Display this application version
-    * [--ansi](bool) Force ANSI output
-    * [--no-ansi](bool) Disable ANSI output
-    * [-n][--no-interaction](bool) Do not ask any interactive question
-    * [-v|vv|vvv][--verbose](bool) Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug
+* `[-j][--json]` ***(bool)*** Output as a raw json
+* `[-h][--help]` ***(bool)*** Display this help message
+* `[-q][--quiet]` ***(bool)*** Do not output any message
+* `[-V][--version]` ***(bool)*** Display this application version
+* `[--ansi]` ***(bool)*** Force ANSI output
+* `[--no-ansi]` ***(bool)*** Disable ANSI output
+* `[-n][--no-interaction]` ***(bool)*** Do not ask any interactive question
+* `[-v|vv|vvv][--verbose]` ***(bool)*** Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug
 
 ### Auth
 
-1.  #### auth [-u][--update_token]
+1. #### auth [-u][--update_token]
 
     Set auth token.
     
