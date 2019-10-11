@@ -13,21 +13,20 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class CommandWrapper extends Command
 {
+	/**
+	 * @var HttpHelper
+	 */
 	protected $httpHelper;
-
-	private $skipAuth;
 
 	/**
 	 * CommandWrapper constructor.
 	 * @param ClientInterface $httpClient
 	 * @param null $name
-	 * @param bool $skipAuth
 	 */
-	public function __construct(ClientInterface $httpClient, $name = null, bool $skipAuth = false)
+	public function __construct(ClientInterface $httpClient, $name = null)
 	{
 		parent::__construct($name);
 		$this->httpHelper = new HttpHelper($httpClient);
-		$this->skipAuth = $skipAuth;
 	}
 
 	/**
@@ -39,7 +38,7 @@ class CommandWrapper extends Command
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		$output->getFormatter()->setStyle('warning', new OutputFormatterStyle('black', 'yellow'));
-		if (empty(AuthHelper::getToken()) && !$this->skipAuth) {
+		if (empty(AuthHelper::getToken())) {
 			throw new Exception(
 				'Missed auth token' . PHP_EOL . 'Tokens can be generated at https://www.lamp.io/tokens'
 			);

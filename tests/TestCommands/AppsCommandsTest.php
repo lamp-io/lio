@@ -15,6 +15,7 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use Lio\App\Console\Application;
+use Lio\App\Helpers\AuthHelper;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -31,6 +32,7 @@ class AppsCommandsTest extends TestCase
 	public function setUp(): void
 	{
 		$this->application = new Application();
+		putenv(AuthHelper::TOKEN_ENV_VAR . '=unit_test');
 	}
 
 	/**
@@ -75,7 +77,7 @@ class AppsCommandsTest extends TestCase
 	public function testAppsDeleteCommand()
 	{
 		$client = $this->getMockedClient($this->getMockResponse(''));
-		$command = $this->application->add(new AppsDeleteCommand($client, null, true));
+		$command = $this->application->add(new AppsDeleteCommand($client, null));
 		$commandTester = $this->getExecutedCommandTester($command, ['app_id' => self::TEST_APP_ID, '--yes' => true]);
 		$this->assertEquals('0', $commandTester->getStatusCode());
 	}
@@ -86,7 +88,7 @@ class AppsCommandsTest extends TestCase
 	public function testAppsListCommand()
 	{
 		$client = $this->getMockedClient($this->getMockResponse(''));
-		$command = $this->application->add(new AppsListCommand($client, null, true));
+		$command = $this->application->add(new AppsListCommand($client, null));
 		$commandTester = $this->getExecutedCommandTester($command, ['--json' => true]);
 		$this->assertEquals('0', $commandTester->getStatusCode());
 	}
@@ -97,7 +99,7 @@ class AppsCommandsTest extends TestCase
 	public function testAppsDescribeCommand()
 	{
 		$client = $this->getMockedClient($this->getMockResponse(''));
-		$command = $this->application->add(new AppsDescribeCommand($client, null, true));
+		$command = $this->application->add(new AppsDescribeCommand($client, null));
 		$commandTester = $this->getExecutedCommandTester($command, ['--json' => true, 'app_id' => self::TEST_APP_ID]);
 		$this->assertEquals('0', $commandTester->getStatusCode());
 	}
@@ -114,7 +116,7 @@ class AppsCommandsTest extends TestCase
 				],
 			]
 		)));
-		$this->application->add(new AppsUpdateCommand($client, null, true));
+		$this->application->add(new AppsUpdateCommand($client, null));
 		$command = $this->application->find(AppsUpdateCommand::getDefaultName());
 		$phpIni = getcwd() . DIRECTORY_SEPARATOR . 'php.ini';
 		$httpdConf = getcwd() . DIRECTORY_SEPARATOR . 'http.conf';
@@ -160,7 +162,7 @@ class AppsCommandsTest extends TestCase
 				],
 			]
 		)));
-		$this->application->add(new AppsNewCommand($client, null, true));
+		$this->application->add(new AppsNewCommand($client, null));
 		$command = $this->application->find(AppsNewCommand::getDefaultName());
 		$phpIni = getcwd() . DIRECTORY_SEPARATOR . 'php.ini';
 		$httpdConf = getcwd() . DIRECTORY_SEPARATOR . 'http.conf';
