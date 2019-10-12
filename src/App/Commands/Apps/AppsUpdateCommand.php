@@ -18,10 +18,6 @@ class AppsUpdateCommand extends AbstractUpdateCommand
 
 	const PHP_INI_OPTION_NAME = 'php_ini';
 
-	const ALLOW_ZERO_VALUE = [
-		'replicas',
-	];
-
 	protected static $defaultName = 'apps:update';
 
 	/**
@@ -34,17 +30,17 @@ class AppsUpdateCommand extends AbstractUpdateCommand
 			->setHelp('Update app, api reference' . PHP_EOL . 'https://www.lamp.io/api#/apps/appsUpdate')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
 			->addOption('organization_id', null, InputOption::VALUE_REQUIRED, 'The ID of the organization this app belongs to. STRING')
-			->addOption('description', 'd', InputOption::VALUE_REQUIRED, 'A description', '')
-			->addOption(self::HTTPD_CONF_OPTION_NAME, null, InputOption::VALUE_REQUIRED, 'Path to your httpd.conf', '')
-			->addOption('max_replicas', null, InputOption::VALUE_REQUIRED, 'The maximum number of auto-scaled replicas INT', '')
-			->addOption('memory', 'm', InputOption::VALUE_REQUIRED, 'The amount of memory available (example: 1Gi) STRING', '')
-			->addOption('min_replicas', null, InputOption::VALUE_REQUIRED, 'The minimum number of auto-scaled replicas INT', '')
-			->addOption(self::PHP_INI_OPTION_NAME, null, InputOption::VALUE_REQUIRED, 'Path to your php.ini', '')
-			->addOption('replicas', 'r', InputOption::VALUE_REQUIRED, 'The number current number replicas available. 0 stops app. INT', '')
-			->addOption('vcpu', null, InputOption::VALUE_REQUIRED, 'The number of virtual cpu cores available (maximum: 4, minimum: 0.25) FLOAT', '')
-			->addOption('github_webhook_secret', null, InputOption::VALUE_REQUIRED, 'Github web-hook secret token', '')
-			->addOption('webhook_run_command', null, InputOption::VALUE_REQUIRED, 'Github web-hook command', '')
-			->addOption('hostname', null, InputOption::VALUE_REQUIRED, 'The hostname for the app', '')
+			->addOption('description', 'd', InputOption::VALUE_REQUIRED, 'A description')
+			->addOption(self::HTTPD_CONF_OPTION_NAME, null, InputOption::VALUE_REQUIRED, 'Path to your httpd.conf')
+			->addOption('max_replicas', null, InputOption::VALUE_REQUIRED, 'The maximum number of auto-scaled replicas INT')
+			->addOption('memory', 'm', InputOption::VALUE_REQUIRED, 'The amount of memory available (example: 1Gi) STRING')
+			->addOption('min_replicas', null, InputOption::VALUE_REQUIRED, 'The minimum number of auto-scaled replicas INT')
+			->addOption(self::PHP_INI_OPTION_NAME, null, InputOption::VALUE_REQUIRED, 'Path to your php.ini')
+			->addOption('replicas', 'r', InputOption::VALUE_REQUIRED, 'The number current number replicas available. 0 stops app. INT')
+			->addOption('vcpu', null, InputOption::VALUE_REQUIRED, 'The number of virtual cpu cores available (maximum: 4, minimum: 0.25) FLOAT')
+			->addOption('github_webhook_secret', null, InputOption::VALUE_REQUIRED, 'Github web-hook secret token')
+			->addOption('webhook_run_command', null, InputOption::VALUE_REQUIRED, 'Github web-hook command')
+			->addOption('hostname', null, InputOption::VALUE_REQUIRED, 'The hostname for the app')
 			->addOption('hostname_certificate_valid', null, InputOption::VALUE_REQUIRED, 'Is hostname certificate valid')
 			->addOption('public', 'p', InputOption::VALUE_REQUIRED, 'Public for read-only')
 			->addOption('delete_protection', null, InputOption::VALUE_REQUIRED, 'When enabled the app can not be deleted')
@@ -102,16 +98,16 @@ class AppsUpdateCommand extends AbstractUpdateCommand
 			'public'                     => $input->getOption('public') == 'true',
 			'delete_protection'          => $input->getOption('delete_protection') == 'true',
 		];
-		$attributes = array_filter($attributes, function ($value, $key) use ($input) {
-			if ((((int)$value === 0 || !empty($input->getOption($key))) && in_array($key, self::ALLOW_ZERO_VALUE)) || !empty($input->getOption($key))) {
+		$attributes = array_filter($attributes, function ($key) use ($input) {
+			$option = $input->getOption($key);
+			if (isset($option)) {
 				return true;
 			}
 			return false;
-		}, ARRAY_FILTER_USE_BOTH);
+		}, ARRAY_FILTER_USE_KEY);
 		if (empty($attributes)) {
 			throw new InvalidArgumentException('CommandWrapper requires at least one option to be executed.');
 		}
-
 		return json_encode([
 			'data' => [
 				'attributes' => $attributes,
