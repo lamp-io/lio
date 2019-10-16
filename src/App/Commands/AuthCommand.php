@@ -42,15 +42,12 @@ class AuthCommand extends Command
 		} else {
 			/** @var QuestionHelper $questionHelper */
 			$questionHelper = $this->getHelper('question');
-			if (AuthHelper::isTokenExist() && empty($input->getOption('update_token'))) {
-				$output->writeln(' <info>Token already exist, if you want to update it, please add [-u][--update_token] option </info>');
+			if (!empty(AuthHelper::getToken()) && empty($input->getOption('update_token'))) {
+				$output->writeln('<info>Token already exist, if you want to update it, please add [-u][--update_token] option </info>');
 				return 1;
 			} else {
 				$question = new Question('Tokens can be generated at https://www.lamp.io/tokens' . PHP_EOL . PHP_EOL . 'Enter token:' . PHP_EOL, '');
 				$question->setValidator(function ($answer) use ($input) {
-					if (empty($answer) && !empty(stream_get_contents(STDIN))) {
-						return trim(stream_get_contents(STDIN));
-					}
 					if (!empty($input->getOption('no-interaction'))) {
 						throw new RuntimeException(
 							'[--update_token][-u] Works only on interaction mode, you can set token directly using [--token][-t]'
