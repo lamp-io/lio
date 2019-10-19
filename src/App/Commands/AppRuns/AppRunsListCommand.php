@@ -72,7 +72,7 @@ class AppRunsListCommand extends AbstractListCommand
 				'Status'         => 'data.%d.attributes.status',
 			],
 			new Table($output),
-			end($sortedData)
+			end($sortedData) ? end($sortedData) : []
 		);
 		$table->render();
 	}

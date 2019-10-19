@@ -79,7 +79,7 @@ class UsersListCommand extends AbstractListCommand
 				'Email'      => 'data.%d.attributes.email',
 			],
 			new Table($output),
-			end($sortedData),
+			end($sortedData) ? end($sortedData) : [],
 			80
 		);
 		$table->render();
