@@ -314,6 +314,11 @@ Commands
     Return all app runs for all user's organizations
     
     Api reference https://www.lamp.io/api#/app_runs/appRunsList
+    
+   Options:
+
+   * `[--page_number]` ***(int)*** Pagination page, default value 1
+   * `[--page_size]` ***(int)*** Count per paginated page, default value 100
 
 4. ### app_runs:describe
 
