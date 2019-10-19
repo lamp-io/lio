@@ -7,6 +7,7 @@ use Art4\JsonApiClient\V1\Document;
 use Lio\App\AbstractCommands\AbstractListCommand;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Helper\Table;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\Serializer\ArraySerializer;
@@ -14,7 +15,11 @@ use Symfony\Component\Console\Input\InputInterface;
 
 class AppsListCommand extends AbstractListCommand
 {
-	const API_ENDPOINT = 'https://api.lamp.io/apps';
+	const API_ENDPOINT = 'https://api.lamp.io/apps%s';
+
+	const OPTIONS_TO_QUERY_KEYS = [
+		'organization_id' => 'filter[organization_id]',
+	];
 
 	protected static $defaultName = 'apps:list';
 
@@ -26,7 +31,16 @@ class AppsListCommand extends AbstractListCommand
 		parent::configure();
 		$this->setDescription('Returns the apps for an organization')
 			->setHelp('Get list all allowed apps, api reference' . PHP_EOL . 'https://www.lamp.io/api#/apps/appsList')
-			->setApiEndpoint(self::API_ENDPOINT);
+			->addOption('organization_id', 'o', InputOption::VALUE_REQUIRED, 'Comma-separated list of requested organization_ids. If omitted defaults to user\'s default organization');
+	}
+
+	protected function execute(InputInterface $input, OutputInterface $output)
+	{
+		$this->setApiEndpoint(sprintf(
+			self::API_ENDPOINT,
+			$this->httpHelper->optionsToQuery($input->getOptions(), self::OPTIONS_TO_QUERY_KEYS)
+		));
+		return parent::execute($input, $output);
 	}
 
 	/**

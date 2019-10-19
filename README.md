@@ -148,6 +148,10 @@ Commands
     Returns the apps for an organization
     
     Api reference https://www.lamp.io/api#/apps/appsList
+    
+    Options:
+    
+    * `[--organization_id][-o]` ***(string)*** Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
 
 5.  #### apps:describe <app_id>
 
