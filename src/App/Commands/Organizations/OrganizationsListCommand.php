@@ -57,7 +57,7 @@ class OrganizationsListCommand extends AbstractListCommand
 				'Updated at' => 'data.%d.attributes.updated_at',
 			],
 			new Table($output),
-			end($sortedData)
+			end($sortedData) ? end($sortedData) : []
 		);
 		$table->render();
 	}

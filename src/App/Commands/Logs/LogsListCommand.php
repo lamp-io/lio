@@ -84,7 +84,7 @@ class LogsListCommand extends AbstractListCommand
 				'Payload'   => 'data.%d.attributes.payload',
 			],
 			new Table($output),
-			end($sortedData),
+			end($sortedData) ? end($sortedData) : [],
 			80
 		);
 		$table->render();

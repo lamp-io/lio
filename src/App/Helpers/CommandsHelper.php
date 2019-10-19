@@ -2,15 +2,10 @@
 
 namespace Lio\App\Helpers;
 
-use Exception;
 use InvalidArgumentException;
-use Lio\App\Commands\AuthCommand;
-use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Helper\QuestionHelper;
-use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Symfony\Component\Console\Question\Question;
@@ -108,19 +103,5 @@ class CommandsHelper
 		});
 
 		return $data;
-	}
-
-	/**
-	 * @param Application $application
-	 * @throws Exception
-	 */
-	public static function callAuthCommand(Application $application)
-	{
-		$authCommand = $application->find(AuthCommand::getDefaultName());
-		$args = [
-			'command' => AuthCommand::getDefaultName(),
-		];
-		$input = new ArrayInput($args);
-		$authCommand->run($input, new ConsoleOutput());
 	}
 }

@@ -148,6 +148,10 @@ Commands
     Returns the apps for an organization
     
     Api reference https://www.lamp.io/api#/apps/appsList
+    
+    Options:
+    
+    * `[--organization_id][-o]` ***(string)*** Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
 
 5.  #### apps:describe <app_id>
 
@@ -310,6 +314,11 @@ Commands
     Return all app runs for all user's organizations
     
     Api reference https://www.lamp.io/api#/app_runs/appRunsList
+    
+   Options:
+
+   * `[--page_number]` ***(int)*** Pagination page, default value 1
+   * `[--page_size]` ***(int)*** Count per paginated page, default value 100
 
 4. ### app_runs:describe
 
