@@ -64,12 +64,12 @@ class AppRunsListCommand extends AbstractListCommand
 			$document,
 			'App runs',
 			[
-				'Id'             => 'data.%d.id',
-				'App ID'         => 'data.%d.attributes.app_id',
-				'Created at'     => 'data.%d.attributes.created_at',
-				'Complete'       => 'data.%d.attributes.complete',
-				'CommandWrapper' => 'data.%d.attributes.command',
-				'Status'         => 'data.%d.attributes.status',
+				'Id'         => 'data.%d.id',
+				'App ID'     => 'data.%d.attributes.app_id',
+				'Created at' => 'data.%d.attributes.created_at',
+				'Complete'   => 'data.%d.attributes.complete',
+				'Command'    => 'data.%d.attributes.command',
+				'Status'     => 'data.%d.attributes.status',
 			],
 			new Table($output),
 			end($sortedData) ? end($sortedData) : []
