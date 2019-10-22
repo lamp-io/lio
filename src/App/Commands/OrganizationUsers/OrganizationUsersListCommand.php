@@ -36,7 +36,7 @@ class OrganizationUsersListCommand extends AbstractListCommand
 		parent::configure();
 		$this->setDescription('Returns organization/user relationships')
 			->setHelp('Get organization/user relationship, api reference' . PHP_EOL . 'https://www.lamp.io/api#/organization_users/organizationUsersList')
-			->addOption('organization_id', null, InputOption::VALUE_REQUIRED, 'Comma-separated list of requested organization_ids. If omitted defaults to user\'s default organization');
+			->addOption('organization_id', 'o', InputOption::VALUE_REQUIRED, 'Comma-separated list of requested organization_ids. If omitted defaults to user\'s default organization');
 	}
 
 	/**

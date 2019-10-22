@@ -38,7 +38,7 @@ class DatabasesNewCommand extends AbstractNewCommand
 			->setHelp('Create a new database, api reference' . PHP_EOL . 'https://www.lamp.io/api#/databases/databasesCreate')
 			->addOption('description', 'd', InputOption::VALUE_REQUIRED, 'Description of your database', '')
 			->addOption('memory', 'm', InputOption::VALUE_REQUIRED, 'Amount of virtual memory on your database, default 512Mi', '512Mi')
-			->addOption('organization_id', null, InputOption::VALUE_REQUIRED, 'Name of your organization', '')
+			->addOption('organization_id', 'o', InputOption::VALUE_REQUIRED, 'Name of your organization', '')
 			->addOption('mysql_root_password', null, InputOption::VALUE_OPTIONAL, 'Root password', false)
 			->addOption('my_cnf', null, InputOption::VALUE_REQUIRED, 'Path to your database config file', '')
 			->addOption('ssd', null, InputOption::VALUE_REQUIRED, 'Size of ssd storage, default 1Gi', '1Gi')

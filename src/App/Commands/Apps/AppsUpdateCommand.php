@@ -29,7 +29,7 @@ class AppsUpdateCommand extends AbstractUpdateCommand
 		$this->setDescription('Update app')
 			->setHelp('Update app, api reference' . PHP_EOL . 'https://www.lamp.io/api#/apps/appsUpdate')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addOption('organization_id', null, InputOption::VALUE_REQUIRED, 'The ID of the organization this app belongs to. STRING')
+			->addOption('organization_id', 'o', InputOption::VALUE_REQUIRED, 'The ID of the organization this app belongs to. STRING')
 			->addOption('description', 'd', InputOption::VALUE_REQUIRED, 'A description')
 			->addOption(self::HTTPD_CONF_OPTION_NAME, null, InputOption::VALUE_REQUIRED, 'Path to your httpd.conf')
 			->addOption('max_replicas', null, InputOption::VALUE_REQUIRED, 'The maximum number of auto-scaled replicas INT')
