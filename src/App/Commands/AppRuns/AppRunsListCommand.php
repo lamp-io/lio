@@ -19,8 +19,9 @@ class AppRunsListCommand extends AbstractListCommand
 	const API_ENDPOINT = 'https://api.lamp.io/app_runs%s';
 
 	const OPTIONS_TO_QUERY_KEYS = [
-		'page_number' => 'page[number]',
-		'page_size'   => 'page[size]',
+		'page_number'     => 'page[number]',
+		'page_size'       => 'page[size]',
+		'organization_id' => 'filter[organization_id]',
 	];
 
 	protected static $defaultName = 'app_runs:list';
@@ -33,6 +34,7 @@ class AppRunsListCommand extends AbstractListCommand
 		parent::configure();
 		$this->setDescription('Return all app runs for all user\'s organizations')
 			->setHelp('Get all app runs for all user\'s organizations, api reference' . PHP_EOL . 'https://www.lamp.io/api#/app_runs/appRunsList')
+			->addOption('organization_id', 'o', InputOption::VALUE_REQUIRED, 'Filter output by organization id value')
 			->addOption('page_number', null, InputOption::VALUE_REQUIRED, 'Pagination page', '1')
 			->addOption('page_size', null, InputOption::VALUE_REQUIRED, 'Count per paginated page', '100');
 	}
