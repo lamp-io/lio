@@ -34,7 +34,7 @@ class DatabasesListCommand extends AbstractListCommand
 		parent::configure();
 		$this->setDescription('Returns all databases')
 			->setHelp('Get all databases, api reference' . PHP_EOL . 'https://www.lamp.io/api#/databases/databasesList')
-			->addOption('organization_id', null, InputOption::VALUE_REQUIRED, 'Filter output by organization id value');
+			->addOption('organization_id', 'o', InputOption::VALUE_REQUIRED, 'Filter output by organization id value');
 	}
 
 	/**

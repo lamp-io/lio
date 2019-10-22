@@ -151,7 +151,7 @@ Commands
     
     Options:
     
-    * `[--organization_id][-o]` ***(string)*** Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
+    * `[-o][--organization_id]` ***(string)*** Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
 
 5.  #### apps:describe <app_id>
 
@@ -332,7 +332,7 @@ Commands
 
 ### Databases
 
-1. ### databases:new  [-d][--description] [-m][--memory] [--organization_id] [--mysql_root_password] [--my_cnf] [--ssd] [--vcpu] [--delete_protection]
+1. ### databases:new  [-d][--description] [-m][--memory] [-o][--organization_id] [--mysql_root_password] [--my_cnf] [--ssd] [--vcpu] [--delete_protection]
 
    Create a new database
    
@@ -342,7 +342,7 @@ Commands
 
    * `[-d][--description]` ***(string)*** Description of your database
    * `[-m][--memory]` ***(string)*** Amount of virtual memory on your database (default: 512Mi)
-   * `[--organization_id]` ***(string)*** Name of your organization
+   * `[-o][--organization_id]` ***(string)*** Name of your organization
    * `[--mysql_root_password]` ***(string)*** Your root password for mysql
    * `[--my_cnf]` ***(string)*** Path to your database config file
    * `[--ssd]` ***(string)*** Size of ssd storage (default: 1Gi)
@@ -363,7 +363,7 @@ Commands
 
     * `[--yes][-y]` ***(bool)*** Skip confirm delete question
 
-3. ### databases:update <database_id> [-d][--description] [-m][--memory] [--organization_id] [--my_cnf] [--mysql_root_password] [--ssd] [--vcpu] [--delete_protection]
+3. ### databases:update <database_id> [-d][--description] [-m][--memory] [-o][--organization_id] [--my_cnf] [--mysql_root_password] [--ssd] [--vcpu] [--delete_protection]
 
     Update a database.
     
@@ -377,14 +377,14 @@ Commands
        
   * `[-d][--description]` ***(string)*** Description of your database
   * `[-m][--memory]` ***(string)*** Amount of virtual memory on your database (default: 512Mi)
-  * `[--organization_id]` ***(string)*** Name of your organization
+  * `[-o][--organization_id]` ***(string)*** Name of your organization
   * `[--mysql_root_password]` ***(bool)*** If you need to update root password, set it as true
   * `[--my_cnf]` ***(string)*** Path to your database config file
   * `[--ssd]` ***(string)*** Size of ssd storage (default: 1Gi)
   * `[--vcpu]` ***(float)*** The number of virtual cpu cores available (default: 0.25)
   * `[--delete_protection]` ***(bool)*** When enabled the database can not be deleted
 
-4. ### databases:list [--organization_id]
+4. ### databases:list [-o][--organization_id]
 
     Returns all databases
     
@@ -430,7 +430,7 @@ Commands
 
     * `[--yes][-y]` ***(string)*** Skip confirm delete question
 
-3. ###db_backups:list [--organization_id][-o]
+3. ###db_backups:list [-o][--organization_id]
 
     Return db backups
     
@@ -438,7 +438,7 @@ Commands
 
     Options:
 
-    * `[--organization_id][-o]` ***(string)*** Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
+    * `[-o][--organization_id]` ***(string)*** Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
 
 4. ### db_backups:describe <db_backup_id>
 
@@ -473,7 +473,7 @@ Commands
 
     * `<db_restore_id>` ***(string)*** The ID of the db restore
 
-3. ### db_restores:list [--organization_id][-o]
+3. ### db_restores:list [-o][--organization_id]
 
     Return db restore jobs
     
@@ -481,7 +481,7 @@ Commands
 
     Options:
 
-    * `[--organization_id][-o]` ***(string)*** Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
+    * `[-o][--organization_id]` ***(string)*** Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
 
 4. ### db_restores:describe <db_restore_id>
 
@@ -669,7 +669,7 @@ Commands
 
 ### Logs
 
-1. ### logs:list [--organization_id][-o] [--pod_name][-p] [--start_time] [--end_time]
+1. ### logs:list [-o][--organization_id][--pod_name][-p] [--start_time] [--end_time]
 
     Return logs
     
@@ -677,7 +677,7 @@ Commands
 
     Options
 
-    * `[--organization_id][-o]` ***(string)*** One organization_id. If omitted defaults to user's default organization
+    * `[-o][--organization_id]` ***(string)*** One organization_id. If omitted defaults to user's default organization
     * `[--pod_name][-p]` ***(string)*** One pod_name. Uses wildcard prefix match
     * `[--start_time]` ***(string)*** Start time conforming to RFC3339 (default: 10 minutes in the past)
     * `[--end_time]` ***(string)*** End time conforming to RFC3339. (default: current date)
@@ -722,7 +722,7 @@ Commands
 
     * `[--admin]` ***(bool)*** Set selected user as admin of organization (if you need to remove admin role from selected user, just omit this option)
 
-2. ### organizations_users:list [--organization_id]
+2. ### organizations_users:list [-o][--organization_id]
 
     Returns organization/user relationships
     
@@ -730,7 +730,7 @@ Commands
 
     Options:
 
-    * `[--organization_id]` ***(string)*** Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
+    * `[-o][--organization_id]` ***(string)*** Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
 
 3. ### organizations_users:describe <organization_user_id>
 
@@ -800,7 +800,7 @@ Commands
 
 ### Users
 
-1. #### users:list [--organization_id][-o] [--email][-e]
+1. #### users:list [-o][--organization_id][--email][-e]
 
     Returns users
     
@@ -808,7 +808,7 @@ Commands
     
     Options:
 
-    * `[--organization_id][-o]` ***(string)*** Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
+    * `[-o][--organization_id]` ***(string)*** Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
     * `[--email][-e]` ***(string)*** Email address to filter for
 
 ### Phar updates
