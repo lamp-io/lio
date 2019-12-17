@@ -36,7 +36,7 @@ How lio can handle tokens
 1.  Store token in a environment variable
 
     ```sh
-    export $LAMP_IO_TOKEN={TOKEN_VALUE}
+    export LAMP_IO_TOKEN={TOKEN_VALUE}
     ```
 
 2.  Store token in a file
