@@ -6,7 +6,6 @@ use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 use Lio\App\AbstractCommands\AbstractNewCommand;
 use Exception;
-use GuzzleHttp\Exception\GuzzleException;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -40,7 +39,6 @@ class FilesNewCommand extends AbstractNewCommand
 	 * @param OutputInterface $output
 	 * @return int|null|void
 	 * @throws Exception
-	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -49,7 +47,7 @@ class FilesNewCommand extends AbstractNewCommand
 			$input->getArgument('app_id'),
 			!empty($input->getOption('source')) ? '?command=fetch&source=' . $input->getOption('source') : ''
 		));
-		parent::execute($input, $output);
+		return parent::execute($input, $output);
 	}
 
 	/**

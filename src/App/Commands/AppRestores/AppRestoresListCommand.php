@@ -53,7 +53,7 @@ class AppRestoresListCommand extends AbstractListCommand
 			self::API_ENDPOINT,
 			$this->httpHelper->optionsToQuery($input->getOptions(), self::OPTIONS_TO_QUERY_KEYS)
 		));
-		parent::execute($input, $output);
+		return parent::execute($input, $output);
 	}
 
 	/**

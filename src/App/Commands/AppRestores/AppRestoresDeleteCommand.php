@@ -42,7 +42,7 @@ class AppRestoresDeleteCommand extends AbstractDeleteCommand
 			self::API_ENDPOINT,
 			$input->getArgument('app_restore_id')
 		));
-		parent::execute($input, $output);
+		return parent::execute($input, $output);
 	}
 
 	/**

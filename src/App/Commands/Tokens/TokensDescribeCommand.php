@@ -5,7 +5,6 @@ namespace Lio\App\Commands\Tokens;
 
 use Lio\App\AbstractCommands\AbstractDescribeCommand;
 use Exception;
-use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -35,7 +34,6 @@ class TokensDescribeCommand extends AbstractDescribeCommand
 	 * @param OutputInterface $output
 	 * @return int|null|void
 	 * @throws Exception
-	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -43,6 +41,6 @@ class TokensDescribeCommand extends AbstractDescribeCommand
 			self::API_ENDPOINT,
 			$input->getArgument('token_id')
 		));
-		parent::execute($input, $output);
+		return parent::execute($input, $output);
 	}
 }

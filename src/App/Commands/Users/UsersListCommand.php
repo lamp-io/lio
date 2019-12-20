@@ -5,7 +5,6 @@ namespace Lio\App\Commands\Users;
 use Lio\App\AbstractCommands\AbstractListCommand;
 use Art4\JsonApiClient\V1\Document;
 use Exception;
-use GuzzleHttp\Exception\GuzzleException;
 use Lio\App\Helpers\CommandsHelper;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Helper\Table;
@@ -45,7 +44,6 @@ class UsersListCommand extends AbstractListCommand
 	 * @param OutputInterface $output
 	 * @return int|null|void
 	 * @throws Exception
-	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -53,7 +51,7 @@ class UsersListCommand extends AbstractListCommand
 			self::API_ENDPOINT,
 			$this->httpHelper->optionsToQuery($input->getOptions(), self::OPTIONS_TO_QUERY_KEYS)
 		));
-		parent::execute($input, $output);
+		return parent::execute($input, $output);
 	}
 
 	/**

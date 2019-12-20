@@ -42,7 +42,7 @@ class OrganizationUsersUpdateCommand extends AbstractUpdateCommand
 			self::API_ENDPOINT,
 			$input->getArgument('organization_user_id')
 		));
-		parent::execute($input, $output);
+		return parent::execute($input, $output);
 	}
 
 	/**

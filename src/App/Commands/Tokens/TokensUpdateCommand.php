@@ -44,7 +44,7 @@ class TokensUpdateCommand extends AbstractUpdateCommand
 			self::API_ENDPOINT,
 			$input->getArgument('token_id')
 		));
-		parent::execute($input, $output);
+		return parent::execute($input, $output);
 	}
 
 	/**

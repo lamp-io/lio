@@ -4,7 +4,6 @@ namespace Lio\App\Commands\DbBackups;
 
 use Lio\App\AbstractCommands\AbstractDeleteCommand;
 use Exception;
-use GuzzleHttp\Exception\GuzzleException;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -32,7 +31,6 @@ class DbBackupsDeleteCommand extends AbstractDeleteCommand
 	 * @param OutputInterface $output
 	 * @return int|void|null
 	 * @throws Exception
-	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -40,7 +38,7 @@ class DbBackupsDeleteCommand extends AbstractDeleteCommand
 			self::API_ENDPOINT,
 			$input->getArgument('db_backup_id')
 		));
-		parent::execute($input, $output);
+		return parent::execute($input, $output);
 	}
 
 	/**

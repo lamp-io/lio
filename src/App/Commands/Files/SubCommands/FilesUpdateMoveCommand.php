@@ -42,7 +42,7 @@ class FilesUpdateMoveCommand extends AbstractUpdateCommand
 				ltrim($input->getArgument('file_id'), '/'),
 				'command=move')
 		);
-		parent::execute($input, $output);
+		return parent::execute($input, $output);
 	}
 
 	/**

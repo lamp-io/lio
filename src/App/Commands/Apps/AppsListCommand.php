@@ -4,6 +4,7 @@ namespace Lio\App\Commands\Apps;
 
 
 use Art4\JsonApiClient\V1\Document;
+use Exception;
 use Lio\App\AbstractCommands\AbstractListCommand;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Helper\Table;
@@ -34,6 +35,12 @@ class AppsListCommand extends AbstractListCommand
 			->addOption('organization_id', 'o', InputOption::VALUE_REQUIRED, 'Comma-separated list of requested organization_ids. If omitted defaults to user\'s default organization');
 	}
 
+	/**
+	 * @param InputInterface $input
+	 * @param OutputInterface $output
+	 * @return int|void|null
+	 * @throws Exception
+	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		$this->setApiEndpoint(sprintf(

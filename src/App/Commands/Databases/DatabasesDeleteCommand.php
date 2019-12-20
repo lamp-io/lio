@@ -41,7 +41,7 @@ class DatabasesDeleteCommand extends AbstractDeleteCommand
 			self::API_ENDPOINT,
 			$input->getArgument('database_id')
 		));
-		parent::execute($input, $output);
+		return parent::execute($input, $output);
 	}
 
 	/**

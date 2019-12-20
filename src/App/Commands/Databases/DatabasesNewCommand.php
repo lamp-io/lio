@@ -5,7 +5,6 @@ namespace Lio\App\Commands\Databases;
 use Lio\App\AbstractCommands\AbstractNewCommand;
 use Lio\App\Helpers\CommandsHelper;
 use Exception;
-use GuzzleHttp\Exception\GuzzleException;
 use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Helper\QuestionHelper;
@@ -53,14 +52,13 @@ class DatabasesNewCommand extends AbstractNewCommand
 	 * @param OutputInterface $output
 	 * @return int|void|null
 	 * @throws Exception
-	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		if ($this->isPassWordOptionExist($input)) {
 			$this->password = $this->handlePasswordOption($input, $output);
 		}
-		parent::execute($input, $output);
+		return parent::execute($input, $output);
 	}
 
 	protected function renderOutput(ResponseInterface $response, OutputInterface $output, InputInterface $input)

@@ -66,7 +66,7 @@ class AppsUpdateCommand extends AbstractUpdateCommand
 			'ssh_pub_key',
 			'webhook_run_command',
 		]);
-		parent::execute($input, $output);
+		return parent::execute($input, $output);
 	}
 
 	/**

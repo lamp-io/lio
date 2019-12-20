@@ -39,7 +39,7 @@ class AppsDeleteCommand extends AbstractDeleteCommand
 			self::API_ENDPOINT,
 			$input->getArgument('app_id')
 		));
-		parent::execute($input, $output);
+		return parent::execute($input, $output);
 	}
 
 	/**

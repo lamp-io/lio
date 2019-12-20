@@ -6,7 +6,6 @@ use Art4\JsonApiClient\Helper\Parser;
 use Art4\JsonApiClient\V1\Document;
 use Lio\App\AbstractCommands\AbstractDescribeCommand;
 use Exception;
-use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputArgument;
@@ -36,7 +35,6 @@ class DbBackupsDescribeCommand extends AbstractDescribeCommand
 	 * @param OutputInterface $output
 	 * @return int|void|null
 	 * @throws Exception
-	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -44,7 +42,7 @@ class DbBackupsDescribeCommand extends AbstractDescribeCommand
 			self::API_ENDPOINT,
 			$input->getArgument('db_backup_id')
 		));
-		parent::execute($input, $output);
+		return parent::execute($input, $output);
 	}
 
 	/**

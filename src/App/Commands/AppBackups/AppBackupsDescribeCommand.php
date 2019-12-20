@@ -4,7 +4,6 @@ namespace Lio\App\Commands\AppBackups;
 
 use Lio\App\AbstractCommands\AbstractDescribeCommand;
 use Exception;
-use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -31,7 +30,6 @@ class AppBackupsDescribeCommand extends AbstractDescribeCommand
 	 * @param OutputInterface $output
 	 * @return int|void|null
 	 * @throws Exception
-	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -39,6 +37,6 @@ class AppBackupsDescribeCommand extends AbstractDescribeCommand
 			self::API_ENDPOINT,
 			$input->getArgument('app_backup_id')
 		));
-		parent::execute($input, $output);
+		return parent::execute($input, $output);
 	}
 }

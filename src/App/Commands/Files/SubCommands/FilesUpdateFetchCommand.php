@@ -41,7 +41,7 @@ class FilesUpdateFetchCommand extends AbstractUpdateCommand
 			$input->getArgument('app_id'),
 			'command=fetch&source=' . $input->getArgument('source')
 		));
-		parent::execute($input, $output);
+		return parent::execute($input, $output);
 	}
 
 	/**

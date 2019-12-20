@@ -41,7 +41,7 @@ class FilesUpdateUnarchiveCommand extends AbstractUpdateCommand
 			ltrim($input->getArgument('file_id'), '/'),
 			'command=unarchive'
 		));
-		parent::execute($input, $output);
+		return parent::execute($input, $output);
 	}
 
 	/**

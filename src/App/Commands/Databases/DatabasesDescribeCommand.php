@@ -41,7 +41,7 @@ class DatabasesDescribeCommand extends AbstractDescribeCommand
 		$this->setSkipAttributes([
 			'my_cnf',
 		]);
-		parent::execute($input, $output);
+		return parent::execute($input, $output);
 	}
 }
 

@@ -53,7 +53,7 @@ class FilesUpdateCommand extends AbstractUpdateCommand
 		if (!empty($input->getOption('recursive')) && empty($input->getOption('apache_writable'))) {
 			throw new InvalidArgumentException('[--recursive][-r] can be used only in pair with [--apache_writable]');
 		}
-		parent::execute($input, $output);
+		return parent::execute($input, $output);
 	}
 
 	/**

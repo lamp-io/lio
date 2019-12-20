@@ -3,6 +3,7 @@
 
 namespace Lio\App\Commands\AppRuns;
 
+use Exception;
 use Lio\App\AbstractCommands\AbstractListCommand;
 use Lio\App\Helpers\CommandsHelper;
 use Psr\Http\Message\ResponseInterface;
@@ -39,6 +40,12 @@ class AppRunsListCommand extends AbstractListCommand
 			->addOption('page_size', null, InputOption::VALUE_REQUIRED, 'Count per paginated page', '100');
 	}
 
+	/**
+	 * @param InputInterface $input
+	 * @param OutputInterface $output
+	 * @return int|void|null
+	 * @throws Exception
+	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		$this->setApiEndpoint(sprintf(

@@ -66,8 +66,7 @@ class DatabasesUpdateCommand extends AbstractUpdateCommand
 			$password = $helper->ask($input, $output, $question);
 			$input->setOption('mysql_root_password', $password);
 		}
-		parent::execute($input, $output);
-
+		return parent::execute($input, $output);
 	}
 
 	/**

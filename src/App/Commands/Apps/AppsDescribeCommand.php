@@ -7,7 +7,6 @@ use Lio\App\AbstractCommands\AbstractDescribeCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
-use GuzzleHttp\Exception\GuzzleException;
 
 class AppsDescribeCommand extends AbstractDescribeCommand
 {
@@ -33,7 +32,6 @@ class AppsDescribeCommand extends AbstractDescribeCommand
 	 * @param InputInterface $input
 	 * @param OutputInterface $output
 	 * @return int|void|null
-	 * @throws GuzzleException
 	 * @throws Exception
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
@@ -49,6 +47,6 @@ class AppsDescribeCommand extends AbstractDescribeCommand
 			'ssh_pub_key',
 			'webhook_run_command',
 		]);
-		parent::execute($input, $output);
+		return parent::execute($input, $output);
 	}
 }

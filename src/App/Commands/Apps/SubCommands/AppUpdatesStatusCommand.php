@@ -45,7 +45,7 @@ class AppUpdatesStatusCommand extends AbstractUpdateCommand
 			$output->writeln('<error>You need to specify --enable true/false to call this command</error>');
 			return 1;
 		}
-		parent::execute($input, $output);
+		return parent::execute($input, $output);
 	}
 
 	/**

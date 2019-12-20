@@ -7,7 +7,6 @@ use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\V1\Document;
 use Lio\App\AbstractCommands\AbstractListCommand;
 use Exception;
-use GuzzleHttp\Exception\GuzzleException;
 use Lio\App\Helpers\CommandsHelper;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Helper\Table;
@@ -50,7 +49,6 @@ class LogsListCommand extends AbstractListCommand
 	 * @param OutputInterface $output
 	 * @return int|null|void
 	 * @throws Exception
-	 * @throws GuzzleException
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
@@ -58,7 +56,7 @@ class LogsListCommand extends AbstractListCommand
 			self::API_ENDPOINT,
 			$this->httpHelper->optionsToQuery($input->getOptions(), self::OPTIONS_TO_QUERY_KEYS)
 		));
-		parent::execute($input, $output);
+		return parent::execute($input, $output);
 	}
 
 	/**
