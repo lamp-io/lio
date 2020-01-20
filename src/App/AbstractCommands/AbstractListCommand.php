@@ -36,9 +36,10 @@ abstract class AbstractListCommand extends AbstractCommand
 	 * @param Table $table
 	 * @param array $lastElement
 	 * @param int $wordWrap
+	 * @param bool $cutWord
 	 * @return Table
 	 */
-	protected function getTableOutput(array $data, Document $document, string $title, array $rows, Table $table, array $lastElement = [], int $wordWrap = 20): Table
+	protected function getTableOutput(array $data, Document $document, string $title, array $rows, Table $table, array $lastElement = [], int $wordWrap = 20, bool $cutWord = false): Table
 	{
 		$table->setHeaderTitle($title);
 		$table->setHeaders(array_keys($rows));
@@ -54,7 +55,7 @@ abstract class AbstractListCommand extends AbstractCommand
 				}
 				$tableRow[] = wordwrap(trim(preg_replace(
 					'/\s\s+|\t/', ' ', $tableValue
-				)), $wordWrap, PHP_EOL);
+				)), $wordWrap, PHP_EOL, $cutWord);
 			}
 			$table->addRow($tableRow);
 			if (!empty($lastElement) && $val != $lastElement) {
