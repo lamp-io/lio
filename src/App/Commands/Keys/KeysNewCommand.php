@@ -18,6 +18,9 @@ class KeysNewCommand extends AbstractNewCommand
 
 	const API_ENDPOINT = 'https://api.lamp.io/keys';
 
+	/**
+	 *
+	 */
 	protected function configure()
 	{
 		parent::configure();
@@ -28,6 +31,12 @@ class KeysNewCommand extends AbstractNewCommand
 			->setApiEndpoint(self::API_ENDPOINT);
 	}
 
+	/**
+	 * @param ResponseInterface $response
+	 * @param OutputInterface $output
+	 * @param InputInterface $input
+	 * @return void|null
+	 */
 	protected function renderOutput(ResponseInterface $response, OutputInterface $output, InputInterface $input)
 	{
 		/** @var Document $document */
@@ -47,6 +56,10 @@ class KeysNewCommand extends AbstractNewCommand
 		$table->render();
 	}
 
+	/**
+	 * @param InputInterface $input
+	 * @return string
+	 */
 	protected function getRequestBody(InputInterface $input): string
 	{
 		return json_encode([
