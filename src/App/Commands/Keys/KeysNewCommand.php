@@ -41,19 +41,7 @@ class KeysNewCommand extends AbstractNewCommand
 	{
 		/** @var Document $document */
 		$document = Parser::parseResponseString($response->getBody()->getContents());
-		$table = $this->getTableOutput(
-			$document,
-			'Key',
-			[
-				'Id'              => 'document.id',
-				'Description'     => 'document.attributes.description',
-				'Organization id' => 'document.attributes.organization_id',
-				'Ssh public key'  => 'document.attributes.ssh_pub_key',
-				'Created at'      => 'document.attributes.created_at',
-			],
-			new Table($output)
-		);
-		$table->render();
+		$output->writeln('<info>Your new key successfully created, key id: ' . $document->get('data.id') . '</info>');
 	}
 
 	/**
