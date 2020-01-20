@@ -106,7 +106,7 @@ class AppsUpdateCommand extends AbstractUpdateCommand
 			return false;
 		}, ARRAY_FILTER_USE_KEY);
 		if (empty($attributes)) {
-			throw new InvalidArgumentException('CommandWrapper requires at least one option to be executed.');
+			throw new InvalidArgumentException('Command requires at least one option to be executed.');
 		}
 		return json_encode([
 			'data' => [

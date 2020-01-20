@@ -30,7 +30,7 @@ class AppRunsNewCommand extends AbstractNewCommand
 		$this->setDescription('Run command on app')
 			->setHelp('Run command on app, api reference' . PHP_EOL . 'https://www.lamp.io/api#/app_runs/appRunsCreate')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app')
-			->addArgument('exec', InputArgument::REQUIRED, 'CommandWrapper to run')
+			->addArgument('exec', InputArgument::REQUIRED, 'Command to run')
 			->setApiEndpoint(self::API_ENDPOINT);
 	}
 
