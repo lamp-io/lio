@@ -5,8 +5,8 @@ namespace Lio\App\Commands\Keys;
 
 
 use Art4\JsonApiClient\Helper\Parser;
-use Art4\JsonApiClient\Serializer\ArraySerializer;
 use Art4\JsonApiClient\V1\Document;
+use Exception;
 use Lio\App\AbstractCommands\AbstractDescribeCommand;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Console\Helper\Table;
@@ -28,6 +28,12 @@ class KeysDescribeCommand extends AbstractDescribeCommand
 			->addArgument('key_id', InputArgument::REQUIRED, 'The id of the key');
 	}
 
+	/**
+	 * @param InputInterface $input
+	 * @param OutputInterface $output
+	 * @return int|void|null
+	 * @throws Exception
+	 */
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		$this->setApiEndpoint(sprintf(
