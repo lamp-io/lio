@@ -67,9 +67,10 @@ abstract class AbstractUpdateCommand extends AbstractCommand
 	 * @param Table $table
 	 * @param array $skipKeys
 	 * @param int $wordWrap
+	 * @param bool $cutWord
 	 * @return Table
 	 */
-	protected function getTableOutput(Document $document, string $title, Table $table, array $skipKeys = [], int $wordWrap = 20): Table
+	protected function getTableOutput(Document $document, string $title, Table $table, array $skipKeys = [], int $wordWrap = 20, bool $cutWord = false): Table
 	{
 		$table->setHeaderTitle($title);
 		$table->setHeaders(['Attribute', 'Value']);
@@ -85,7 +86,7 @@ abstract class AbstractUpdateCommand extends AbstractCommand
 			$tableRow[] = $key;
 			$value = wordwrap(trim(preg_replace(
 				'/\s\s+|\t/', ' ', $row
-			)), $wordWrap, PHP_EOL);
+			)), $wordWrap, PHP_EOL, $cutWord);
 			$table->addRow([$key, $value]);
 		}
 
