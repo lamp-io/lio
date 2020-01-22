@@ -95,7 +95,7 @@ class DatabasesUpdateCommand extends AbstractUpdateCommand
 		}
 
 		if (empty($attributes)) {
-			throw new CliInvalidArgumentException('CommandWrapper requires at least one option to be executed. List of allowed options');
+			throw new CliInvalidArgumentException('Command requires at least one option to be executed. List of allowed options');
 		}
 
 		return json_encode([
