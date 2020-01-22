@@ -24,7 +24,7 @@ class KeysNewCommand extends AbstractNewCommand
 		parent::configure();
 		$this->setDescription('Creates a new key')
 			->setHelp('Create key, api reference' . PHP_EOL . 'https://www.lamp.io/api#/keys/keysCreate')
-			->addOption('organization_id', 'o', InputOption::VALUE_REQUIRED, 'The organization this key belongs to')
+			->addOption('organization_id', 'o', InputOption::VALUE_REQUIRED, 'One organization_id. If omitted defaults to user\'s default organization')
 			->addOption('description', 'd', InputOption::VALUE_REQUIRED, 'An immutable description for this key')
 			->setApiEndpoint(self::API_ENDPOINT);
 	}
