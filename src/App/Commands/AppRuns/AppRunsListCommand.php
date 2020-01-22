@@ -87,6 +87,7 @@ class AppRunsListCommand extends AbstractListCommand
 				'Created at' => 'data.%d.attributes.created_at',
 				'Complete'   => 'data.%d.attributes.complete',
 				'Command'    => 'data.%d.attributes.command',
+				'Output'     => 'data.%d.attributes.output',
 				'Status'     => 'data.%d.attributes.status',
 			],
 			new Table($output),
@@ -116,7 +117,11 @@ class AppRunsListCommand extends AbstractListCommand
 			}
 			$tableRow = [];
 			foreach ($rows as $lineHeader => $row) {
-				$tableValue = $document->get(sprintf($row, $key));
+				if (!$document->has(sprintf($row, $key))) {
+					$tableValue = '';
+				} else {
+					$tableValue = $document->get(sprintf($row, $key));
+				}
 				if ($tableValue === true || $tableValue === false) {
 					$tableValue = $tableValue ? 'true' : 'false';
 				}
