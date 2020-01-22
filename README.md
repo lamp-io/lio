@@ -309,7 +309,7 @@ Commands
     
     * `<app_run_id>` ***(string)*** ID of app run
 
-3. ### app_runs:list
+3. ### app_runs:list [--page_number] [--page_size] [--organization_id][-o] [--output_lines]
 
     Return all app runs for all user's organizations
     
@@ -319,6 +319,8 @@ Commands
 
    * `[--page_number]` ***(int)*** Pagination page, default value 1
    * `[--page_size]` ***(int)*** Count per paginated page, default value 100
+   * `[-o][--organization_id]` ***(string)*** Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
+   * `[--output_lines]` ***(int)*** Maximum number of lines returned. 1 is Unlimited. Default 5
 
 4. ### app_runs:describe
 
@@ -666,6 +668,63 @@ Commands
     * `<app_id>` ***(string)*** The ID of the app
     * `<file_id>` ***(string)*** File ID of file to move
     * `<move_path>` ***(string)*** The target File ID to move to. NOTE: The target directory must exist
+    
+### Keys
+    
+1. ### keys:new [-o][organization_id] [-d][--description]
+
+    Creates a new key
+    
+    Api reference https://www.lamp.io/api#/keys/keysCreate
+    
+    Options:
+    
+    * `[-o][--organization_id]` ***(string)*** One organization_id. If omitted defaults to user's default organization
+    * `[-d][--description]` ***(string)*** An immutable description for this key
+
+2. ### keys:update <key_id> [-d][--description]
+
+    Update a key
+    
+    Api reference https://www.lamp.io/api#/keys/keysUpdate
+    
+    Arguments:
+    
+    * `<key_id>` ***(string)*** The ID of the key
+    
+    Options:
+    
+    * `[-d][--description]` ***(string)*** An immutable description for this key
+    
+3. ### keys:delete <key_id>
+
+    Delete a key
+    
+    Api reference https://www.lamp.io/api#/keys/keysDelete
+    
+    Arguments:
+        
+    * `<key_id>` ***(string)*** The ID of the key
+    
+4. ### keys:list [-o][--organization_id]
+
+    Returns keys for organization
+    
+    Api reference https://www.lamp.io/api#/keys/keysList
+    
+    Options
+    
+    * `[-o][--organization_id]` ***(string)*** One organization_id. If omitted defaults to user's default organization
+    
+5. ### keys:describe <key_id>
+
+    Returns a key
+    
+    Api reference https://www.lamp.io/api#/keys/keysShow
+    
+    Arguments:
+            
+    * `<key_id>` ***(string)*** The ID of the key
 
 ### Logs
 
