@@ -42,7 +42,7 @@ class AuthHelper
 	 */
 	protected static function getTokenFromFile(): string
 	{
-		return file_exists(self::getPathToTokenFolder() . self::TOKEN_FILE_NAME) ? file_get_contents(self::getPathToTokenFolder() . self::TOKEN_FILE_NAME) : '';
+		return file_exists(self::getPathToTokenFolder() . self::TOKEN_FILE_NAME) ? trim(file_get_contents(self::getPathToTokenFolder() . self::TOKEN_FILE_NAME)) : '';
 	}
 
 	/**
