@@ -9,7 +9,7 @@ if (file_exists(dirname(__DIR__, 3) . '/autoload.php')) {
 use Lio\App\Console\Application;
 
 try {
-	$app = new Application($classLoader, 'lamp.io commandline interface', '0.1.2');
+	$app = new Application($classLoader, 'lamp.io commandline interface', '0.1.3');
 	$app->run();
 } catch (Exception $exception) {
 	echo $exception->getMessage() . PHP_EOL;
