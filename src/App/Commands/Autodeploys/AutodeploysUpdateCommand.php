@@ -23,7 +23,7 @@ class AutodeploysUpdateCommand extends AbstractUpdateCommand
 	{
 		parent::configure();
 		$this->setDescription('Update an autodeploy')
-			->setHelp('Update a key, api reference' . PHP_EOL . 'https://www.lamp.io/api#/autodeploys/autoDeploysUpdate')
+			->setHelp('Update a autodeploy, api reference' . PHP_EOL . 'https://www.lamp.io/api#/autodeploys/autoDeploysUpdate')
 			->addArgument('autodeploy_id', InputArgument::REQUIRED, 'The ID of the autodeploy')
 			->addOption('github_repository', 'g', InputOption::VALUE_REQUIRED, 'The repository this autodeploy uses')
 			->addOption('create_app_on_pr', 'c', InputOption::VALUE_REQUIRED, 'Create lamp.io app when a PR is created')

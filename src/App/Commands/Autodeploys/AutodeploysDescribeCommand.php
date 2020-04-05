@@ -21,7 +21,7 @@ class AutodeploysDescribeCommand extends AbstractDescribeCommand
 	{
 		parent::configure();
 		$this->setDescription('Returns an autodeploy')
-			->setHelp('Get selected key, api reference' . PHP_EOL . 'https://www.lamp.io/api#/autodeploys/autoDeploysShow')
+			->setHelp('Get selected autodeploy, api reference' . PHP_EOL . 'https://www.lamp.io/api#/autodeploys/autoDeploysShow')
 			->addArgument('autodeploy_id', InputArgument::REQUIRED, 'The id of the autodeploy');
 	}
 
