@@ -179,6 +179,133 @@ Commands
 
     * `[--enable]` ***(bool)*** Enable your stopped app
     * `[--disable]` ***(bool)*** Disable your running app
+    
+### Autodeploys
+
+1.  #### autodeploys:new <github_repository> [--organization_id][-o] [--create_app_on_pr][-c] [--delete_app_on_branch_delete][-d]
+
+    Create an autodeploy for an organization
+    
+    Api reference https://www.lamp.io/api#/autodeploys/autoDeploysCreate
+    
+    Arguments:
+
+    * `<github_repository>` ***(string)*** The repository this autodeploy uses
+    
+    Options:
+    
+    * `[-o][--organization_id]` ***(string)*** One organization_id. If omitted defaults to user's default organization
+    * `[-c][--create_app_on_pr]` ***(bool)*** Create lamp.io app when a PR is created
+    * `[-d][--delete_app_on_branch_delete]` ***(bool)*** Delete lamp.io app when branch is deleted
+
+2.  #### autodeploys:update <autodeploy_id> [--github_repository][-g] [--organization_id][-o] [--create_app_on_pr][-c]
+
+    Update an autodeploy
+    
+    Api reference https://www.lamp.io/api#/autodeploys/autoDeploysUpdate
+    
+    Arguments:
+
+    * `<autodeploy_id>` ***(string)*** The ID of the autodeploy
+    
+    Options:
+    
+    * `[-g][--github_repository]` ***(string)*** The repository this autodeploy uses
+    * `[-c][--create_app_on_pr]` ***(bool)*** Create lamp.io app when a PR is created
+    * `[-d][--delete_app_on_branch_delete]` ***(bool)*** Delete lamp.io app when branch is deleted
+    
+3.  #### autodeploys:delete <autodeploy_id>
+
+    Delete an autodeploy
+    
+    Api reference https://www.lamp.io/api#/autodeploys/autoDeploysDelete
+    
+    Arguments:
+    
+    * `<autodeploy_id>` ***(string)*** The ID of the autodeploy
+
+4.  #### autodeploys:list [--organization_id][-o]
+
+    Return autodeploys
+    
+    Api reference https://www.lamp.io/api#/autodeploys/autoDeploysList
+    
+    Options:
+        
+    * `[-o][--organization_id]` ***(string)*** Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
+
+5.  #### autodeploys:describe
+
+    Returns an autodeploy
+    
+    Api reference https://www.lamp.io/api#/autodeploys/autoDeploysShow
+    
+    Arguments:
+
+    * `<autodeploy_id>` ***(string)*** The ID of the autodeploy
+    
+### AutodeploysBranch <app_id> <autodeploy_id> <branch> [--organization_id][-o]
+
+1. ### autodeploysBranch:new
+
+    Create an autodeployBranch for an organization
+    
+    Api reference https://www.lamp.io/api#/autodeploys_branch/autoDeploysBranchCreate
+    
+    Arguments:
+
+    * `<app_id>` ***(string)*** The ID of the app this branch deploys to
+    * `<autodeploy_id>` ***(string)*** The ID of the autodeploy
+    * `<branch>` ***(string)*** Branch name
+    
+    Options:
+        
+    * `[-o][--organization_id]` ***(string)*** One organization_id. If omitted defaults to user's default organization
+    
+2. ### autodeploysBranch:update <autodeploy_branch_id> [--app_id][-a] [--branch][-b]
+
+    Update an autodeploys_branch
+    
+    Api reference https://www.lamp.io/api#/autodeploys_branch/autoDeploysBranchUpdate
+    
+    Arguments:
+    
+    * `<autodeploy_branch_id>` ***(string)*** The ID of the autodeployBranch
+    
+    Options:
+            
+    * `[-a][--app_id]` ***(string)*** The ID of the app to deploy against
+    * `[-b][--branch]` ***(string)*** Branch name
+    
+3. ### autodeploysBranch:delete <autodeploy_branch_id>
+
+    Delete an autodeploys_branch
+    
+    Api reference https://www.lamp.io/api#/autodeploys_branch/autoDeploysBranchDelete
+    
+    Arguments:
+    
+    * `<autodeploy_branch_id>` ***(string)*** The ID of the autodeployBranch
+
+4. ### autodeploysBranch:list [--organization_id][-o]
+
+    Return autodeploys_branch
+    
+    Api reference https://www.lamp.io/api#/autodeploys_branch/autoDeploysBranchList
+    
+    Options:
+            
+    * `[-o][--organization_id]` ***(string)*** Comma-separated list of requested organization_ids. If omitted defaults to user's default organization
+
+5. ### autodeploysBranch:describe <autodeploy_branch_id>
+
+    Return an autodeploy_branch
+    
+    Api reference https://www.lamp.io/api#/autodeploys_branch/autoDeploysBranchShow
+    
+    Arguments:
+    
+    * `<autodeploy_branch_id>` ***(string)*** The ID of the autodeployBranch
 
 ### App backups
 
