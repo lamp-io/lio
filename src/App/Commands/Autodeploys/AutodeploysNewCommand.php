@@ -24,6 +24,7 @@ class AutodeploysNewCommand extends AbstractNewCommand
 	{
 		parent::configure();
 		$this->setDescription('Create an autodeploy for an organization.')
+			->setHelp('Create an autodeploy, api reference' . PHP_EOL . 'https://www.lamp.io/api#/autodeploys/autoDeploysCreate')
 			->addArgument('github_repository', InputArgument::REQUIRED, 'The repository this autodeploy uses')
 			->addOption('organization_id', 'o', InputOption::VALUE_REQUIRED, 'One organization_id. If omitted defaults to user\'s default organization')
 			->addOption('create_app_on_pr', 'c', InputOption::VALUE_REQUIRED, 'Create lamp.io app when a PR is created', 'false')
