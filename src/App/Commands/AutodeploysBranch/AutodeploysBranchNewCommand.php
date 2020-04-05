@@ -23,7 +23,8 @@ class AutodeploysBranchNewCommand extends AbstractNewCommand
 	protected function configure()
 	{
 		parent::configure();
-		$this->setDescription('Create an autodeploy for an organization.')
+		$this->setDescription('Create an autodeployBranch for an organization')
+			->setHelp('Create an autodeployBranch, api reference' . PHP_EOL . 'https://www.lamp.io/api#/autodeploys_branch/autoDeploysBranchCreate')
 			->addArgument('app_id', InputArgument::REQUIRED, 'The ID of the app this branch deploys to')
 			->addArgument('autodeploy_id', InputArgument::REQUIRED, 'The ID of an autodeploy')
 			->addArgument('branch', InputArgument::REQUIRED, 'Branch name')
