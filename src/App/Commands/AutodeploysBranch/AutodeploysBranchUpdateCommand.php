@@ -23,6 +23,7 @@ class AutodeploysBranchUpdateCommand extends AbstractUpdateCommand
 	{
 		parent::configure();
 		$this->setDescription('Update an autodeploys_branch')
+			->setHelp('Update a autodeploys_branch, api reference' . PHP_EOL . 'https://www.lamp.io/api#/autodeploys_branch/autoDeploysBranchUpdate')
 			->addArgument('autodeploy_branch_id', InputArgument::REQUIRED, 'The ID of the autodeployBranch')
 			->addOption('app_id', 'a', InputOption::VALUE_REQUIRED, 'The ID of the app to deploy against')
 			->addOption('branch', 'b', InputOption::VALUE_REQUIRED, 'Branch name')
