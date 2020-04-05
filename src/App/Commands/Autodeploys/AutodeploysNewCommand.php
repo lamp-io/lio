@@ -42,7 +42,7 @@ class AutodeploysNewCommand extends AbstractNewCommand
 	{
 		/** @var Document $document */
 		$document = Parser::parseResponseString($response->getBody()->getContents());
-		$output->writeln('<info>Your new autodeploy successfully created, key id: ' . $document->get('data.id') . '</info>');
+		$output->writeln('<info>Your new autodeploy successfully created, id: ' . $document->get('data.id') . '</info>');
 	}
 
 	/**
